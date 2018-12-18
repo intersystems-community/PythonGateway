@@ -101,16 +101,21 @@ int SimpleStringFull(char *command, double* result) {
 int SimpleString(char *command, char *resultVar, char* result) {
 	PyRun_SimpleString(command);
 
-	PyObject *var = PyObject_GetAttrString(mainModule, resultVar);
+	int exists = PyObject_HasAttrString(mainModule, resultVar);
 
-	//PyObject* varStr = PyObject_Repr(var);
-	PyObject* varStr = PyObject_Str(var);
-	char* str = PyUnicode_AsUTF8(varStr);
+	if (exists == 1) {
+		PyObject *var = PyObject_GetAttrString(mainModule, resultVar);
 
-	sprintf(result, "%s", str);
+		//PyObject* varStr = PyObject_Repr(var);
+		PyObject* varStr = PyObject_Str(var);
+		char* str  = PyUnicode_AsUTF8(varStr);
 
-	Py_DECREF(varStr);
-	Py_DECREF(var);
+		sprintf(result, "%s", str);
+
+		Py_DECREF(varStr);
+		Py_DECREF(var);
+	}
+
 	return ZF_SUCCESS;
 }
 
@@ -126,7 +131,7 @@ int main(int argc, char **argv) {
 	char* result = malloc(sizeof(char) * 1024);
 
 	Initialize();
-	SimpleString("x=2", "x", result);
+	SimpleString("x=2", "y", result);
 	Finalize();
 
 	printf(result);
