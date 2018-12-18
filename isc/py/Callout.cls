@@ -20,22 +20,44 @@ ClassMethod GetRandom() As %Double
 	quit random
 }
 
-/// Init, eval code and return variable x.
-/// w ##class(isc.py.Callout).SimpleString()
-ClassMethod SimpleString(code = {"import random;" _ $$$NL _ "x=random.random();"}) As %Double
+/// Test method. Get random number
+/// w ##class(isc.py.Callout).GetRandomSimple()
+ClassMethod GetRandomSimple() As %Double
 {
 	set path = ..#DLL
-	set result = $ZF(-3, path, "SimpleString", code)
+	set random = $ZF(-3, path, "GetRandomSimple")
+	quit random
+}
+
+/// Init, eval code and return variable x.
+/// w ##class(isc.py.Callout).SimpleStringFull()
+ClassMethod SimpleStringFull(code = {"import random;" _ $$$NL _ "x=random.random();"}) As %Double
+{
+	set converted = $$$NO
+	if $ZISWIDE(code) {
+		set code = $zcvt(code, "O", "UTF8")
+		set converted = $$$YES
+	}
+	set path = ..#DLL
+	set result = $ZF(-3, path, "SimpleStringFull", code)
+	set:converted result = $zcvt(result, "I", "UTF8")
 	quit result
 }
 
 /// Eval code vaiable in initialized context and 
-/// return value of variable (currently limited to double and similar)
-/// w ##class(isc.py.Callout).SimpleStringN()
-ClassMethod SimpleStringN(code As %String = {"import random;" _ $$$NL _ "x=random.random();"}, variable As %String = "") As %Double
+/// return value of variable str evaluation
+/// w ##class(isc.py.Callout).SimpleString()
+ClassMethod SimpleString(code As %String = {"import random;" _ $$$NL _ "x=random.random();"}, variable As %String = "x") As %Double
 {
+	set converted = $$$NO
+	if $ZISWIDE(code) {
+		set code = $zcvt(code, "O", "UTF8")
+		set converted = $$$YES
+	}
 	set path = ..#DLL
-	set result = $ZF(-3, path, "SimpleStringN", code, variable)
+	set result = $ZF(-3, path, "SimpleString", code, variable)
+	
+	set:converted result = $zcvt(result, "I", "UTF8")
 	quit result
 }
 
@@ -48,7 +70,7 @@ ClassMethod Finalize() As %Integer
 }
 
 /// Unload library
-/// write ##class(Utils.Callout).Unload()
+/// write ##class(isc.py.Callout).Unload()
 ClassMethod Unload() As %Integer
 {
 	set result = $ZF(-3, "")

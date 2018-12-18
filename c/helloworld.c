@@ -20,16 +20,26 @@
  #include <stdlib.h>
  */
 
+
+// Reference to scope in which top-level code executes.
+PyObject *mainModule;
+
+// Initializes Python environment
+// and obtains reference to the main module, to be used by
 int Initialize() {
 	Py_Initialize();
+	mainModule = PyImport_AddModule("__main__");
 	return ZF_SUCCESS;
 }
 
 int Finalize() {
+	Py_DECREF(mainModule);
 	Py_Finalize();
 	return ZF_SUCCESS;
 }
 
+
+// Test method, returns random double
 int GetRandom(double* random) {
 
 	Py_Initialize();
@@ -56,6 +66,7 @@ int GetRandom(double* random) {
 	return ZF_SUCCESS;   // set the exit status code
 }
 
+// Test method, returns random double
 int GetRandomSimple(double* random) {
 
 	Py_Initialize();
@@ -68,11 +79,11 @@ int GetRandomSimple(double* random) {
 	*random = PyFloat_AsDouble(var);
 	Py_Finalize();
 
-	// set value to be returned by the $ZF function call
-	return ZF_SUCCESS;   // set the exit status code
+	return ZF_SUCCESS;
 }
 
-int SimpleString(char *command, double* result) {
+// Does complete initialization, executes code and finalizes environment
+int SimpleStringFull(char *command, double* result) {
 
 	Py_Initialize();
 	PyRun_SimpleString(command);
@@ -83,58 +94,50 @@ int SimpleString(char *command, double* result) {
 	*result = PyFloat_AsDouble(var);
 	Py_Finalize();
 
-	// set value to be returned by the $ZF function call
-	return ZF_SUCCESS;   // set the exit status code
+	return ZF_SUCCESS;
 }
 
-int SimpleStringN(char *command, char *resultVar, char* result) {
+// Assumes initialized environment
+int SimpleString(char *command, char *resultVar, char* result) {
 	PyRun_SimpleString(command);
 
-	PyObject *mainModule = PyImport_AddModule("__main__");
-
-	//char varName = *resultVar;
-
 	PyObject *var = PyObject_GetAttrString(mainModule, resultVar);
-	//*result = PyFloat_AsDouble(var);
 
-	//PyObject* objectsRepresentation = PyObject_Repr(var);
-	PyObject* objectsRepresentation = PyObject_Str(var);
-	char* s = PyUnicode_AsUTF8(objectsRepresentation);
+	//PyObject* varStr = PyObject_Repr(var);
+	PyObject* varStr = PyObject_Str(var);
+	char* str = PyUnicode_AsUTF8(varStr);
 
-	sprintf(result,"%s",s);
+	sprintf(result, "%s", str);
 
-	//strcpy (result, s);
-	//result = s;
-	// TODO
-	// https://stackoverflow.com/questions/5356773/python-get-string-representation-of-pyobject
-
-
-	// set value to be returned by the $ZF function call
-	return ZF_SUCCESS;   // set the exit status code
+	Py_DECREF(varStr);
+	Py_DECREF(var);
+	return ZF_SUCCESS;
 }
 
+// Code for testing and debugging as an executable
 int main(int argc, char **argv) {
 	printf("X: ");
-	//exec_interactive_interpreter(argc, argv);
+
 	//double random = 0;
 	//GetRandom(&random);
 	//GetRandomSimple(&random);
-	// printf("%lf", random);
+	//printf("%lf", random);
+
 	char* result = malloc(sizeof(char) * 1024);
 
-
 	Initialize();
-	SimpleStringN("x=2", "x", result);
+	SimpleString("x=2", "x", result);
 	Finalize();
 
 	printf(result);
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 ZFBEGIN
 ZFENTRY("Initialize","",Initialize)
 ZFENTRY("Finalize","",Finalize)
 ZFENTRY("GetRandom","D",GetRandom)
-ZFENTRY("SimpleString","cD",SimpleString)
-ZFENTRY("SimpleStringN","ccC",SimpleStringN)
+ZFENTRY("GetRandomSimple","D",GetRandomSimple)
+ZFENTRY("SimpleStringFull","cD",SimpleStringFull)
+ZFENTRY("SimpleString","ccC",SimpleString)
 ZFEND
