@@ -87,7 +87,7 @@ int SimpleString(char *command, double* result) {
 	return ZF_SUCCESS;   // set the exit status code
 }
 
-int SimpleStringN(char *command, char *resultVar, double* result) {
+int SimpleStringN(char *command, char *resultVar, char* result) {
 	PyRun_SimpleString(command);
 
 	PyObject *mainModule = PyImport_AddModule("__main__");
@@ -95,8 +95,16 @@ int SimpleStringN(char *command, char *resultVar, double* result) {
 	//char varName = *resultVar;
 
 	PyObject *var = PyObject_GetAttrString(mainModule, resultVar);
-	*result = PyFloat_AsDouble(var);
+	//*result = PyFloat_AsDouble(var);
 
+	//PyObject* objectsRepresentation = PyObject_Repr(var);
+	PyObject* objectsRepresentation = PyObject_Str(var);
+	char* s = PyUnicode_AsUTF8(objectsRepresentation);
+
+	sprintf(result,"%s",s);
+
+	//strcpy (result, s);
+	//result = s;
 	// TODO
 	// https://stackoverflow.com/questions/5356773/python-get-string-representation-of-pyobject
 
@@ -106,12 +114,20 @@ int SimpleStringN(char *command, char *resultVar, double* result) {
 }
 
 int main(int argc, char **argv) {
-	printf("Random: ");
+	printf("X: ");
 	//exec_interactive_interpreter(argc, argv);
-	double random = 0;
+	//double random = 0;
 	//GetRandom(&random);
-	GetRandomSimple(&random);
-	printf("%lf", random);
+	//GetRandomSimple(&random);
+	// printf("%lf", random);
+	char* result = malloc(sizeof(char) * 1024);
+
+
+	Initialize();
+	SimpleStringN("x=2", "x", result);
+	Finalize();
+
+	printf(result);
 	return 0;
 }
 
@@ -120,5 +136,5 @@ ZFENTRY("Initialize","",Initialize)
 ZFENTRY("Finalize","",Finalize)
 ZFENTRY("GetRandom","D",GetRandom)
 ZFENTRY("SimpleString","cD",SimpleString)
-ZFENTRY("SimpleStringN","ccD",SimpleStringN)
+ZFENTRY("SimpleStringN","ccC",SimpleStringN)
 ZFEND
