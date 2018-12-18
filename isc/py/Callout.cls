@@ -1,7 +1,7 @@
 Class isc.py.Callout
 {
 
-Parameter DLL As COSEXPRESSION = "$g(^isc.py.Callout)";
+Parameter DLL As COSEXPRESSION = "$g(^isc.py.Callout, $g(^%SYS(""bindir"")) _ ""libhelloworld.dll"")";
 
 /// Init Python context
 /// do ##class(isc.py.Callout).Initialize()
