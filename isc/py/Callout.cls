@@ -1,3 +1,10 @@
+/// Main callout wrapper. 
+/// To use:
+/// 1. Call: write ##class(isc.py.Callout).Setup() once per systems start
+/// 2. Call: do ##class(isc.py.Callout).Initialize() once per process
+/// 3. Call main method (can be called many times, context persists): write ##class(isc.py.Callout).SimpleString(code, data)
+/// 4. Call: do ##class(isc.py.Callout).Finalize() to free Python context
+/// 5. Call: write ##class(isc.py.Callout).Unload() to free callout library
 Class isc.py.Callout
 {
 
@@ -17,6 +24,8 @@ Parameter SimpleString As Integer = 6;
 
 Parameter DLL As COSEXPRESSION = "$g(^isc.py.Callout, $g(^%SYS(""bindir"")) _ ""libhelloworld.dll"")";
 
+/// Should be executed once per system start. Idempotent.
+/// Add to ZSTART or production start.
 /// write ##class(isc.py.Callout).Setup()
 ClassMethod Setup()
 {
@@ -25,7 +34,7 @@ ClassMethod Setup()
     quit sc
 }
 
-/// Init Python context
+/// Init Python context. Idempotent.
 /// do ##class(isc.py.Callout).Initialize()
 ClassMethod Initialize(debug As %Boolean = {$$$NO}) As %Integer
 {
@@ -70,7 +79,7 @@ ClassMethod SimpleStringFull(code = {"import random;" _ $$$NL _ "x=random.random
 
 /// Eval code vaiable in initialized context and 
 /// return value of variable str evaluation
-/// w ##class(isc.py.Callout).SimpleString()
+/// write ##class(isc.py.Callout).SimpleString()
 ClassMethod SimpleString(code As %String = {"import random;" _ $$$NL _ "x=random.random();"}, variable As %String = "x") As %Double
 {
 	set converted = $$$NO
@@ -85,7 +94,7 @@ ClassMethod SimpleString(code As %String = {"import random;" _ $$$NL _ "x=random
 	quit result
 }
 
-/// Finalize Python 
+/// Finalize Python. Idempotent.
 /// do ##class(isc.py.Callout).Finalize()
 ClassMethod Finalize() As %Integer
 {
@@ -93,7 +102,7 @@ ClassMethod Finalize() As %Integer
 	do $ZF(-6, ..#PyLibId, ..#Finalize)
 }
 
-/// Unload library
+/// Unload library. Idempotent.
 /// write ##class(isc.py.Callout).Unload()
 ClassMethod Unload() As %Integer
 {
