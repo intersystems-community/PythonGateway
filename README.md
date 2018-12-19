@@ -28,7 +28,7 @@ write ##class(isc.py.Callout).Unload()
 
 # Test Business Process
 
-Along with callout code and Interoperability adapter we supply a test production and test Business Process. To use them:
+Along with callout code and Interoperability adapter there's also a test Interoperability Production and test Business Process. To use them:
 
 1. In OS bash execute `python -m pip install  pyodbc pandas matplotlib seaborn`. 
 2. Execute: `do ##class(isc.py.test.CannibalizationData).Import()` to populate test data.
