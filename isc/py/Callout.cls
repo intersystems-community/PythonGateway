@@ -1,22 +1,47 @@
 Class isc.py.Callout
 {
 
+Parameter PyLibId As Integer = 4937;
+
+Parameter Initialize As Integer = 1;
+
+Parameter Finalize As Integer = 2;
+
+Parameter GetRandom As Integer = 3;
+
+Parameter GetRandomSimple As Integer = 4;
+
+Parameter SimpleStringFull As Integer = 5;
+
+Parameter SimpleString As Integer = 6;
+
 Parameter DLL As COSEXPRESSION = "$g(^isc.py.Callout, $g(^%SYS(""bindir"")) _ ""libhelloworld.dll"")";
+
+/// write ##class(isc.py.Callout).Setup()
+ClassMethod Setup()
+{
+	set sc = $ZF(-4,6,..#PyLibId)
+    set sc = $ZF(-4,5,..#PyLibId, ..#DLL)
+    quit sc
+}
 
 /// Init Python context
 /// do ##class(isc.py.Callout).Initialize()
-ClassMethod Initialize() As %Integer
+ClassMethod Initialize(debug As %Boolean = {$$$NO}) As %Integer
 {
-	set path = ..#DLL
-	do $ZF(-3, path, "Initialize")
+	if debug {
+		set sc = $ZF(-4,4,..#PyLibId)   		// unload current copy of inputlib
+		set sc = $ZF(-4,8)   					// delete existing process index, if any
+		set sc = $ZF(-4,7,..#PyLibId, ..#DLL)  	// override system index
+	}
+	do $ZF(-6, ..#PyLibId, ..#Initialize)
 }
 
 /// Test method. Get random number
 /// w ##class(isc.py.Callout).GetRandom()
 ClassMethod GetRandom() As %Double
 {
-	set path = ..#DLL
-	set random = $ZF(-3, path, "GetRandom")
+	set random = $ZF(-6, ..#PyLibId, ..#GetRandom)
 	quit random
 }
 
@@ -24,8 +49,7 @@ ClassMethod GetRandom() As %Double
 /// w ##class(isc.py.Callout).GetRandomSimple()
 ClassMethod GetRandomSimple() As %Double
 {
-	set path = ..#DLL
-	set random = $ZF(-3, path, "GetRandomSimple")
+	set random = $ZF(-6, ..#PyLibId, ..#GetRandomSimple)
 	quit random
 }
 
@@ -39,7 +63,7 @@ ClassMethod SimpleStringFull(code = {"import random;" _ $$$NL _ "x=random.random
 		set converted = $$$YES
 	}
 	set path = ..#DLL
-	set result = $ZF(-3, path, "SimpleStringFull", code)
+	set result = $ZF(-6, ..#PyLibId, ..#SimpleStringFull, code)
 	set:converted result = $zcvt(result, "I", "UTF8")
 	quit result
 }
@@ -55,7 +79,7 @@ ClassMethod SimpleString(code As %String = {"import random;" _ $$$NL _ "x=random
 		set converted = $$$YES
 	}
 	set path = ..#DLL
-	set result = $ZF(-3, path, "SimpleString", code, variable)
+	set result = $ZF(-6, ..#PyLibId, ..#SimpleString, code, variable)
 	
 	set:converted result = $zcvt(result, "I", "UTF8")
 	quit result
@@ -66,14 +90,14 @@ ClassMethod SimpleString(code As %String = {"import random;" _ $$$NL _ "x=random
 ClassMethod Finalize() As %Integer
 {
 	set path = ..#DLL
-	do $ZF(-3, path, "Finalize")
+	do $ZF(-6, ..#PyLibId, ..#Finalize)
 }
 
 /// Unload library
 /// write ##class(isc.py.Callout).Unload()
 ClassMethod Unload() As %Integer
 {
-	set result = $ZF(-3, "")
+	set result = $ZF(-4, 4, ..#PyLibId)
 	quit result
 }
 
