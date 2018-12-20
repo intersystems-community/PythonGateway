@@ -63,10 +63,12 @@ Development of C code is done in Eclipse.
 2. Set `GLOBALS_HOME` environment variable to the root of Caché or Ensemble installation.
 3. Set `PYTHONHOME` environment variable to the root of Python3 installation. Usually `C:\Users\<User>\AppData\Local\Programs\Python\Python3<X>`
 4. Open MinGW bash.
-5. In `Repository\c\` execute `make`.
+5. In `<Repository>\c\` execute `make`.
 
 ## Linux
 
 1. Add Python 3.6 repo: `add-apt-repository ppa:jonathonf/python-3.6` and `apt-get update`
 2. Install: `apt install python3.6 python3.6-dev libpython3.6-dev build-essential`
-2. TBD. Get the binary from releases page (built for 3.6). Check [issue 3](https://github.com/intersystems-ru/PythonAdapter/issues/3) for progress.
+3. Set `GLOBALS_HOME` environment variable to the root of Caché or Ensemble installation.
+4. Set environment variable `PYTHONVER` to the python version you want to build, i.e.: ` export PYTHONVER=3.6`
+5. In `<Repository>/c/` execute `make`.
