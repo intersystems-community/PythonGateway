@@ -1,10 +1,10 @@
 /*
  ============================================================================
- Name        : helloworld.c
+ Name        : iscpython.c
  Author      : 
  Version     :
- Copyright   : Your copyright notice
- Description : Hello World in C, Ansi-style
+ Copyright   : MIT
+ Description : Python callout library for InterSystems Platforms
  ============================================================================
  */
 
