@@ -5,8 +5,17 @@ Python adapter via callout for InterSystems Data Platforms.
 
 1. Load ObjectScript code.
 2. Place callout DLL in `bin` folder.
+
+## Windows 
+
 3. Check that your `PYTHONHOME` environment variable points to Python 3.6. 
 4. Check that your SYSTEM `PATH` environment variable has `PYTHONHOME` variable (or directory it points to).
+
+## Linux 
+
+3. Check that your SYSTEM `PATH` environment variable has `/usr/lib`, preferably at the begining
+
+If you modified environment variables (for Windows or Linux) restart your InterSystems product.
 
 # Use
 
@@ -58,4 +67,6 @@ Development of C code is done in Eclipse.
 
 ## Linux
 
-TBD. Get the binary from releases page (built for 3.6). 
+1. Add Python 3.6 repo: `add-apt-repository ppa:jonathonf/python-3.6` and `apt-get update`
+2. Install: `apt install python3.6 python3.6-dev libpython3.6-dev build-essential`
+2. TBD. Get the binary from releases page (built for 3.6). Check [issue 3](https://github.com/intersystems-ru/PythonAdapter/issues/3) for progress.
