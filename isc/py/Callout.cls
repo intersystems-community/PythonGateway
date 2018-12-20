@@ -1,6 +1,6 @@
 /// Main callout wrapper. 
 /// To use:
-/// 1. Call: write ##class(isc.py.Callout).Setup() once per systems start
+/// 1. Call: do ##class(isc.py.Callout).Setup() once per systems start
 /// 2. Call: do ##class(isc.py.Callout).Initialize() once per process
 /// 3. Call main method (can be called many times, context persists): write ##class(isc.py.Callout).SimpleString(code, data)
 /// 4. Call: do ##class(isc.py.Callout).Finalize() to free Python context
@@ -22,7 +22,7 @@ Parameter SimpleStringFull As Integer = 5;
 
 Parameter SimpleString As Integer = 6;
 
-Parameter DLL As COSEXPRESSION = "$g(^isc.py.Callout, $g(^%SYS(""bindir"")) _ ""libhelloworld.dll"")";
+Parameter DLL As COSEXPRESSION = "$g(^isc.py.Callout, $g(^%SYS(""bindir"")) _ ""iscpython.dll"")";
 
 /// Should be executed once per system start. Idempotent.
 /// Add to ZSTART or production start.
