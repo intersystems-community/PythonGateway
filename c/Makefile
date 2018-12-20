@@ -30,7 +30,7 @@ else ifneq (, $(findstring mingw, $(SYS)))
          $(error Couldn't find PYTHONHOME)
 	endif
 	
-	PYTHONVER := $(shell ${PYTHONHOME}python -c "import sys; print(str(sys.version_info[0])+str(sys.version_info[1]))")
+	PYTHONVER := $(shell ${PYTHONHOME}/python -c "import sys; print(str(sys.version_info[0])+str(sys.version_info[1]))")
 	
 	INCLUDES += -I${PYTHONHOME}/include
 	LDFLAGS += -L${PYTHONHOME}/Libs
