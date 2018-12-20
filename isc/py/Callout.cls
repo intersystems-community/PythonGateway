@@ -22,7 +22,10 @@ Parameter SimpleStringFull As Integer = 5;
 
 Parameter SimpleString As Integer = 6;
 
-Parameter DLL As COSEXPRESSION = "$g(^isc.py.Callout, $g(^%SYS(""bindir"")) _ ""iscpython.dll"")";
+ClassMethod GetDLL() [ CodeMode = expression ]
+{
+$g(^isc.py.Callout, $g(^%SYS("bindir")) _ "iscpython." _ $select($$$isWINDOWS:"dll", 1:"so"))
+}
 
 /// Should be executed once per system start. Idempotent.
 /// Add to ZSTART or production start.
@@ -30,7 +33,7 @@ Parameter DLL As COSEXPRESSION = "$g(^isc.py.Callout, $g(^%SYS(""bindir"")) _ ""
 ClassMethod Setup()
 {
 	set sc = $ZF(-4,6,..#PyLibId)
-    set sc = $ZF(-4,5,..#PyLibId, ..#DLL)
+    set sc = $ZF(-4,5,..#PyLibId, ..GetDLL())
     quit sc
 }
 
@@ -41,7 +44,7 @@ ClassMethod Initialize(debug As %Boolean = {$$$NO}) As %Integer
 	if debug {
 		set sc = $ZF(-4,4,..#PyLibId)   		// unload current copy of inputlib
 		set sc = $ZF(-4,8)   					// delete existing process index, if any
-		set sc = $ZF(-4,7,..#PyLibId, ..#DLL)  	// override system index
+		set sc = $ZF(-4,7,..#PyLibId, ..GetDLL())  	// override system index
 	}
 	do $ZF(-6, ..#PyLibId, ..#Initialize)
 }
@@ -71,7 +74,6 @@ ClassMethod SimpleStringFull(code = {"import random;" _ $$$NL _ "x=random.random
 		set code = $zcvt(code, "O", "UTF8")
 		set converted = $$$YES
 	}
-	set path = ..#DLL
 	set result = $ZF(-6, ..#PyLibId, ..#SimpleStringFull, code)
 	set:converted result = $zcvt(result, "I", "UTF8")
 	quit result
@@ -87,7 +89,6 @@ ClassMethod SimpleString(code As %String = {"import random;" _ $$$NL _ "x=random
 		set code = $zcvt(code, "O", "UTF8")
 		set converted = $$$YES
 	}
-	set path = ..#DLL
 	set result = $ZF(-6, ..#PyLibId, ..#SimpleString, code, variable)
 	
 	set:converted result = $zcvt(result, "I", "UTF8")
@@ -98,7 +99,6 @@ ClassMethod SimpleString(code As %String = {"import random;" _ $$$NL _ "x=random
 /// do ##class(isc.py.Callout).Finalize()
 ClassMethod Finalize() As %Integer
 {
-	set path = ..#DLL
 	do $ZF(-6, ..#PyLibId, ..#Finalize)
 }
 
