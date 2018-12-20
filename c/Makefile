@@ -5,7 +5,6 @@ MAKE := make
 
 CFLAGS += -Wall -Wextra -fpic -O2 -fno-strict-aliasing -Wno-unused-parameter
 
-
 SYS := $(shell gcc -dumpmachine)
 
 ifeq ($(SYS), x86_64-w64-mingw32)
@@ -16,33 +15,35 @@ endif
 
 ifneq (, $(findstring linux, $(SYS)))
 	SUFFIX := so
-	LDFLAGS := -shared
-	LIBS += -ldl
+	
+	ifndef PYTHONVER
+         $(error Couldn't find PYTHONVER)
+	endif
+	
+	INCLUDES += $(shell python${PYTHONVER}-config --includes)
+	LDFLAGS := -shared $(shell python${PYTHONVER}-config --ldflags) 
+	LIBS += $(shell python${PYTHONVER}-config --libs)
 else ifneq (, $(findstring mingw, $(SYS)))
 	SUFFIX := dll
-	LDFLAGS := -shared
+	
+	ifndef PYTHONHOME
+         $(error Couldn't find PYTHONHOME)
+	endif
+	
+	PYTHONVER := $(shell ${PYTHONHOME}python -c "import sys; print(str(sys.version_info[0])+str(sys.version_info[1]))")
+	
+	INCLUDES += -I${PYTHONHOME}/include
+	LDFLAGS += -L${PYTHONHOME}/Libs
+	LIBS  = -lpython${PYTHONVER}
 else 
 	$(error Unsupported build platform)
 endif
 
-
-
-
 ifndef GLOBALS_HOME
-    $(error Couldn't find GLOBALS_HOME)
+     $(error Couldn't find GLOBALS_HOME)
 endif
-
-ifndef PYTHONHOME
-    $(error Couldn't find PYTHONHOME)
-endif
-
-PYTHONVER := $(shell ${PYTHONHOME}python -c "import sys; print(sys.version_info[0],sys.version_info[1],sep='')")
-LIBS  = -lpython${PYTHONVER}
-
-LDFLAGS += -L${PYTHONHOME}/Libs
 
 INCLUDES += -I${GLOBALS_HOME}/dev/cpp/include
-INCLUDES += -I${PYTHONHOME}/include
 CFLAGS += $(INCLUDES)
 
 .PHONY: all clean

@@ -131,10 +131,10 @@ int main(int argc, char **argv) {
 	char* result = malloc(sizeof(char) * 1024);
 
 	Initialize();
-	SimpleString("x=2", "y", result);
+	SimpleString("x=2", "x", result);
 	Finalize();
 
-	printf(result);
+	printf("%s", result);
 	return EXIT_SUCCESS;
 }
 
