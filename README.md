@@ -45,3 +45,17 @@ Along with callout code and Interoperability adapter there's also a test Interop
 
 Development of ObjectScript is done via [cache-tort-git](https://github.com/MakarovS96/cache-tort-git) in UDL mode. 
 Development of C code is done in Eclipse.
+
+# Building
+
+## Windows
+
+1. Install [MinGW-w64](https://sourceforge.net/projects/mingw-w64/) you'll need `mak` and `gcc`
+2. Set `GLOBALS_HOME` environment variable to the root of Caché or Ensemble installation.
+3. Set `PYTHONHOME` environment variable to the root of Python3 installation. Usually `C:\Users\<User>\AppData\Local\Programs\Python\Python3<X>`
+4. Open MinGW bash.
+5. In `Repository\c\` execute `make`.
+
+## Linux
+
+TBD. Get the binary from releases page (built for 3.6). 
