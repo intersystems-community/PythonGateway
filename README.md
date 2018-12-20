@@ -4,7 +4,7 @@ Python adapter via callout for InterSystems Data Platforms.
 # Installation
 
 1. Load ObjectScript code.
-2. Place callout DLL in `bin` folder.
+2. Place callout DLL/SO in `bin` folder.
 
 ## Windows 
 
