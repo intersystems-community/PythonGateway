@@ -59,11 +59,12 @@ Development of C code is done in Eclipse.
 
 ## Windows
 
-1. Install [MinGW-w64](https://sourceforge.net/projects/mingw-w64/) you'll need `mak` and `gcc`
-2. Set `GLOBALS_HOME` environment variable to the root of Caché or Ensemble installation.
-3. Set `PYTHONHOME` environment variable to the root of Python3 installation. Usually `C:\Users\<User>\AppData\Local\Programs\Python\Python3<X>`
-4. Open MinGW bash.
-5. In `<Repository>\c\` execute `make`.
+1. Install [MinGW-w64](https://sourceforge.net/projects/mingw-w64/) you'll need `make` and `gcc`. 
+2. Rename `mingw32-make.exe` to `make.exe` in `mingw64\bin` directory.
+3. Set `GLOBALS_HOME` environment variable to the root of Caché or Ensemble installation.
+4. Set `PYTHONHOME` environment variable to the root of Python3 installation. Usually `C:\Users\<User>\AppData\Local\Programs\Python\Python3<X>`
+5. Open MinGW bash (`mingw64env.cmd`).
+6. In `<Repository>\c\` execute `make`.
 
 ## Linux
 
