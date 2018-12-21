@@ -7,12 +7,6 @@ CFLAGS += -Wall -Wextra -fpic -O2 -fno-strict-aliasing -Wno-unused-parameter
 
 SYS := $(shell gcc -dumpmachine)
 
-ifeq ($(SYS), x86_64-w64-mingw32)
-	BUILDSYS := $(SYS)
-else
-	BUILDSYS := $(shell bash $(LIBFFI_PATH)/config.guess)
-endif
-
 ifneq (, $(findstring linux, $(SYS)))
 	SUFFIX := so
 	
