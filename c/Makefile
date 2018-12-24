@@ -44,7 +44,7 @@ CFLAGS += $(INCLUDES)
 
 all: iscpython.$(SUFFIX)
 
-iscpython.o: iscpython.c
+iscpython.o: iscpython.h iscpython.c 
 
 iscpython.$(SUFFIX): iscpython.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
