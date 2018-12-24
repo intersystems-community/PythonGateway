@@ -110,7 +110,7 @@ int SimpleStringFull(char *command, double* result) {
 }
 
 // Assumes initialized environment
-int SimpleString(char *command, char *resultVar, char* result) {
+int SimpleString(char *command, char *resultVar, CACHE_EXSTRP result) {
 
 	if (isInitialized == false) {
 		Initialize();
@@ -125,9 +125,16 @@ int SimpleString(char *command, char *resultVar, char* result) {
 
 		//PyObject* varStr = PyObject_Repr(var);
 		PyObject* varStr = PyObject_Str(var);
-		char* str  = PyUnicode_AsUTF8(varStr);
+		char* str = PyUnicode_AsUTF8(varStr);
 
-		sprintf(result, "%s", str);
+		//sprintf(result, "%s", str);
+
+		int len = strlen(str);
+		CACHEEXSTRKILL(result);
+		if (!CACHEEXSTRNEW(result,len)) {
+			return ZF_FAILURE;
+		}
+		memcpy(result->str.ch, str, len);   // copy to retval->str.ch
 
 		Py_DECREF(varStr);
 		Py_DECREF(var);
@@ -148,7 +155,7 @@ int main(int argc, char **argv) {
 	char* result = malloc(sizeof(char) * 1024);
 
 	Initialize();
-	SimpleString("x=2", "x", result);
+	//SimpleString("x=2", "x", result);
 	Finalize();
 
 	printf("%s", result);
@@ -161,5 +168,5 @@ ZFBEGIN
 	ZFENTRY("GetRandom","D",GetRandom)
 	ZFENTRY("GetRandomSimple","D",GetRandomSimple)
 	ZFENTRY("SimpleStringFull","cD",SimpleStringFull)
-	ZFENTRY("SimpleString","ccC",SimpleString)
+	ZFENTRY("SimpleString","ccJ",SimpleString)
 ZFEND
