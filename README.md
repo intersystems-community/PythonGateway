@@ -19,15 +19,13 @@ If you modified environment variables (for Windows or Linux) restart your InterS
 
 # Use
 
-1. Call: `do ##class(isc.py.Callout).Setup()` once per systems start (add to ZSTART!)
-2. Call: `do ##class(isc.py.Callout).Initialize()` once per process
-3. Call main method (can be called many times, context persists): `write ##class(isc.py.Callout).SimpleString(code, data)`
-4. Call: `do ##class(isc.py.Callout).Finalize()` to free Python context
-5. Call: `write ##class(isc.py.Callout).Unload()` to free callout library
+1. Call: `do ##class(isc.py.Callout).Setup()` once per systems start (add to ZSTART: [docs](https://docs.intersystems.com/latest/csp/docbook/DocBook.UI.Page.cls?KEY=GSTU_customize#GSTU_customize_startstop), [sample](https://gist.githubusercontent.com/eduard93/412ed81e2bf619269ab4a49d939d2304/raw/c9d5f922827db5052b6e1195616d333ffe7dc1ec/%2525ZSTART)).
+2. Call main method (can be called many times, context persists): `write ##class(isc.py.Callout).SimpleString(code, data)`
+3. Call: `do ##class(isc.py.Callout).Finalize()` to free Python context.
+4. Call: `write ##class(isc.py.Callout).Unload()` to free callout library.
 
 ```
 do ##class(isc.py.Callout).Setup() 
-do ##class(isc.py.Callout).Initialize()
 write ##class(isc.py.Callout).SimpleString("x='ПРИВЕТ'","x")
 write ##class(isc.py.Callout).SimpleString("x=repr('ПРИВЕТ')","x")
 write ##class(isc.py.Callout).SimpleString("x=123","x")
