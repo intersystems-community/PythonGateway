@@ -12,6 +12,7 @@
 
 #include <cdzf.h>
 #include <Python.h>
+#include <stdbool.h>
 
 #undef ERROR
 /*
@@ -24,17 +25,28 @@
 // Reference to scope in which top-level code executes.
 PyObject *mainModule;
 
+// Current state of Python Environment.
+// Should be managed by C code automatically.
+// Relevant for SimpleString method
+bool isInitialized = false;
+
 // Initializes Python environment
 // and obtains reference to the main module, to be used by
 int Initialize() {
-	Py_Initialize();
-	mainModule = PyImport_AddModule("__main__");
+	if (isInitialized == false) {
+		Py_Initialize();
+		mainModule = PyImport_AddModule("__main__");
+		isInitialized = true;
+	}
 	return ZF_SUCCESS;
 }
 
 int Finalize() {
-	Py_DECREF(mainModule);
-	Py_Finalize();
+	if (isInitialized) {
+		isInitialized = false;
+		Py_DECREF(mainModule);
+		Py_Finalize();
+	}
 	return ZF_SUCCESS;
 }
 
@@ -99,6 +111,11 @@ int SimpleStringFull(char *command, double* result) {
 
 // Assumes initialized environment
 int SimpleString(char *command, char *resultVar, char* result) {
+
+	if (isInitialized == false) {
+		Initialize();
+	}
+
 	PyRun_SimpleString(command);
 
 	int exists = PyObject_HasAttrString(mainModule, resultVar);
@@ -139,10 +156,10 @@ int main(int argc, char **argv) {
 }
 
 ZFBEGIN
-ZFENTRY("Initialize","",Initialize)
-ZFENTRY("Finalize","",Finalize)
-ZFENTRY("GetRandom","D",GetRandom)
-ZFENTRY("GetRandomSimple","D",GetRandomSimple)
-ZFENTRY("SimpleStringFull","cD",SimpleStringFull)
-ZFENTRY("SimpleString","ccC",SimpleString)
+	ZFENTRY("Initialize","",Initialize)
+	ZFENTRY("Finalize","",Finalize)
+	ZFENTRY("GetRandom","D",GetRandom)
+	ZFENTRY("GetRandomSimple","D",GetRandomSimple)
+	ZFENTRY("SimpleStringFull","cD",SimpleStringFull)
+	ZFENTRY("SimpleString","ccC",SimpleString)
 ZFEND

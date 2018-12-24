@@ -1,15 +1,6 @@
 Class isc.py.ens.OutboundAdapter Extends Ens.OutboundAdapter
 {
 
-/// Do requred in-process initialization.
-/// System-wide initialization: do ##class(isc.py.Callout).Setup()
-/// assumed to be done before this point.
-Method OnInit() As %Status
-{
-	do ##class(isc.py.Callout).Initialize()
-	quit $$$OK
-}
-
 /// Free Python library
 Method OnTearDown() As %Status
 {

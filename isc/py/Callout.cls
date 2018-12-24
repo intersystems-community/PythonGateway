@@ -1,10 +1,9 @@
 /// Main callout wrapper. 
 /// To use:
 /// 1. Call: do ##class(isc.py.Callout).Setup() once per systems start
-/// 2. Call: do ##class(isc.py.Callout).Initialize() once per process
-/// 3. Call main method (can be called many times, context persists): write ##class(isc.py.Callout).SimpleString(code, data)
-/// 4. Call: do ##class(isc.py.Callout).Finalize() to free Python context
-/// 5. Call: write ##class(isc.py.Callout).Unload() to free callout library
+/// 2. Call main method (can be called many times, context persists): write ##class(isc.py.Callout).SimpleString(code, data)
+/// 3. Call: do ##class(isc.py.Callout).Finalize() to clear Python context
+/// 4. Call: write ##class(isc.py.Callout).Unload() to free callout library
 Class isc.py.Callout
 {
 
@@ -22,6 +21,8 @@ Parameter SimpleStringFull As Integer = 5;
 
 Parameter SimpleString As Integer = 6;
 
+/// Get path to DLL. 
+/// DLL assumed to be in bin folder, unless specified otherwise
 ClassMethod GetDLL() [ CodeMode = expression ]
 {
 $g(^isc.py.Callout, $g(^%SYS("bindir")) _ "iscpython." _ $select($$$isWINDOWS:"dll", 1:"so"))
@@ -38,12 +39,14 @@ ClassMethod Setup()
 }
 
 /// Init Python context. Idempotent.
+/// Currently this is done automatically on a C side of things.
+/// Left for debugging/dev purposes.
 /// do ##class(isc.py.Callout).Initialize()
 ClassMethod Initialize(debug As %Boolean = {$$$NO}) As %Integer
 {
 	if debug {
-		set sc = $ZF(-4,4,..#PyLibId)   		// unload current copy of inputlib
-		set sc = $ZF(-4,8)   					// delete existing process index, if any
+		set sc = $ZF(-4,4,..#PyLibId)   			// unload current copy of inputlib
+		set sc = $ZF(-4,8)   						// delete existing process index, if any
 		set sc = $ZF(-4,7,..#PyLibId, ..GetDLL())  	// override system index
 	}
 	do $ZF(-6, ..#PyLibId, ..#Initialize)
@@ -81,6 +84,7 @@ ClassMethod SimpleStringFull(code = {"import random;" _ $$$NL _ "x=random.random
 
 /// Eval code vaiable in initialized context and 
 /// return value of variable str evaluation
+/// TODO determine wide variable value.
 /// write ##class(isc.py.Callout).SimpleString()
 ClassMethod SimpleString(code As %String = {"import random;" _ $$$NL _ "x=random.random();"}, variable As %String = "x") As %Double
 {
