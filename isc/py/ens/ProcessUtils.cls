@@ -2,6 +2,13 @@
 Class isc.py.ens.ProcessUtils
 {
 
+/// List of nodes that may contain ActivityList.
+/// Retrieved with:
+/// SELECT  parent, ID,  Name, Type
+/// FROM %Dictionary.CompiledProperty
+/// WHERE Parent %STARTSWITH 'Ens.BPL' AND Name='Activities'
+Parameter ActivityNodes = {$lb("Ens.BPL.Case", "Ens.BPL.CaseNode", "Ens.BPL.Catch", "Ens.BPL.CatchAll", "Ens.BPL.CompensationHandler", "Ens.BPL.Default", "Ens.BPL.Flow", "Ens.BPL.ForEach", "Ens.BPL.Message", "Ens.BPL.Request", "Ens.BPL.Response", "Ens.BPL.Scope", "Ens.BPL.Sequence", "Ens.BPL.Until", "Ens.BPL.While")};
+
 /// Get value of activity annatation by name
 ClassMethod GetAnnotation(name) As %String [ CodeMode = objectgenerator ]
 {
@@ -29,19 +36,32 @@ ClassMethod GetAnnotation(name) As %String [ CodeMode = objectgenerator ]
 			
 			#dim activities As Ens.BPL.ActivityList
 			set activities = process.Sequence.Activities
-				
-			for i=1:1:activities.Count() {
-				#dim activity As Ens.BPL.Activity
-				set activity = activities.GetAt(i)
-				set annotationText = $$$quote(activity.Annotation)
-				do:activity.Annotation'="" %code.WriteLine(" quit:name=""" _ activity.Name _ """ " _ annotationText)
-			}
+			do ..ParseActivities(activities)	
+
 			do %code.WriteLine(" quit """"")
         }
     } catch ex {
 	    set sc = ex.AsStatus()
     }
     quit sc
+}
+
+ClassMethod ParseActivities(activities As Ens.BPL.ActivityList)
+{
+	for i=1:1:activities.Count() {
+		#dim activity As Ens.BPL.Activity
+		set activity = activities.GetAt(i)
+		set class = activity.%ClassName(1)
+		if $lf(..#ActivityNodes, class) {
+			do ..ParseActivities(activity.Activities)
+		} elseif (class="Ens.BPL.If") {
+			do ..ParseActivities(activity.True)
+			do ..ParseActivities(activity.False)
+		} else {
+			set annotationText = $$$quote(activity.Annotation)
+			do:activity.Annotation'="" %code.WriteLine(" quit:name=""" _ activity.Name _ """ " _ annotationText)
+		}
+	}
 }
 
 }
