@@ -1,7 +1,7 @@
 /*
  ============================================================================
  Name        : iscpython.c
- Author      : 
+ Author      : Eduard
  Version     :
  Copyright   : MIT
  Description : Python callout library for InterSystems Platforms

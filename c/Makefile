@@ -2,8 +2,9 @@ CC := gcc
 RM := rm
 CD := cd
 MAKE := make
+LDFLAGS := -shared
 
-CFLAGS += -Wall -Wextra -fpic -O2 -fno-strict-aliasing -Wno-unused-parameter
+CFLAGS += -Wall -Wextra -fpic -O3 -fno-strict-aliasing -Wno-unused-parameter
 
 SYS := $(shell gcc -dumpmachine)
 
@@ -15,7 +16,7 @@ ifneq (, $(findstring linux, $(SYS)))
 	endif
 	
 	INCLUDES += $(shell python${PYTHONVER}-config --includes)
-	LDFLAGS := -shared $(shell python${PYTHONVER}-config --ldflags) 
+	LDFLAGS += $(shell python${PYTHONVER}-config --ldflags) 
 	LIBS += $(shell python${PYTHONVER}-config --libs)
 else ifneq (, $(findstring mingw, $(SYS)))
 	SUFFIX := dll
@@ -44,7 +45,7 @@ CFLAGS += $(INCLUDES)
 
 all: iscpython.$(SUFFIX)
 
-iscpython.o: iscpython.h iscpython.c 
+iscpython.o: iscpython.c
 
 iscpython.$(SUFFIX): iscpython.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
