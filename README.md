@@ -47,6 +47,16 @@ Along with callout code and Interoperability adapter there's also a test Interop
 8. Send empty `Ens.Request` mesage to the `isc.py.test.Process`.
 
 
+# Unit tests
+
+To run tests execute:
+
+```
+set repo = ##class(%SourceControl.Git.Utils).TempFolder()
+set ^UnitTestRoot = ##class(%File).SubDirectoryName(##class(%File).SubDirectoryName(##class(%File).SubDirectoryName(repo,"isc"),"py"),"unit",1)
+set sc = ##class(%UnitTest.Manager).RunTest(,"/nodelete")
+```
+
 
 # Development
 
