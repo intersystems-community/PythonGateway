@@ -86,7 +86,7 @@ ClassMethod SimpleStringFull(code = {"import random;" _ $$$NL _ "x=random.random
 /// return value of variable str evaluation
 /// TODO determine wide variable value.
 /// write ##class(isc.py.Callout).SimpleString()
-ClassMethod SimpleString(code As %String = {"import random;" _ $$$NL _ "x=random.random();"}, variable As %String = "x") As %Double
+ClassMethod SimpleString(code As %String = "", variable As %String = "") As %Double
 {
 	set converted = $$$NO
 	if $ZISWIDE(code) {
