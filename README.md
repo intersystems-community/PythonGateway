@@ -57,6 +57,12 @@ set ^UnitTestRoot = ##class(%File).SubDirectoryName(##class(%File).SubDirectoryN
 set sc = ##class(%UnitTest.Manager).RunTest(,"/nodelete")
 ```
 
+# Limitations
+
+There are several limitaions associated with the use of PythonAdapter.
+
+1. Modules reinitialization. Some modules may only be loaded once diring process lifetime (i.e. numpy). While Finalization clears the context of the process, repeated load of such libraries terminates the process. Discussions: [1](https://stackoverflow.com/questions/14843408/python-c-embedded-segmentation-fault), [2](https://stackoverflow.com/questions/7676314/py-initialize-py-finalize-not-working-twice-with-numpy).
+2. Variables. Do not use these variables: `zzztype`, `zzzjson`. They are used by `isc.py.data` package.
 
 # Development
 
