@@ -110,7 +110,7 @@ int SimpleStringFull(char *command, double* result) {
 }
 
 // Assumes initialized environment
-int SimpleString(char *command, char *resultVar, CACHE_EXSTRP result) {
+int SimpleString(char *command, char *resultVar, int serialization, CACHE_EXSTRP result) {
 
 	if (isInitialized == false) {
 		Initialize();
@@ -122,9 +122,14 @@ int SimpleString(char *command, char *resultVar, CACHE_EXSTRP result) {
 
 	if (exists == 1) {
 		PyObject *var = PyObject_GetAttrString(mainModule, resultVar);
+		PyObject* varStr;
 
-		//PyObject* varStr = PyObject_Repr(var);
-		PyObject* varStr = PyObject_Str(var);
+		if (serialization==0) {
+			varStr = PyObject_Str(var);
+		} else {
+			varStr = PyObject_Repr(var);
+		}
+
 		char* str = PyUnicode_AsUTF8(varStr);
 
 		//sprintf(result, "%s", str);
@@ -168,5 +173,5 @@ ZFBEGIN
 	ZFENTRY("GetRandom","D",GetRandom)
 	ZFENTRY("GetRandomSimple","D",GetRandomSimple)
 	ZFENTRY("SimpleStringFull","cD",SimpleStringFull)
-	ZFENTRY("SimpleString","ccJ",SimpleString)
+	ZFENTRY("SimpleString","cciJ",SimpleString)
 ZFEND
