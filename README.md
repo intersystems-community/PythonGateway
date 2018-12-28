@@ -33,6 +33,14 @@ do ##class(isc.py.Callout).Finalize()
 write ##class(isc.py.Callout).Unload()
 ```
 
+# Context persistence
+
+Python context can be persisted into InterSystems IRIS and restored later on. There are currently three public functions:
+
+- Save context: `set sc = ##class(isc.py.data.Context).SaveContext(verbose, .context)` where `verbose` specifies displaying context after saving, and `context` is a resulting Python context. Get context id with `context.%Id()`
+- Display context: `do ##class(isc.py.data.Context).DisplayContext(id)` where `id` is an id of a stored context. Leave empty to display current context.
+- Restore context: `do ##class(isc.py.data.Context).RestoreContext(id, verbose, clear)` where `clear` kills currently loaded context if set to 1.
+
 # Test Business Process
 
 Along with callout code and Interoperability adapter there's also a test Interoperability Production and test Business Process. To use them:
@@ -62,7 +70,9 @@ set sc = ##class(%UnitTest.Manager).RunTest(,"/nodelete")
 There are several limitaions associated with the use of PythonAdapter.
 
 1. Modules reinitialization. Some modules may only be loaded once diring process lifetime (i.e. numpy). While Finalization clears the context of the process, repeated load of such libraries terminates the process. Discussions: [1](https://stackoverflow.com/questions/14843408/python-c-embedded-segmentation-fault), [2](https://stackoverflow.com/questions/7676314/py-initialize-py-finalize-not-working-twice-with-numpy).
-2. Variables. Do not use these variables: `zzztype`, `zzzjson`. They are used by `isc.py.data` package.
+2. Variables. Do not use these variables: `zzztype`, `zzzjson`, `zzzcount`, `zzzitem`, `zzzmodules`, `zzzvars`. They are used by `isc.py.data` package.
+3. Functions  Do not redefine these functions `zzzmodulesfunc()`, `zzzvarsfunc()`. They are used by `isc.py.data` package.
+4. Context persistence. Only variables, which define a valid `repr` method could be restored correctly. User functions are currently not supported. Module import are supported.
 
 # Development
 
