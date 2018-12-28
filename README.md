@@ -41,6 +41,8 @@ Python context can be persisted into InterSystems IRIS and restored later on. Th
 - Display context: `do ##class(isc.py.data.Context).DisplayContext(id)` where `id` is an id of a stored context. Leave empty to display current context.
 - Restore context: `do ##class(isc.py.data.Context).RestoreContext(id, verbose, clear)` where `clear` kills currently loaded context if set to 1.
 
+Context is saved into `isc.py.data` package and can be viewed/edited by SQL and object methods.
+
 # Test Business Process
 
 Along with callout code and Interoperability adapter there's also a test Interoperability Production and test Business Process. To use them:
