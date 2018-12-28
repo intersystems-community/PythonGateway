@@ -18,7 +18,7 @@ Property JSON As %VarString;
 /// zw ##class(isc.py.data.Varable).SaveVariable()
 ClassMethod SaveVariable(name As %String = "", Output variable As isc.py.data.Varable) As %Status
 {
-	kill var
+	kill variable
 	quit:name="" $$$ERROR($$$GeneralError, "Variable name can't be empty")
 	
 	set repr = ##class(isc.py.Callout).SimpleString(,name, 1)
