@@ -37,7 +37,7 @@ write ##class(isc.py.Callout).Unload()
 
 Python context can be persisted into InterSystems IRIS and restored later on. There are currently three public functions:
 
-- Save context: `set sc = ##class(isc.py.data.Context).SaveContext(verbose, .context)` where `verbose` specifies displaying context after saving, and `context` is a resulting Python context. Get context id with `context.%Id()`
+- Save context: `set sc = ##class(isc.py.data.Context).SaveContext(.context, verbose)` where `verbose` specifies displaying context after saving, and `context` is a resulting Python context. Get context id with `context.%Id()`
 - Display context: `do ##class(isc.py.data.Context).DisplayContext(id)` where `id` is an id of a stored context. Leave empty to display current context.
 - Restore context: `do ##class(isc.py.data.Context).RestoreContext(id, verbose, clear)` where `clear` kills currently loaded context if set to 1.
 
