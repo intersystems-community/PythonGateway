@@ -91,14 +91,14 @@ Method Init()
 
 /// Save Python context on disk
 /// set sc=##class(isc.py.data.Context).SaveContext()
-ClassMethod SaveContext(verose As %Boolean = {$$$NO}, Output context As isc.py.data.Context) As %Status
+ClassMethod SaveContext(Output context As isc.py.data.Context, verbose As %Boolean = {$$$NO}) As %Status
 {
 	set context = ..%New()
 	do context.Init()
 	//do obj.PopulateHistory()
 	do context.PopulateModules()
 	do context.PopulateVariables()
-	do:verose context.Display()
+	do:verbose context.Display()
 	
 	quit context.%Save()
 }
