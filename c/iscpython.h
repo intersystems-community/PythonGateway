@@ -12,7 +12,7 @@
 // Production methods
 int Initialize();
 int Finalize();
-int SimpleString(char *command, char *resultVar, CACHE_EXSTRP result);
+int SimpleString(char *command, char *resultVar, int serialization, CACHE_EXSTRP result);
 
 // Test methods
 int GetRandom(double* random);
