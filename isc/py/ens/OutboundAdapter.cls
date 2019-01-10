@@ -10,16 +10,27 @@ Method OnTearDown() As %Status
 }
 
 /// Main method execute code and return variable.
-/// Both arguments are optional.
-/// code can be $c(10) or $c(13,10) delimited.
-Method Execute(code = "", variable = "") As %String
+/// All arguments are optional.
+/// code - Python code to execute
+/// variable - variable name, which value is returned
+/// lineSeparator - separate code into lines. Defaults to $c(10).
+Method Execute(code = "", variable = "", lineSeparator As %String = {$c(10)}) As %String
 {
-	set codeList=$lfs(code, $c(10))
-	
-	for i=1:1:$ll(codeList)-1 {  
-		do ##class(isc.py.Callout).SimpleString($lg(codeList, i))
+	if lineSeparator'="" {
+		set codeList=$lfs(code, lineSeparator)
+	} else {
+		set codeList=$lb(code)
 	}
-	set result = ##class(isc.py.Callout).SimpleString($lg(codeList, $ll(codeList)), variable)
+	
+	for i=1:1:$ll(codeList)-1 {
+		set line = $lg(codeList, i)
+		$$$TRACE(line)
+		do ##class(isc.py.Callout).SimpleString(line)
+	}
+	
+	set line = $lg(codeList, $ll(codeList))
+	$$$TRACE(line)
+	set result = ##class(isc.py.Callout).SimpleString(line, variable)
 	quit result
 }
 

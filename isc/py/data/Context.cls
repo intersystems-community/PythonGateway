@@ -93,6 +93,7 @@ Method Init()
 /// set sc=##class(isc.py.data.Context).SaveContext()
 ClassMethod SaveContext(Output context As isc.py.data.Context, verbose As %Boolean = {$$$NO}) As %Status
 {
+	kill context
 	set context = ..%New()
 	do context.Init()
 	//do obj.PopulateHistory()

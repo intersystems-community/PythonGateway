@@ -14,7 +14,14 @@ Method OnMessage(request As isc.py.ens.Request, Output response As isc.py.ens.Re
 	quit:'$Listvalid(variables) $$$ERROR($$$AttributeValueMustBeList, "variables")
 	
 	set variable = $lg(variables, 1)
-	set value = ..Adapter.Execute(request.Code, variable)
+	
+	if request.SeparateLines = $$$YES {
+		set lineSeparator = $c(10)
+	} else {
+		set lineSeparator = ""
+	}
+	
+	set value = ..Adapter.Execute(request.Code, variable, lineSeparator)
 	
 	do:variable'="" response.Variables.SetAt(value, variable)
 	
