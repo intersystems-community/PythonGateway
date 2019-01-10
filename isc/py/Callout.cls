@@ -72,13 +72,10 @@ ClassMethod GetRandomSimple() As %Double
 /// w ##class(isc.py.Callout).SimpleStringFull()
 ClassMethod SimpleStringFull(code = {"import random;" _ $$$NL _ "x=random.random();"}) As %Double
 {
-	set converted = $$$NO
-	if $ZISWIDE(code) {
-		set code = $zcvt(code, "O", "UTF8")
-		set converted = $$$YES
-	}
+	set:$ZISWIDE(code) code = $zcvt(code, "O", "UTF8")
+
 	set result = $ZF(-6, ..#PyLibId, ..#SimpleStringFull, code)
-	set:converted result = $zcvt(result, "I", "UTF8")
+	set result = $zcvt(result, "I", "UTF8")
 	quit result
 }
 
@@ -89,14 +86,10 @@ ClassMethod SimpleStringFull(code = {"import random;" _ $$$NL _ "x=random.random
 /// write ##class(isc.py.Callout).SimpleString()
 ClassMethod SimpleString(code As %String = "", variable As %String = "", serialization As %Integer = 0) As %String
 {
-	set converted = $$$NO
-	if $ZISWIDE(code) {
-		set code = $zcvt(code, "O", "UTF8")
-		set converted = $$$YES
-	}
+	set:$ZISWIDE(code) code = $zcvt(code, "O", "UTF8")
 	set result = $ZF(-6, ..#PyLibId, ..#SimpleString, code, variable, serialization)
 	
-	set:converted result = $zcvt(result, "I", "UTF8")
+	set result = $zcvt(result, "I", "UTF8")
 	quit result
 }
 
