@@ -130,8 +130,10 @@ Method Restore(verbose As %Boolean = {$$$NO}, clear As %Boolean = {$$$NO}) As %S
 		
 	// Restoring variables
 	for i=1:1:..Variables.Count() {
+		#dim variable As isc.py.data.Varable
 		set variable = ..Variables.GetAt(i)
-		do variable.Restore()
+		continue:$e(variable.Value,1)="<"
+		do variable.Restore($this)
 	}
 	
 	do:verbose ..Display()
