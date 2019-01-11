@@ -1,5 +1,5 @@
 /// Stored Python variable
-Class isc.py.data.Varable Extends %Persistent
+Class isc.py.data.Variable Extends %Persistent
 {
 
 /// Variable Name	
@@ -74,7 +74,7 @@ Method Restore(context As isc.py.data.Context)
 
 Storage Default
 {
-<Data name="VarableDefaultData">
+<Data name="VariableDefaultData">
 <Value name="1">
 <Value>%%CLASSNAME</Value>
 </Value>
@@ -88,17 +88,17 @@ Storage Default
 <Value>Value</Value>
 </Value>
 <Value name="5">
-<Value>JSON</Value>
-</Value>
-<Value name="6">
 <Value>Pickle</Value>
 </Value>
+<Value name="6">
+<Value>JSON</Value>
+</Value>
 </Data>
-<DataLocation>^isc.py.data.VarableD</DataLocation>
-<DefaultData>VarableDefaultData</DefaultData>
-<IdLocation>^isc.py.data.VarableD</IdLocation>
-<IndexLocation>^isc.py.data.VarableI</IndexLocation>
-<StreamLocation>^isc.py.data.VarableS</StreamLocation>
+<DataLocation>^isc.py.data.VariableD</DataLocation>
+<DefaultData>VariableDefaultData</DefaultData>
+<IdLocation>^isc.py.data.VariableD</IdLocation>
+<IndexLocation>^isc.py.data.VariableI</IndexLocation>
+<StreamLocation>^isc.py.data.VariableS</StreamLocation>
 <Type>%Library.CacheStorage</Type>
 }
 

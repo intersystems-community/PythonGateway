@@ -9,7 +9,7 @@ Property Name As %String;
 Property Description As %VarString;
 
 /// List of variables.
-Property Variables As list Of isc.py.data.Varable;
+Property Variables As list Of isc.py.data.Variable;
 
 /// Array or loaded modules, key - module name, value - alias.
 Property Modules As array Of %String(SQLPROJECTION = "table/column", STORAGEDEFAULT = "array");
@@ -66,7 +66,7 @@ Method PopulateVariables() As %Status
 	set iterator = variables.%GetIterator()
 	while iterator.%GetNext(.key, .variable) {
 		#dim varObj As isc.py.data.Varable
-		set sc = ##class(isc.py.data.Varable).SaveVariable(variable, .varObj)
+		set sc = ##class(isc.py.data.Variable).SaveVariable(variable, .varObj)
 		quit:$$$ISERR(sc)
 		do ..Variables.Insert(varObj)
 	}
@@ -130,9 +130,9 @@ Method Restore(verbose As %Boolean = {$$$NO}, clear As %Boolean = {$$$NO}) As %S
 		
 	// Restoring variables
 	for i=1:1:..Variables.Count() {
-		#dim variable As isc.py.data.Varable
+		#dim variable As isc.py.data.Variable
 		set variable = ..Variables.GetAt(i)
-		continue:$e(variable.Value,1)="<"
+		continue:variable.Pickle=""
 		do variable.Restore($this)
 	}
 	
