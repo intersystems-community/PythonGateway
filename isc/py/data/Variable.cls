@@ -18,8 +18,8 @@ Property Pickle As %VarString;
 Property JSON As %VarString;
 
 /// Save variable on disk.
-/// zw ##class(isc.py.data.Varable).SaveVariable()
-ClassMethod SaveVariable(name As %String = "", Output variable As isc.py.data.Varable) As %Status
+/// zw ##class(isc.py.data.Variable).SaveVariable()
+ClassMethod SaveVariable(name As %String = "", Output variable As isc.py.data.Variable) As %Status
 {
 	kill variable
 	quit:name="" $$$ERROR($$$GeneralError, "Variable name can't be empty")
@@ -32,6 +32,8 @@ ClassMethod SaveVariable(name As %String = "", Output variable As isc.py.data.Va
 	
 	if type = "DataFrame" {
 		set json = ##class(isc.py.Callout).SimpleString("zzzjson=" _name _ ".to_json()", "zzzjson")
+	} elseif type="DatetimeIndex" {
+		/// TODO
 	} else {
 		set json = ##class(isc.py.Callout).SimpleString("zzzjson=json.dumps(" _name _ ")", "zzzjson")
 	}
