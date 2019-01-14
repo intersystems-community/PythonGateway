@@ -46,11 +46,11 @@ result=corrmat.to_string()
 //PyRun_SimpleString("f.close()
 cnxn.close()
 ]]></annotation>
-<request type='isc.py.ens.Request' >
+<request type='isc.py.msg.ExecutionRequest' >
 <assign property="callrequest.Variables" value="&quot;result&quot;" action="set" />
 <assign property="callrequest.Code" value="process.GetAnnotation(&quot;Correlation Matrix: Tabular&quot;)" action="set" />
 </request>
-<response type='isc.py.ens.Response' />
+<response type='isc.py.msg.ExecutionResponse' />
 </call>
 <sync name='Wait Correlation Matrix: Tabular' calls='Correlation Matrix: Tabular' type='all' xpos='200' ypos='350' />
 <call name='Correlation Matrix: Graph' target='isc.py.ens.Operation' async='1' xpos='200' ypos='450' >
@@ -62,10 +62,10 @@ sns.heatmap(corrmat,xticklabels=corrmat.columns,yticklabels=corrmat.columns)
 plt.title('Correlation analysis of category sales volumes (by year/month)')
 f.savefig(r'C:\InterSystems\Ensemble\mgr\Temp\SHOWCASE004USE02.png')
 plt.close(f)]]></annotation>
-<request type='isc.py.ens.Request' >
+<request type='isc.py.msg.ExecutionRequest' >
 <assign property="callrequest.Code" value="process.GetAnnotation(&quot;Correlation Matrix: Graph&quot;)" action="set" />
 </request>
-<response type='isc.py.ens.Response' />
+<response type='isc.py.msg.ExecutionResponse' />
 </call>
 <sync name='Wait Correlation Matrix: Graph' calls='Correlation Matrix: Graph' type='all' xpos='200' ypos='550' />
 </sequence>
