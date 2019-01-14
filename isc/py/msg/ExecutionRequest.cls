@@ -1,5 +1,5 @@
-/// Request to python operation
-Class isc.py.ens.Request Extends Ens.Request
+/// Request to execute code for python operation
+Class isc.py.msg.ExecutionRequest Extends Ens.Request
 {
 
 /// Python code to execute
@@ -16,8 +16,8 @@ Property SeparateLines As %Boolean [ InitialExpression = {$$$YES} ];
 
 Storage Default
 {
-<Data name="RequestDefaultData">
-<Subscript>"Request"</Subscript>
+<Data name="ExecutionRequestDefaultData">
+<Subscript>"ExecutionRequest"</Subscript>
 <Value name="1">
 <Value>Code</Value>
 </Value>
@@ -25,13 +25,10 @@ Storage Default
 <Value>Variables</Value>
 </Value>
 <Value name="3">
-<Value>LineSeparator</Value>
-</Value>
-<Value name="4">
 <Value>SeparateLines</Value>
 </Value>
 </Data>
-<DefaultData>RequestDefaultData</DefaultData>
+<DefaultData>ExecutionRequestDefaultData</DefaultData>
 <Type>%Library.CacheStorage</Type>
 }
 

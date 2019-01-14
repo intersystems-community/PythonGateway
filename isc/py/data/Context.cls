@@ -20,6 +20,9 @@ Property History As list Of %VarString;
 /// Creation timestamp.
 Property CreatedOn As %TimeStamp [ InitialExpression = {$ZDATETIME($ZTIMESTAMP, 3, 1, 3)} ];
 
+/// Alias of Pickle module, if any.
+Property %PickleAlias As %String [ InitialExpression = "pickle", Transient ];
+
 /// Does not work
 /// See https://stackoverflow.com/questions/53959362/how-to-get-history-from-python-c-api
 Method PopulateHistory() As %Status
@@ -120,13 +123,14 @@ Method Restore(verbose As %Boolean = {$$$NO}, clear As %Boolean = {$$$NO}) As %S
 {
 	do:clear ##class(isc.py.Callout).Finalize()
 	
+	do ..InitPickle()
+	
 	// Restoring modules
 	for {
   		set alias = ..Modules.GetNext(.module)
   		quit:(module = "")
   		do ##class(isc.py.Callout).SimpleString("import " _ module _ " as " _ alias)
 	}
-	
 		
 	// Restoring variables
 	for i=1:1:..Variables.Count() {
@@ -139,6 +143,24 @@ Method Restore(verbose As %Boolean = {$$$NO}, clear As %Boolean = {$$$NO}) As %S
 	do:verbose ..Display()
 	
 	quit $$$OK
+}
+
+/// Calculate Pickle alias and import pickle if required
+Method InitPickle()
+{
+	#dim importedPickle As %Boolean = $$$NO
+
+	for {
+  		set alias = ..Modules.GetNext(.module)
+  		quit:(module = "")
+
+  		if (module="pickle") {
+	  		set ..%PickleAlias = alias
+	  		set importedPickle = $$$YES
+  		}
+	}
+	
+	do:'importedPickle ##class(isc.py.Callout).SimpleString("import pickle as " _ ..%PickleAlias)
 }
 
 /// Wrapper for Display() method.

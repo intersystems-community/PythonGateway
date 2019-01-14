@@ -68,10 +68,11 @@ Method Display(indent As %String = "")
 	write !
 }
 
-/// Restore variable for disk.
+/// Restore variable from disk.
+/// context - variable owner Python context object.
 Method Restore(context As isc.py.data.Context)
 {
-	do ##class(isc.py.Callout).SimpleString(..Name _ "=pickle.loads(" _ ..Pickle _ ")")
+	do ##class(isc.py.Callout).SimpleString(..Name _ "=" _ context.%PickleAlias _ ".loads(" _ ..Pickle _ ")")
 }
 
 Storage Default
