@@ -48,7 +48,7 @@ ClassMethod SaveVariable(name As %String = "", Output variable As isc.py.data.Va
 	set variable.Value = repr
 	set variable.Type = type
 	set variable.Pickle = pickle
-	set variable.JSON = json
+	set variable.JSON = $g(json)
 	set sc = variable.%Save()
 
 	quit sc

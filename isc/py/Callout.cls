@@ -89,6 +89,7 @@ ClassMethod SimpleString(code As %String = "", variable As %String = "", seriali
 	set:$ZISWIDE(code) code = $zcvt(code, "O", "UTF8")
 	set result = $ZF(-6, ..#PyLibId, ..#SimpleString, code, variable, serialization)
 	
+	// Slows getting result by ~50%
 	set result = $zcvt(result, "I", "UTF8")
 	quit result
 }
