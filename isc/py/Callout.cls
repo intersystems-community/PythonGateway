@@ -21,9 +21,10 @@ Parameter SimpleStringFull As Integer = 5;
 
 Parameter SimpleString As Integer = 6;
 
-/// Get path to DLL. 
-/// DLL assumed to be in bin folder, unless specified otherwise
-ClassMethod GetDLL() [ CodeMode = expression ]
+/// Get path to the shared library file. 
+/// Library file is assumed to be in a bin folder, unless specified otherwise in ^isc.py.Callout global.
+/// write ##class(isc.py.Callout).GetLib()
+ClassMethod GetLib() [ CodeMode = expression ]
 {
 $g(^isc.py.Callout, $g(^%SYS("bindir")) _ "iscpython." _ $select($$$isWINDOWS:"dll", 1:"so"))
 }
@@ -34,7 +35,7 @@ $g(^isc.py.Callout, $g(^%SYS("bindir")) _ "iscpython." _ $select($$$isWINDOWS:"d
 ClassMethod Setup()
 {
 	set sc = $ZF(-4,6,..#PyLibId)
-    set sc = $ZF(-4,5,..#PyLibId, ..GetDLL())
+    set sc = $ZF(-4,5,..#PyLibId, ..GetLib())
     quit sc
 }
 
@@ -47,7 +48,7 @@ ClassMethod Initialize(debug As %Boolean = {$$$NO}) As %Integer
 	if debug {
 		set sc = $ZF(-4,4,..#PyLibId)   			// unload current copy of inputlib
 		set sc = $ZF(-4,8)   						// delete existing process index, if any
-		set sc = $ZF(-4,7,..#PyLibId, ..GetDLL())  	// override system index
+		set sc = $ZF(-4,7,..#PyLibId, ..GetLib())  	// override system index
 	}
 	do $ZF(-6, ..#PyLibId, ..#Initialize)
 }
