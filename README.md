@@ -3,8 +3,8 @@ Python adapter via callout for InterSystems Data Platforms.
 
 # Installation
 
-1. Load ObjectScript code.
-2. Place callout DLL/SO in `bin` folder.
+1. Load ObjectScript code (i.e. `do $system.OBJ.LoadDir("C:\InterSystems\Repos\Python\isc\py\","*.cls",,1)`).
+2. Place [callout DLL/SO](https://github.com/intersystems-ru/PythonAdapter/releases) in the `bin` folder of your InterSystems IRIS installation. Library file should be placed into a path returned by `write ##class(isc.py.Callout).GetLib()`. 
 
 ## Windows 
 
