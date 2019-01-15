@@ -67,7 +67,7 @@ Method SaveContext(request As isc.py.msg.SaveRequest, Output response As Ens.Str
 Method RestoreContext(request As isc.py.msg.RestoreRequest, Output response As Ens.Response) As %Status
 {
 	#dim sc As %Status = $$$OK
-	set sc = ##class(isc.py.data.Context).RestoreContext(request.ContextId)
+	set sc = ##class(isc.py.data.Context).RestoreContext(request.ContextId,, request.Clear)
 	set response = ##class(Ens.Response).%New()
 	quit sc
 }
