@@ -24,7 +24,7 @@ XData MessageMap
 /// Execute arbitrary Python code
 Method Execute(request As isc.py.msg.ExecutionRequest, Output response As isc.py.msg.ExecutionResponse) As %Status
 {
-	set response = ##class(isc.py.ens.Response).%New()
+	set response = ##class(isc.py.msg.ExecutionResponse).%New()
 	set variables = $lfs(request.Variables)
 	quit:'$Listvalid(variables) $$$ERROR($$$AttributeValueMustBeList, "variables")
 	
