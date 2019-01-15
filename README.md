@@ -43,6 +43,16 @@ Python context can be persisted into InterSystems IRIS and restored later on. Th
 
 Context is saved into `isc.py.data` package and can be viewed/edited by SQL and object methods.
 
+# Interoperability adapter
+
+Interoperability adapter offers abulity to interact with Python process from Interoperability productions. Currently three operations are supported:
+
+- Execute Python code via `isc.py.msg.ExecutionRequest`. Returns `isc.py.msg.ExecutionResponse` with requested variable values
+- Save Python conext via `isc.py.msg.SaveRequest`. Returns `Ens.StringResponse` with context id.
+- Restore Python context via `isc.py.msg.RestoreRequest`.
+
+Check request/response classes documentation for details.
+
 # Test Business Process
 
 Along with callout code and Interoperability adapter there's also a test Interoperability Production and test Business Process. To use them:
