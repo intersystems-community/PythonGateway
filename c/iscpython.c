@@ -109,14 +109,17 @@ int SimpleStringFull(char *command, double* result) {
 	return ZF_SUCCESS;
 }
 
-// Assumes initialized environment
-int SimpleString(char *command, char *resultVar, int serialization, CACHE_EXSTRP result) {
+// Execute simple command.
+// Initializes environment if required
+// Does not finalize the environment.
+int SimpleString(CACHE_EXSTRP command, char *resultVar, int serialization, CACHE_EXSTRP result) {
 
 	if (isInitialized == false) {
 		Initialize();
 	}
 
-	PyRun_SimpleString(command);
+	PyRun_SimpleString((char*)command->str.ch);
+	CACHEEXSTRKILL(command);
 
 	int exists = PyObject_HasAttrString(mainModule, resultVar);
 
@@ -131,8 +134,6 @@ int SimpleString(char *command, char *resultVar, int serialization, CACHE_EXSTRP
 		}
 
 		char* str = PyUnicode_AsUTF8(varStr);
-
-		//sprintf(result, "%s", str);
 
 		int len = strlen(str);
 		CACHEEXSTRKILL(result);
@@ -173,5 +174,5 @@ ZFBEGIN
 	ZFENTRY("GetRandom","D",GetRandom)
 	ZFENTRY("GetRandomSimple","D",GetRandomSimple)
 	ZFENTRY("SimpleStringFull","cD",SimpleStringFull)
-	ZFENTRY("SimpleString","cciJ",SimpleString)
+	ZFENTRY("SimpleString","jciJ",SimpleString)
 ZFEND
