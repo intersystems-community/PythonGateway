@@ -61,6 +61,11 @@ Method SaveContext(request As isc.py.msg.SaveRequest, Output response As Ens.Str
 	set sc = ##class(isc.py.data.Context).SaveContext(.context)
 	quit:$$$ISERR(sc) sc
 	
+	set context.Name = request.Name
+	set context.Description = request.Description
+	set sc = context.%Save()
+	quit:$$$ISERR(sc) sc
+	
 	set response = ##class(Ens.StringResponse).%New(context.%Id())
 	
 	quit sc
