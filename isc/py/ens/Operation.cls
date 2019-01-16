@@ -24,6 +24,7 @@ XData MessageMap
 /// Execute arbitrary Python code
 Method Execute(request As isc.py.msg.ExecutionRequest, Output response As isc.py.msg.ExecutionResponse) As %Status
 {
+	#dim sc As %Status = $$$OK
 	set response = ##class(isc.py.msg.ExecutionResponse).%New()
 	set variables = $lfs(request.Variables)
 	quit:'$Listvalid(variables) $$$ERROR($$$AttributeValueMustBeList, "variables")
@@ -36,18 +37,20 @@ Method Execute(request As isc.py.msg.ExecutionRequest, Output response As isc.py
 		set lineSeparator = ""
 	}
 	
-	set value = ..Adapter.Execute(request.Code, variable, lineSeparator)
+	set value = ..Adapter.Execute(request.Code, variable, lineSeparator, .sc)
+	quit:$$$ISERR(sc) sc
 	
 	do:variable'="" response.Variables.SetAt(value, variable)
 	
 	for i=2:1:$ll(variables) {
 		set variable = $lg(variables, i)
 		continue:variable=""
-		set value =  ..Adapter.Execute("", variable)
+		set value = ..Adapter.Execute("", variable, , .sc)
 		do response.Variables.SetAt(value, variable)
+		quit:$$$ISERR(sc)
 	}
 	
-	quit $$$OK
+	quit sc
 }
 
 /// Save context

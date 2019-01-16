@@ -110,5 +110,21 @@ ClassMethod Unload() As %Integer
 	quit result
 }
 
+/// Returns last occured exception in Python and clears it
+/// write ##class(isc.py.Callout).GetStatus()
+ClassMethod GetStatus() As %Status
+{
+	do ##class(isc.py.Callout).SimpleString("import sys, traceback")
+	set haxExc = ##class(isc.py.Callout).SimpleString("zzzerr = hasattr(sys, 'last_type')", "zzzerr")
+	
+	quit:haxExc="False" $$$OK
+	
+	set excText = ##class(isc.py.Callout).SimpleString("zzzerr = traceback.format_exception(sys.last_type, sys.last_value, sys.last_traceback)", "zzzerr")
+	set excText = $zcvt($zcvt(excText, "I", "UTF8"), "I", "JSON")
+	do ##class(isc.py.Callout).SimpleString("del zzzerr, sys.last_type, sys.last_value, sys.last_traceback")
+	
+	quit $$$ERROR($$$GeneralError, excText)
+}
+
 }
 
