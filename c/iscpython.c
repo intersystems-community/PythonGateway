@@ -8,6 +8,8 @@
  ============================================================================
  */
 
+#define USE_CALLIN_CHAR
+
 #define ZF_DLL  /* Required only for dynamically linked libraries. */
 
 #include <cdzf.h>
@@ -118,8 +120,15 @@ int SimpleString(CACHE_EXSTRP command, char *resultVar, int serialization, CACHE
 		Initialize();
 	}
 
-	PyRun_SimpleString((char*)command->str.ch);
+	// Copy command text to a new pointer and add null at the end
+	char* commandChar = malloc(1 + sizeof(char)*command->len);
+	memcpy(commandChar, command->str.ch,  command->len);
+	memcpy(commandChar + command->len, "\0", 1);
+
+	PyRun_SimpleString(commandChar);
+
 	CACHEEXSTRKILL(command);
+	free(commandChar);
 
 	int exists = PyObject_HasAttrString(mainModule, resultVar);
 
