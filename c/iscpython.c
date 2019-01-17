@@ -32,6 +32,15 @@ PyObject *mainModule;
 // Relevant for SimpleString method
 bool isInitialized = false;
 
+// Pointer to incoming code to execute
+char* inStream = NULL;
+
+// Current position in incoming code to execute
+int curpos = 0;
+
+// Size of inStream pointer
+int maxpos = 0;
+
 // Initializes Python environment
 // and obtains reference to the main module, to be used by
 int Initialize() {
@@ -158,6 +167,57 @@ int SimpleString(CACHE_EXSTRP command, char *resultVar, int serialization, CACHE
 	return ZF_SUCCESS;
 }
 
+// Init incoming stream (inStream) to length bytes + 1
+int StreamInit(int length)
+{
+	if (!inStream) {
+		free(inStream);
+		inStream = NULL;
+	}
+	inStream = malloc(1 + sizeof(char) * length);
+	curpos = 0;
+	maxpos = length;
+
+	if (!inStream) {
+		return ZF_FAILURE;
+	}
+
+	return ZF_SUCCESS;
+}
+
+// Write piece of inStream
+int StreamWrite(CACHE_EXSTRP command)
+{
+	if ((!inStream) || (command->len + curpos > maxpos)) {
+		return ZF_FAILURE;
+	}
+
+	memcpy(inStream + curpos, command->str.ch,  command->len);
+	curpos += command->len;
+	return ZF_SUCCESS;
+}
+
+// Send inStream to Python and free it
+int StreamExecute()
+{
+	if (isInitialized == false) {
+		Initialize();
+	}
+
+	if (!inStream) {
+		return ZF_FAILURE;
+	}
+
+	memcpy(inStream + curpos, "\0", 1);
+
+	PyRun_SimpleString(inStream);
+	free(inStream);
+	inStream = NULL;
+	curpos = 0;
+
+	return ZF_SUCCESS;
+}
+
 // Code for testing and debugging as an executable
 int main(int argc, char **argv) {
 	printf("X: ");
@@ -184,4 +244,7 @@ ZFBEGIN
 	ZFENTRY("GetRandomSimple","D",GetRandomSimple)
 	ZFENTRY("SimpleStringFull","cD",SimpleStringFull)
 	ZFENTRY("SimpleString","jciJ",SimpleString)
+	ZFENTRY("StreamInit","i",StreamInit)
+	ZFENTRY("StreamWrite","j",StreamWrite)
+	ZFENTRY("StreamExecute","",StreamExecute)
 ZFEND

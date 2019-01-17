@@ -21,6 +21,12 @@ Parameter SimpleStringFull As Integer = 5;
 
 Parameter SimpleString As Integer = 6;
 
+Parameter StreamInit As Integer = 7;
+
+Parameter StreamWrite As Integer = 8;
+
+Parameter StreamExecute As Integer = 9;
+
 /// Get path to the shared library file. 
 /// Library file is assumed to be in a bin folder, unless specified otherwise in ^isc.py.Callout global.
 /// write ##class(isc.py.Callout).GetLib()
@@ -95,6 +101,63 @@ ClassMethod SimpleString(code As %String = "", variable As %String = "", seriali
 	quit result
 }
 
+/// Init incoming Stream
+/// write ##class(isc.py.Callout).StreamInit()
+ClassMethod StreamInit(length As %Integer) As %Status
+{
+	#dim sc As %Status = $$$OK
+	try {
+		do $ZF(-6, ..#PyLibId, ..#StreamInit, length)
+	} catch ex {
+		#dim ex As %Exception.General
+		if (ex.Name = "<FUNCTION>") {
+			set sc = $$$ERROR($$$GeneralError, "Unable to allocate memory")
+		} else {
+			set sc = ex.AsStatus()
+		}
+	}
+	
+	quit sc
+}
+
+/// Write piece into incoming Stream
+/// write ##class(isc.py.Callout).StreamWrite()
+ClassMethod StreamWrite(code As %String = "") As %Status
+{
+	#dim sc As %Status = $$$OK
+	try {
+		do $ZF(-6, ..#PyLibId, ..#StreamWrite, code)
+	} catch ex {
+		#dim ex As %Exception.General
+		if (ex.Name = "<FUNCTION>") {
+			set sc = $$$ERROR($$$GeneralError, "Call StreamInit before calling StreamWrite. Or attempted to write into stream more than allocated data.")
+		} else {
+			set sc = ex.AsStatus()
+		}
+	}
+	
+	quit sc
+}
+
+/// Send incoming stream to Python for execution and free it.
+/// write ##class(isc.py.Callout).StreamExecute()
+ClassMethod StreamExecute() As %Status
+{
+	#dim sc As %Status = $$$OK
+	try {
+		do $ZF(-6, ..#PyLibId, ..#StreamExecute)
+	} catch ex {
+		#dim ex As %Exception.General
+		if (ex.Name = "<FUNCTION>") {
+			set sc = $$$ERROR($$$GeneralError, "Call StreamInit and StreamWrite before calling StreamExecute")
+		} else {
+			set sc = ex.AsStatus()
+		}
+	}
+	
+	quit sc
+}
+
 /// Finalize Python. Idempotent.
 /// do ##class(isc.py.Callout).Finalize()
 ClassMethod Finalize() As %Integer
@@ -108,22 +171,6 @@ ClassMethod Unload() As %Integer
 {
 	set result = $ZF(-4, 4, ..#PyLibId)
 	quit result
-}
-
-/// Returns last occured exception in Python and clears it
-/// write ##class(isc.py.Callout).GetStatus()
-ClassMethod GetStatus() As %Status
-{
-	do ##class(isc.py.Callout).SimpleString("import sys, traceback")
-	set haxExc = ##class(isc.py.Callout).SimpleString("zzzerr = hasattr(sys, 'last_type')", "zzzerr")
-	
-	quit:haxExc="False" $$$OK
-	
-	set excText = ##class(isc.py.Callout).SimpleString("zzzerr = traceback.format_exception(sys.last_type, sys.last_value, sys.last_traceback)", "zzzerr")
-	set excText = $zcvt($zcvt(excText, "I", "UTF8"), "I", "JSON")
-	do ##class(isc.py.Callout).SimpleString("del zzzerr, sys.last_type, sys.last_value, sys.last_traceback")
-	
-	quit $$$ERROR($$$GeneralError, excText)
 }
 
 }
