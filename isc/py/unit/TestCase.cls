@@ -125,5 +125,53 @@ Method TestUnicode()
 	do $$$AssertEquals(unicode, result, "Passing unicode characters works")
 }
 
+/// Test streams work
+/// To do all variants of calling ExcuteCode and GetVariable
+Method TestStreams()
+{
+	set stream = ##class(%Stream.TmpCharacter).%New()
+	
+	do stream.Write("'")
+	for letter = "A","B" {
+		set str = $tr($j("", $$$MaxStringLength), " ", letter)
+		do stream.Write(str)
+	}
+	do stream.Write("'")
+	set sc = ##class(isc.py.Main).ExcuteCode(stream, "stream")
+	do $$$AssertStatusOK(sc, "ExcuteCode")
+	
+	set hash = $system.Encryption.Base64Encode($system.Encryption.MD5HashStream(stream))
+	set length = stream.Size
+	
+	set stream2 = ##class(%Stream.TmpCharacter).%New()
+	
+	set sc = ##class(isc.py.Main).GetVariable("stream", 1, .stream2)
+	do $$$AssertStatusOK(sc, "GetVariable")
+	
+	set length2 = stream2.Size
+	set hash2 = $system.Encryption.Base64Encode($system.Encryption.MD5HashStream(stream2))
+	
+	do $$$AssertEquals(length, length2, "Stream lengths match")
+	do $$$AssertEquals(length2, ($$$MaxStringLength * 2 + 2), "Expected stream length")
+	do $$$AssertEquals(hash, hash2, "Hashes match")
+}
+
+Method TestMultiline()
+{
+	do ##class(isc.py.Main).GetStatus()
+	do ##class(isc.py.Callout).SimpleString("def cube(num):"_ $c(10) _ 
+											"    return num*num*num")
+											
+	set sc = ##class(isc.py.Main).GetStatus()
+	do $$$AssertStatusOK(sc, "def executed")
+	
+	set num = 6
+	set cube = ##class(isc.py.Callout).SimpleString("x=cube(" _ num _ ")", "x")
+	
+	do $$$AssertEquals(num**3, cube, "defined function works")
+	
+	do ##class(isc.py.Callout).SimpleString("del cube")
+}
+
 }
 
