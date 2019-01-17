@@ -1,12 +1,17 @@
 /// Sample process 
-Class isc.py.test.Process Extends (Ens.BusinessProcessBPL, isc.py.ens.ProcessUtils)
+Class isc.py.test.Process Extends (Ens.BusinessProcessBPL, isc.py.ens.ProcessUtils) [ DependsOn = isc.py.ens.ProcessUtils ]
 {
+
+Storage Default
+{
+<Type>%Library.CacheStorage</Type>
+}
 
 /// BPL Definition
 XData BPL [ XMLNamespace = "http://www.intersystems.com/bpl" ]
 {
 <process language='objectscript' request='Ens.Request' response='Ens.Response' height='2000' width='2000' >
-<sequence xend='200' yend='650' >
+<sequence xend='200' yend='750' >
 <call name='Correlation Matrix: Tabular' target='isc.py.ens.Operation' async='1' xpos='200' ypos='250' >
 <annotation><![CDATA[import pyodbc
 import pandas as pd
@@ -68,13 +73,12 @@ plt.close(f)]]></annotation>
 <response type='isc.py.msg.ExecutionResponse' />
 </call>
 <sync name='Wait Correlation Matrix: Graph' calls='Correlation Matrix: Graph' type='all' xpos='200' ypos='550' />
+<call name='Save Context' target='isc.py.ens.Operation' async='1' xpos='200' ypos='650' >
+<request type='isc.py.msg.SaveRequest' />
+<response type='Ens.StringResponse' />
+</call>
 </sequence>
 </process>
-}
-
-Storage Default
-{
-<Type>%Library.CacheStorage</Type>
 }
 
 }
