@@ -17,7 +17,7 @@ ClassMethod SimpleString(code As %String = "", variable As %String = "", seriali
 		set result = ""
 		#dim ex As %Exception.General
 		if (ex.Name = "<FUNCTION>") {
-			set sc = $$$ERROR($$$GeneralError, "Unable to allocate memory")
+			set sc = $$$ERROR($$$GeneralError, "Python Error. Probably variable '" _ variable _ "' is longer than current limit: " _ $$$MaxStringLength)
 		} else {
 			set sc = ex.AsStatus()
 		}

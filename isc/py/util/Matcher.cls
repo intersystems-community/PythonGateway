@@ -9,8 +9,8 @@ Class isc.py.util.Matcher
 ClassMethod MatchOr(input As %String, list As %String) As %Boolean
 {
 	set ok = $$$NO
-	for pie=1:1:$L(list,",") {
-		set mask=$P(list,",",pie) 
+	for pie = 1:1:$length(list,",") {
+		set mask = $piece(list,",",pie) 
 		if mask'="",..Match(input,mask) {
 			set ok = $$$YES
 		}
@@ -25,8 +25,8 @@ ClassMethod MatchOr(input As %String, list As %String) As %Boolean
 ClassMethod MatchAnd(input As %String, list As %String) As %Boolean
 {
 	set ok = $$$YES 
-	for pie=1:1:$L(list,",") {
-		set mask=$P(list,",",pie) 
+	for pie = 1:1:$length(list,",") {
+		set mask = $piece(list,",",pie) 
 		if mask'="",'..Match(input,mask) {
 			set ok = $$$NO
 		}

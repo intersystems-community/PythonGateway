@@ -174,7 +174,7 @@ int StreamInit(int length)
 		free(inStream);
 		inStream = NULL;
 	}
-	inStream = malloc(1 + sizeof(char) * length);
+	inStream = calloc(length + 1, sizeof(char));
 	curpos = 0;
 	maxpos = length;
 
@@ -188,7 +188,7 @@ int StreamInit(int length)
 // Write piece of inStream
 int StreamWrite(CACHE_EXSTRP command)
 {
-	if ((!inStream) || (command->len + curpos > maxpos)) {
+	if ((!inStream) || ((int)command->len + curpos > maxpos)) {
 		return ZF_FAILURE;
 	}
 
