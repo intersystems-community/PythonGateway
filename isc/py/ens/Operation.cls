@@ -27,7 +27,6 @@ Method Execute(request As isc.py.msg.ExecutionRequest, Output response As isc.py
 	#dim sc As %Status = $$$OK
 	set response = ##class(isc.py.msg.ExecutionResponse).%New()
 	set variables = $lfs(request.Variables)
-	quit:'$Listvalid(variables) $$$ERROR($$$AttributeValueMustBeList, "variables")
 	
 	set variable = $lg(variables, 1)
 	

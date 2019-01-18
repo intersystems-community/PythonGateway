@@ -130,11 +130,12 @@ ClassMethod GetVariable(variable As %String, serialization As %Integer = 0, ByRe
 /// type - variable type
 /// length - length (in symbols) of variable chosen serialization
 /// set sc = ##class(isc.py.Main).GetVariableInfo()
-ClassMethod GetVariableInfo(variable As %String, serialization As %Integer = 0, Output defined As %Boolean, Output type As %String, Output length As %String) As %Status
+ClassMethod GetVariableInfo(variable As %String = "", serialization As %Integer = 0, Output defined As %Boolean, Output type As %String, Output length As %String) As %Status
 {
 	#dim sc As %Status = $$$OK
 	kill defined, type, length
 	
+	quit:variable="" $$$ERROR($$$GeneralError, "Variable argument should be set")
 	set defined = ##class(isc.py.Callout).SimpleString("zzzdef='" _ variable _ "' in vars() or '" _ variable _ "' in globals()", "zzzdef")
 	set defined = $case(defined, "True":$$$YES, "False":$$$NO, :"")
 	

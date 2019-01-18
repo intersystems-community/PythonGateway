@@ -23,11 +23,10 @@ Method Execute(code = "", variable = "", lineSeparator As %String = {$c(10)}, Ou
 		set codeList=$lb(code)
 	}
 	
-	for i=1:1:$ll(codeList)-1 {
+	for i=1:1:$ll(codeList) {
 		set line = $lg(codeList, i)
-		$$$TRACE(line)
-		do ##class(isc.py.Callout).SimpleString(line)
-		set sc = ##class(isc.py.Callout).GetStatus()
+		$$$TRACE(line)	
+		set sc = ##class(isc.py.Main).SimpleString(line)
 		if $$$ISERR(sc) {
 			set sc = $$$ADDSC($$$ERROR($$$GeneralError, "Code: " _ line), sc)
 			/// TODO continue despite error?
@@ -35,13 +34,9 @@ Method Execute(code = "", variable = "", lineSeparator As %String = {$c(10)}, Ou
 		}
 	}
 	quit:$$$ISERR(sc) ""
-	
-	set line = $lg(codeList, $ll(codeList))
-	$$$TRACE(line)
-	set result = ##class(isc.py.Callout).SimpleString(line, variable)
-	set sc = ##class(isc.py.Callout).GetStatus()
-	set:$$$ISERR(sc) sc = $$$ADDSC($$$ERROR($$$GeneralError, "Code: " _ line _ ", Variable: " _ variable), sc)
-	quit result
+	$$$TRACE("Var: " _ variable)
+	set:variable'="" sc = ##class(isc.py.Main).GetVariable(variable, ##class(isc.py.Callout).#SerializationStr, .result, $$$YES)
+	quit $g(result)
 }
 
 }
