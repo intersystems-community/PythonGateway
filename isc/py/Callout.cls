@@ -7,6 +7,12 @@
 Class isc.py.Callout
 {
 
+/// Serialization by str() function
+Parameter SerializationStr = 0;
+
+/// Serialization by repr() function
+Parameter SerializationRepr = 1;
+
 Parameter PyLibId As Integer = 4937;
 
 Parameter Initialize As Integer = 1;
@@ -91,7 +97,7 @@ ClassMethod SimpleStringFull(code = {"import random;" _ $$$NL _ "x=random.random
 /// serialization - currenlty: 0 - string serialization, 1 - repr serialization.
 /// TODO determine wide variable value.
 /// write ##class(isc.py.Callout).SimpleString()
-ClassMethod SimpleString(code As %String = "", variable As %String = "", serialization As %Integer = 0) As %String
+ClassMethod SimpleString(code As %String = "", variable As %String = "", serialization As %Integer = {..#SerializationStr}) As %String
 {
 	set:$ZISWIDE(code) code = $zcvt(code, "O", "UTF8")
 	set result = $ZF(-6, ..#PyLibId, ..#SimpleString, code, variable, serialization)
