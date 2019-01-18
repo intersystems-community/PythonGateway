@@ -20,8 +20,9 @@ Property Pickle As %Stream.GlobalCharacter;
 Property JSON As %Stream.GlobalCharacter;
 
 /// Save variable on disk.
+/// Do not save if length > maxLength
 /// zw ##class(isc.py.data.Variable).SaveVariable()
-ClassMethod SaveVariable(variable As %String = "", Output obj As isc.py.data.Variable) As %Status
+ClassMethod SaveVariable(variable As %String = "", maxLength As %Integer = {$$$MaxStringLength}, Output obj As isc.py.data.Variable) As %Status
 {
 	#include Ensemble
 	kill obj
@@ -30,8 +31,8 @@ ClassMethod SaveVariable(variable As %String = "", Output obj As isc.py.data.Var
 	//$$$TRACE(variable)
 	
 	set sc = ##class(isc.py.Main).GetVariableInfo(variable, ##class(isc.py.Callout).#SerializationRepr, .defined, .type, .length)
-	quit:$$$ISERR(sc) sc
-	quit:'defined $$$ERROR($$$GeneralError, "Variable '" _ variable _ "' is not defined")
+	quit:(($$$ISERR(sc)) || ((maxLength>0) && (length>maxLength))) sc
+	quit:'defined $$$ERROR($$$GeneralError, "Variable '" _ variable _ "' is not defined")	
 	
 	#dim repr, pickle, json As %Stream.GlobalCharacter
 		

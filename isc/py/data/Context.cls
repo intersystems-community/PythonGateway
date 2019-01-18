@@ -61,7 +61,7 @@ Method PopulateModules() As %Status
 }
 
 /// Get variables and their values.
-Method PopulateVariables() As %Status
+Method PopulateVariables(maxLength As %Integer = {$$$MaxStringLength}, mask As %String = "*") As %Status
 {
 	#dim sc As %Status = $$$OK
 
@@ -73,9 +73,13 @@ Method PopulateVariables() As %Status
 	set iterator = variables.%GetIterator()
 	while iterator.%GetNext(.key, .variable) {
 		#dim varObj As isc.py.data.Varable
-		set sc = ##class(isc.py.data.Variable).SaveVariable(variable, .varObj)
-		quit:$$$ISERR(sc)
-		do ..Variables.Insert(varObj)
+		kill varObj
+		if ##class(isc.py.util.Matcher).MatchOr(variable, mask) {
+			set sc = ##class(isc.py.data.Variable).SaveVariable(variable, maxLength, .varObj)
+			quit:$$$ISERR(sc)
+			do:$isObject($g(varObj)) ..Variables.Insert(varObj)
+		}
+
 	}
 	
 	quit sc
@@ -98,8 +102,8 @@ Method Init()
 
 /// Save Python context on disk
 /// context - resulting context
-/// maxLength - maximum length of saved variable. If veriable serialization is longer than that, it would be ignored. Overrides mask. Set to 0 to get them all.
-/// mask - commaseparated list of variables to save. Special symbols * and ? are recognized.
+/// maxLength - maximum length of saved variable. If veriable serialization is longer than that, it would be ignored. Set to 0 to get them all.
+/// mask - comma separated list of variables to save. Special symbols * and ? are recognized. Set to * to get them all.
 /// set sc=##class(isc.py.data.Context).SaveContext()
 ClassMethod SaveContext(Output context As isc.py.data.Context, maxLength As %Integer = {$$$MaxStringLength}, mask As %String = "*", verbose As %Boolean = {$$$NO}) As %Status
 {
@@ -109,7 +113,7 @@ ClassMethod SaveContext(Output context As isc.py.data.Context, maxLength As %Int
 	//do obj.PopulateHistory()
 	set sc = context.PopulateModules()
 	quit:$$$ISERR(sc) sc
-	set sc = context.PopulateVariables()
+	set sc = context.PopulateVariables(maxLength, mask)
 	quit:$$$ISERR(sc) sc
 	do:verbose context.Display()
 	

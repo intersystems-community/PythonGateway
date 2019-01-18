@@ -57,7 +57,7 @@ Method SaveContext(request As isc.py.msg.SaveRequest, Output response As Ens.Str
 {
 	#dim sc As %Status = $$$OK
 	#dim context As isc.py.data.Context
-	set sc = ##class(isc.py.data.Context).SaveContext(.context)
+	set sc = ##class(isc.py.data.Context).SaveContext(.context, request.MaxLength, request.Mask)
 	quit:$$$ISERR(sc) sc
 	
 	set context.Name = request.Name
