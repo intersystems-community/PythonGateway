@@ -44,10 +44,11 @@ Method PopulateHistory() As %Status
 /// Get modules and their aliases
 Method PopulateModules() As %Status
 {
+	#dim sc As %Status = $$$OK
     set modules = ##class(isc.py.Callout).SimpleString("zzzmodules=json.dumps(list(zzzmodulesfunc()))", "zzzmodules")
 	do ##class(isc.py.Callout).SimpleString("del zzzmodules")
-
 	set modules = {}.%FromJSON(modules)
+	
 	set iterator = modules.%GetIterator()
 	while iterator.%GetNext(.key, .value) {
 		set module = value.%Get(0)
@@ -55,6 +56,8 @@ Method PopulateModules() As %Status
 		continue:module="builtins"
 		do ..Modules.SetAt(alias, module)
 	}
+	
+	quit sc
 }
 
 /// Get variables and their values.
@@ -66,6 +69,7 @@ Method PopulateVariables() As %Status
 	do ##class(isc.py.Callout).SimpleString("del zzzvars")
 
 	set variables = {}.%FromJSON(variables)
+	
 	set iterator = variables.%GetIterator()
 	while iterator.%GetNext(.key, .variable) {
 		#dim varObj As isc.py.data.Varable
@@ -93,15 +97,20 @@ Method Init()
 }
 
 /// Save Python context on disk
+/// context - resulting context
+/// maxLength - maximum length of saved variable. If veriable serialization is longer than that, it would be ignored. Overrides mask. Set to 0 to get them all.
+/// mask - commaseparated list of variables to save. Special symbols * and ? are recognized.
 /// set sc=##class(isc.py.data.Context).SaveContext()
-ClassMethod SaveContext(Output context As isc.py.data.Context, verbose As %Boolean = {$$$NO}) As %Status
+ClassMethod SaveContext(Output context As isc.py.data.Context, maxLength As %Integer = {$$$MaxStringLength}, mask As %String = "*", verbose As %Boolean = {$$$NO}) As %Status
 {
 	kill context
 	set context = ..%New()
 	do context.Init()
 	//do obj.PopulateHistory()
-	do context.PopulateModules()
-	do context.PopulateVariables()
+	set sc = context.PopulateModules()
+	quit:$$$ISERR(sc) sc
+	set sc = context.PopulateVariables()
+	quit:$$$ISERR(sc) sc
 	do:verbose context.Display()
 	
 	quit context.%Save()

@@ -2,6 +2,8 @@
 Class isc.py.data.Variable Extends %Persistent
 {
 
+Parameter DisplayLimit = 100;
+
 /// Variable Name	
 Property Name As %String;
 
@@ -9,47 +11,46 @@ Property Name As %String;
 Property Type As %String;
 
 /// Variable repr serialization
-Property Value As %VarString;
+Property Value As %Stream.GlobalCharacter;
 
 /// Variable pickle serialization
-Property Pickle As %VarString;
+Property Pickle As %Stream.GlobalCharacter;
 
 /// Variable JSON serialization
-Property JSON As %VarString;
+Property JSON As %Stream.GlobalCharacter;
 
 /// Save variable on disk.
 /// zw ##class(isc.py.data.Variable).SaveVariable()
-ClassMethod SaveVariable(name As %String = "", Output variable As isc.py.data.Variable) As %Status
+ClassMethod SaveVariable(variable As %String = "", Output obj As isc.py.data.Variable) As %Status
 {
-	kill variable
-	quit:name="" $$$ERROR($$$GeneralError, "Variable name can't be empty")
+	#include Ensemble
+	kill obj
+	quit:variable="" $$$ERROR($$$GeneralError, "Variable name can't be empty")
 	
-	set repr = ##class(isc.py.Callout).SimpleString(,name, 1)
-	quit:repr="" $$$ERROR($$$GeneralError, $$$FormatText("Variable %1 is empty or initialized", name))
+	//$$$TRACE(variable)
 	
-	set type = ##class(isc.py.Callout).SimpleString("zzztype=type("_name_").__name__", "zzztype")
-	do ##class(isc.py.Callout).SimpleString("import json, pickle;")
+	set sc = ##class(isc.py.Main).GetVariableInfo(variable, ##class(isc.py.Callout).#SerializationRepr, .defined, .type, .length)
+	quit:$$$ISERR(sc) sc
+	quit:'defined $$$ERROR($$$GeneralError, "Variable '" _ variable _ "' is not defined")
 	
-	if type = "DataFrame" {
-		set json = ##class(isc.py.Callout).SimpleString("zzzjson=" _name _ ".to_json()", "zzzjson")
-	} elseif type="DatetimeIndex" {
-		/// TODO
-	} else {
-		set json = ##class(isc.py.Callout).SimpleString("zzzjson=json.dumps(" _name _ ")", "zzzjson")
-	}
+	#dim repr, pickle, json As %Stream.GlobalCharacter
+		
+	set sc = ##class(isc.py.Main).GetVariable(variable, ##class(isc.py.Callout).#SerializationRepr, .repr)
+	quit:$$$ISERR(sc) sc
 	
-	set pickle = ##class(isc.py.Callout).SimpleString("zzzjson=pickle.dumps(" _name _ ")", "zzzjson")
+	set sc = ##class(isc.py.Main).GetVariableJson(variable, .json)
+	quit:$$$ISERR(sc) sc
 	
-	
-	do ##class(isc.py.Callout).SimpleString("del zzztype, zzzjson")
+	set sc = ##class(isc.py.Main).GetVariablePickle(variable, .pickle)
+	quit:$$$ISERR(sc) sc
 
-	set variable = ..%New()
-	set variable.Name = name
-	set variable.Value = repr
-	set variable.Type = type
-	set variable.Pickle = pickle
-	set variable.JSON = $g(json)
-	set sc = variable.%Save()
+	set obj = ..%New()
+	set obj.Name = variable
+	set obj.Value = repr
+	set obj.Type = type
+	set obj.Pickle = pickle
+	set obj.JSON = json
+	set sc = obj.%Save()
 
 	quit sc
 }
@@ -58,21 +59,24 @@ ClassMethod SaveVariable(name As %String = "", Output variable As isc.py.data.Va
 Method Display(indent As %String = "")
 {
 	write indent, "Name: ", ..Name, !
-	write indent, "Type: ", ..Type, !
-	set limit = 100
-	If $l(..Value)<=limit {
-		Write indent, "Value: ", ..Value, !
-	} Else {
-		Write indent, "Value (truncated): ", $replace($e(..Value,1,limit),$c(10), $c(13,10)), !
-	}
-	write !
+	write indent, "Type: ", ..Type, !	
+	write indent, "Value", $case(..Value.Size<=..#DisplayLimit, $$$YES:"", $$$NO:" (truncated)"), ": ", ..Value.Read(..#DisplayLimit), !, !
 }
 
 /// Restore variable from disk.
 /// context - variable owner Python context object.
-Method Restore(context As isc.py.data.Context)
+Method Restore(context As isc.py.data.Context) As %Status
 {
-	do ##class(isc.py.Callout).SimpleString(..Name _ "=" _ context.%PickleAlias _ ".loads(" _ ..Pickle _ ")")
+	#dim sc As %Status = $$$OK
+	if ..Pickle.Size > 0 {
+		set stream = ##class(%Stream.TmpCharacter).%New()
+		do stream.Write(context.%PickleAlias _ ".loads(")
+		do stream.CopyFrom(..Pickle)
+		do stream.Write(")")
+		set sc = ##class(isc.py.Main).ExcuteCode(stream, ..Name)
+	}
+	
+	quit sc
 }
 
 Storage Default
