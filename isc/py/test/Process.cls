@@ -11,7 +11,7 @@ Storage Default
 XData BPL [ XMLNamespace = "http://www.intersystems.com/bpl" ]
 {
 <process language='objectscript' request='Ens.Request' response='Ens.Response' height='2000' width='2000' >
-<sequence xend='200' yend='750' >
+<sequence xend='200' yend='850' >
 <call name='Correlation Matrix: Tabular' target='isc.py.ens.Operation' async='1' xpos='200' ypos='250' >
 <annotation><![CDATA[import pyodbc
 import pandas as pd
@@ -42,13 +42,7 @@ Data0['UEBRIGE_BRUEHWURST_STUECK']=pd.to_numeric(Data0['UEBRIGE_BRUEHWURST_STUEC
 Data0['WIENERLI_KNACKERLI_FRANKFURTERLI']=pd.to_numeric(Data0['WIENERLI_KNACKERLI_FRANKFURTERLI'])
 corrmat=Data0.corr()
 corrmat.columns.name='CATEGORY'
-//PyRun_SimpleString("import sys
-//PyRun_SimpleString("orig_stdout=sys.stdout
-//PyRun_SimpleString("f=open('C:/IRIS+Python/IRIS+Python_output_model_001.txt','w')
-//PyRun_SimpleString("sys.stdout=f
 result=corrmat.to_string()
-//PyRun_SimpleString("sys.stdout=orig_stdout
-//PyRun_SimpleString("f.close()
 cnxn.close()
 ]]></annotation>
 <request type='isc.py.msg.ExecutionRequest' >
@@ -77,6 +71,7 @@ plt.close(f)]]></annotation>
 <request type='isc.py.msg.SaveRequest' />
 <response type='Ens.StringResponse' />
 </call>
+<sync name='Wait: Save Context' calls='Save Context' type='all' xpos='200' ypos='750' />
 </sequence>
 </process>
 }
