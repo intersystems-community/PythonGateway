@@ -39,11 +39,9 @@ ClassMethod SaveVariable(variable As %String = "", maxLength As %Integer = {$$$M
 	set sc = ##class(isc.py.Main).GetVariable(variable, ##class(isc.py.Callout).#SerializationRepr, .repr)
 	quit:$$$ISERR(sc) sc
 	
-	set sc = ##class(isc.py.Main).GetVariableJson(variable, .json)
-	quit:$$$ISERR(sc) sc
-	
+	//  Ignore errors, as some types can't be serialized.
+	set sc = ##class(isc.py.Main).GetVariableJson(variable, .json)	
 	set sc = ##class(isc.py.Main).GetVariablePickle(variable, .pickle)
-	quit:$$$ISERR(sc) sc
 
 	set obj = ..%New()
 	set obj.Name = variable

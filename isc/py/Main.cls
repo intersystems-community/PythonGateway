@@ -207,6 +207,20 @@ ClassMethod GetVariableJson(variable As %String, ByRef stream As %Stream.Object,
 			} 	
 		}
 	}
+	
+	if $$$ISERR(sc) {
+		if useString {
+			set stream = ""
+		} else {
+			if $isObject($g(stream)) {
+				do stream.Clear()
+				do stream.%Save()
+				do stream.Rewind()
+			} else {
+				set stream = ##class(%Stream.GlobalCharacter).%New()
+			}
+		}
+	}
 	quit sc
 }
 
@@ -221,27 +235,24 @@ ClassMethod GetVariablePickle(variable As %String, ByRef stream As %Stream.Objec
 	do ##class(isc.py.Callout).SimpleString("import pickle;")
 	
 	set sc = ##class(isc.py.Main).ExcuteCode("pickle.dumps(" _ variable _ ")", "zzzpickle")
-	if $$$ISERR(sc) {
-		//   can't pickle xyz objects
-		if $system.Status.GetErrorText(sc) [ "can't pickle" {
-			if useString {
-				set stream = ""
-			} else {
-				if $isObject($g(stream)) {
-					do stream.Clear()
-					do stream.%Save()
-					do stream.Rewind()
-				} else {
-					set stream = ##class(%Stream.GlobalCharacter).%New()
-				}
-			}
-			set sc = $$$OK
-		}
-	} else {
+	if $$$ISOK(sc) {
 		set sc = ##class(isc.py.Main).GetVariable("zzzpickle", ##class(isc.py.Callout).#SerializationStr, .stream, useString)
 		do ##class(isc.py.Callout).SimpleString("del zzzpickle")
 	}
 
+	if $$$ISERR(sc) {
+		if useString {
+			set stream = ""
+		} else {
+			if $isObject($g(stream)) {
+				do stream.Clear()
+				do stream.%Save()
+				do stream.Rewind()
+			} else {
+				set stream = ##class(%Stream.GlobalCharacter).%New()
+			}
+		}
+	}
 	quit sc
 }
 
