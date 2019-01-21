@@ -13,6 +13,9 @@
 int Initialize(char *file);
 int Finalize();
 int SimpleString(CACHE_EXSTRP command, char *resultVar, int serialization, CACHE_EXSTRP result);
+int StreamInit(int length)
+int StreamWrite(CACHE_EXSTRP command);
+int StreamExecute();
 
 // Test methods
 int GetRandom(double* random);
