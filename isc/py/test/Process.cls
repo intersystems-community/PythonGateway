@@ -2,21 +2,42 @@
 Class isc.py.test.Process Extends (Ens.BusinessProcessBPL, isc.py.ens.ProcessUtils) [ DependsOn = isc.py.ens.ProcessUtils ]
 {
 
-Storage Default
-{
-<Type>%Library.CacheStorage</Type>
-}
+/// Бизнес-операция, запускающая ожидание поступления изменений объекта
+Property ConnectionType As %String(MAXLEN = 4, VALUELIST = ",JDBC,ODBC") [ InitialExpression = "ODBC" ];
+
+Parameter SETTINGS = "ConnectionType:Basic";
 
 /// BPL Definition
 XData BPL [ XMLNamespace = "http://www.intersystems.com/bpl" ]
 {
 <process language='objectscript' request='Ens.Request' response='Ens.Response' height='2000' width='2000' >
-<sequence xend='200' yend='850' >
-<call name='Correlation Matrix: Tabular' target='isc.py.ens.Operation' async='1' xpos='200' ypos='250' >
+<sequence xend='200' yend='1300' >
+<if name='is ODBC' condition='context=1' xpos='200' ypos='250' xend='200' yend='500' >
+<true>
+<call name='ODBC connect' target='isc.py.ens.Operation' async='1' xpos='470' ypos='400' >
 <annotation><![CDATA[import pyodbc
-import pandas as pd
 cnxn=pyodbc.connect(('DSN=ENSEMBLE(PYTHON);UID=dev;PWD=123'),autocommit=True)
-y=1
+y=1]]></annotation>
+<request type='isc.py.msg.ExecutionRequest' >
+<assign property="callrequest.Code" value="process.GetAnnotation(&quot;ODBC connect&quot;)" action="set" />
+</request>
+<response type='isc.py.msg.ExecutionResponse' />
+</call>
+</true>
+<false>
+<call name='JDBC connect' target='isc.py.ens.Operation' async='1' xpos='200' ypos='400' >
+<annotation><![CDATA[import jaydebeapi
+cnxn=jaydebeapi.connect("com.intersystems.jdbc.IRISDriver","jdbc:IRIS://localhost:51773/Python",  ["dev", "123"], "/InterSystems/IRIS/dev/java/lib/JDK18/intersystems-jdbc-3.0.0.jar")]]></annotation>
+<request type='isc.py.msg.ExecutionRequest' >
+<assign property="callrequest.Code" value="process.GetAnnotation(&quot;JDBC connect&quot;)" action="set" />
+</request>
+<response type='isc.py.msg.ExecutionResponse' />
+</call>
+</false>
+</if>
+<sync name='Wait for connection' calls='ODBC connect,JDBC connect' type='any' xpos='200' ypos='600' />
+<call name='Correlation Matrix: Tabular' target='isc.py.ens.Operation' async='1' xpos='200' ypos='700' >
+<annotation><![CDATA[import pandas as pd
 Data=pd.read_sql('SELECT * FROM isc_py_test.CannibalizationData',cnxn)
 Data0=Data.drop(['WEEK'],axis=1)
 Data0['BRATWURST']=pd.to_numeric(Data0['BRATWURST'])
@@ -51,8 +72,8 @@ cnxn.close()
 </request>
 <response type='isc.py.msg.ExecutionResponse' />
 </call>
-<sync name='Wait Correlation Matrix: Tabular' calls='Correlation Matrix: Tabular' type='all' xpos='200' ypos='350' />
-<call name='Correlation Matrix: Graph' target='isc.py.ens.Operation' async='1' xpos='200' ypos='450' >
+<sync name='Wait Correlation Matrix: Tabular' calls='Correlation Matrix: Tabular' type='all' xpos='200' ypos='800' />
+<call name='Correlation Matrix: Graph' target='isc.py.ens.Operation' async='1' xpos='200' ypos='900' >
 <annotation><![CDATA[import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -66,12 +87,12 @@ plt.close(f)]]></annotation>
 </request>
 <response type='isc.py.msg.ExecutionResponse' />
 </call>
-<sync name='Wait Correlation Matrix: Graph' calls='Correlation Matrix: Graph' type='all' xpos='200' ypos='550' />
-<call name='Save Context' target='isc.py.ens.Operation' async='1' xpos='200' ypos='650' >
+<sync name='Wait Correlation Matrix: Graph' calls='Correlation Matrix: Graph' type='all' xpos='200' ypos='1000' />
+<call name='Save Context' target='isc.py.ens.Operation' async='1' xpos='200' ypos='1100' >
 <request type='isc.py.msg.SaveRequest' />
 <response type='Ens.StringResponse' />
 </call>
-<sync name='Wait: Save Context' calls='Save Context' type='all' xpos='200' ypos='750' />
+<sync name='Wait: Save Context' calls='Save Context' type='all' xpos='200' ypos='1200' />
 </sequence>
 </process>
 }
