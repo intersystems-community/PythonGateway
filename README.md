@@ -19,25 +19,38 @@ If you modified environment variables (for Windows or Linux) restart your InterS
 
 # Use
 
-1. Call: `do ##class(isc.py.Callout).Setup()` once per systems start (add to ZSTART: [docs](https://docs.intersystems.com/latest/csp/docbook/DocBook.UI.Page.cls?KEY=GSTU_customize#GSTU_customize_startstop), [sample](https://gist.githubusercontent.com/eduard93/412ed81e2bf619269ab4a49d939d2304/raw/c9d5f922827db5052b6e1195616d333ffe7dc1ec/%2525ZSTART)).
-2. Call main method (can be called many times, context persists): `write ##class(isc.py.Callout).SimpleString(code, data)`
-3. Call: `do ##class(isc.py.Callout).Finalize()` to free Python context.
-4. Call: `write ##class(isc.py.Callout).Unload()` to free callout library.
+1. Call: `set sc = ##class(isc.py.Callout).Setup()` once per systems start (add to ZSTART: [docs](https://docs.intersystems.com/latest/csp/docbook/DocBook.UI.Page.cls?KEY=GSTU_customize#GSTU_customize_startstop), [sample](https://gist.githubusercontent.com/eduard93/412ed81e2bf619269ab4a49d939d2304/raw/c9d5f922827db5052b6e1195616d333ffe7dc1ec/%2525ZSTART)).
+2. Call main method (can be called many times, context persists): `write ##class(isc.py.Main).SimpleString(code, variable, , .result)`
+3. Call: `set sc = ##class(isc.py.Callout).Finalize()` to free Python context.
+4. Call: `set sc = ##class(isc.py.Callout).Unload()` to free callout library.
 
 ```
-do ##class(isc.py.Callout).Setup() 
-write ##class(isc.py.Callout).SimpleString("x='ПРИВЕТ'","x")
-write ##class(isc.py.Callout).SimpleString("x=repr('ПРИВЕТ')","x")
-write ##class(isc.py.Callout).SimpleString("x=123","x")
-do ##class(isc.py.Callout).Finalize()
-write ##class(isc.py.Callout).Unload()
+set sc = ##class(isc.py.Callout).Setup() 
+set sc = ##class(isc.py.Callout).SimpleString("x='HELLO'", "x", , .x)
+write x
+set sc = ##class(isc.py.Callout).Finalize()
+set sc = ##class(isc.py.Callout).Unload()
 ```
+
+Generally the main interface to Python is `isc.py.Main`. It offers these methods (all return `%Status`):
+
+- `SimpleString(code, returnVariable, serialization, .result)` - for cases where both code and variable are strings.
+- `ExcuteCode(code, variable)` - execute `code` (it may be a stream or string), optionally ser result into `variable`.
+- `GetVariable(variable, serialization, .stream, useString)` - get `serialization` of `variable` in `stream`. If `useString` is 1 and variable serialization can fit into string then string is returned instead of the stream.
+-  `GetVariableInfo(variable, serialization, .defined, .type, .length)` - get info about variable: is it defined, type,and serialization length.
+- `GetStatus()` - returns last occured exception in Python and clears it.
+- `GetVariableJson(variable, .stream, useString)` - get JSON serialization of variable.
+- `GetVariablePickle(variable, .stream, useString)` - get Pickle serialization of variable.
+
+Possible Serializations:
+- `##class(isc.py.Callout).SerializationStr` - Serialization by str() function
+- `##class(isc.py.Callout).SerializationRepr` - Serialization by repr() function
 
 # Context persistence
 
 Python context can be persisted into InterSystems IRIS and restored later on. There are currently three public functions:
 
-- Save context: `set sc = ##class(isc.py.data.Context).SaveContext(.context, verbose)` where `verbose` specifies displaying context after saving, and `context` is a resulting Python context. Get context id with `context.%Id()`
+- Save context: `set sc = ##class(isc.py.data.Context).SaveContext(.context, maxLength, mask, verbose)` where `maxLength` - maximum length of saved variable. If veriable serialization is longer than that, it would be ignored. Set to 0 to get them all, `mask` - comma separated list of variables to save (special symbols * and ? are recognized), `verbose` specifies displaying context after saving, and `context` is a resulting Python context. Get context id with `context.%Id()`
 - Display context: `do ##class(isc.py.data.Context).DisplayContext(id)` where `id` is an id of a stored context. Leave empty to display current context.
 - Restore context: `do ##class(isc.py.data.Context).RestoreContext(id, verbose, clear)` where `clear` kills currently loaded context if set to 1.
 
@@ -45,9 +58,10 @@ Context is saved into `isc.py.data` package and can be viewed/edited by SQL and 
 
 # Interoperability adapter
 
-Interoperability adapter offers abulity to interact with Python process from Interoperability productions. Currently three operations are supported:
+Interoperability adapter `isc.py.ens.Operation` offers abulity to interact with Python process from Interoperability productions. Currently three operations are supported:
 
 - Execute Python code via `isc.py.msg.ExecutionRequest`. Returns `isc.py.msg.ExecutionResponse` with requested variable values
+- Execute Python code via `isc.py.msg.StreamExecutionRequest`. Returns `isc.py.msg.StreamExecutionResponse` with requested variable values. Same as above, but accepts and returns streams instead of strings.
 - Save Python conext via `isc.py.msg.SaveRequest`. Returns `Ens.StringResponse` with context id.
 - Restore Python context via `isc.py.msg.RestoreRequest`.
 
@@ -57,14 +71,21 @@ Check request/response classes documentation for details.
 
 Along with callout code and Interoperability adapter there's also a test Interoperability Production and test Business Process. To use them:
 
-1. In OS bash execute `python -m pip install  pyodbc pandas matplotlib seaborn`. 
+1. In OS bash execute `pip install pyodbc pandas matplotlib seaborn`. 
 2. Execute: `do ##class(isc.py.test.CannibalizationData).Import()` to populate test data.
-3. Create ODBC connection to the namespace with data
-4. In test Business Process `isc.py.test.Process` edit annotation for `Correlation Matrix: Tabular` call, specifying correct ODBC DSN in line 3
+3. Create ODBC or JDBC connection to the namespace with data.
+4. In test Business Process `isc.py.test.Process` edit annotation for `ODBC connection` or `JDBC connection` call, specifying correct DSN.
 5. Edit annotation for `Correlation Matrix: Graph` call, specifying valid filepath for `f.savefig` function.
 6. Save and compile business process.
+7. Configure `ConnectionType` setting for a business process.
 7. Start `isc.py.test.Production` production.
 8. Send empty `Ens.Request` mesage to the `isc.py.test.Process`.
+
+Notes.
+
+- If you want to use JDBC connection, install JayDeBeApi: `pip install JayDeBeApi`. On linux you might need to install `apt-get install python-apt`. 
+- For ODBC on Linux insall `unixodbc unixodbc-dev python-pyodbc`. 
+- If you get errors similar to `undefined symbol: _Py_TrueStruct` in `isc.py.ens.Operation`operation set setting `PythonLib` to `libpython3.6m.so` or even to a full path of the shared library.
 
 
 # Unit tests
@@ -84,7 +105,7 @@ There are several limitaions associated with the use of PythonAdapter.
 1. Modules reinitialization. Some modules may only be loaded once diring process lifetime (i.e. numpy). While Finalization clears the context of the process, repeated load of such libraries terminates the process. Discussions: [1](https://stackoverflow.com/questions/14843408/python-c-embedded-segmentation-fault), [2](https://stackoverflow.com/questions/7676314/py-initialize-py-finalize-not-working-twice-with-numpy).
 2. Variables. Do not use these variables: `zzztype`, `zzzjson`, `zzzcount`, `zzzitem`, `zzzmodules`, `zzzvars`. They are used by `isc.py.data` package.
 3. Functions  Do not redefine these functions `zzzmodulesfunc()`, `zzzvarsfunc()`. They are used by `isc.py.data` package.
-4. Context persistence. Only variables, which define a valid `repr` method could be restored correctly. User functions are currently not supported. Module import are supported.
+4. Context persistence. Only pickled variables could be restored correctly. User functions are currently not supported. Module imports are supported.
 
 # Development
 
@@ -109,3 +130,4 @@ Development of C code is done in Eclipse.
 3. Set `GLOBALS_HOME` environment variable to the root of Caché or Ensemble installation.
 4. Set environment variable `PYTHONVER` to the python version you want to build, i.e.: ` export PYTHONVER=3.6`
 5. In `<Repository>/c/` execute `make`.
+
