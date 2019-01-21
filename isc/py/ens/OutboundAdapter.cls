@@ -54,5 +54,29 @@ Method Execute(code = "", variable = "", lineSeparator As %String = {$c(10)}, Ou
 	quit $g(result)
 }
 
+/// Main method execute stream
+/// All arguments are optional.
+/// code - Python code to execute
+/// lineSeparator - separate code into lines. Defaults to $c(10).
+Method StreamExecute(code As %Stream.GlobalCharacter, separateLines As %Boolean = {$$$YES}) As %Status
+{
+	#dim sc As %Status = $$$OK
+	
+	if separateLines = $$$YES {
+		set code.LineTerminator = $c(10)
+		
+		while 'code.AtEnd {
+			set line = code.ReadLine($$$MaxLocalLength)
+			$$$TRACE("Var: " _ line)
+			set sc = ##class(isc.py.Main).SimpleString(line)
+			quit:$$$ISERR(sc)
+		}	
+	} else {
+		set sc = ##class(isc.py.Main).ExcuteCode(code)
+	}
+	
+	quit sc
+}
+
 }
 

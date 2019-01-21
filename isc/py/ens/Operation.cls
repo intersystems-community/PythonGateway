@@ -9,6 +9,9 @@ Property Adapter As isc.py.ens.OutboundAdapter;
 XData MessageMap
 {
 <MapItems>
+  <MapItem MessageType="isc.py.msg.StreamExecutionRequest">
+    <Method>StreamExecute</Method>
+  </MapItem>
   <MapItem MessageType="isc.py.msg.ExecutionRequest">
     <Method>Execute</Method>
   </MapItem>
@@ -46,6 +49,28 @@ Method Execute(request As isc.py.msg.ExecutionRequest, Output response As isc.py
 		continue:variable=""
 		set value = ..Adapter.Execute("", variable, , .sc)
 		do response.Variables.SetAt(value, variable)
+		quit:$$$ISERR(sc)
+	}
+	
+	quit sc
+}
+
+/// Execute arbitrary Python code
+Method StreamExecute(request As isc.py.msg.StreamExecutionRequest, Output response As isc.py.msg.StreamExecutionResponse) As %Status
+{
+	#dim sc As %Status = $$$OK
+	set response = ##class(isc.py.msg.StreamExecutionResponse).%New()
+	set variables = $lfs(request.Variables)
+	
+	set sc = ..Adapter.StreamExecute(request.Code, request.SeparateLines)
+	quit:$$$ISERR(sc) sc
+	
+	for i=1:1:$ll(variables) {
+		set variable = $lg(variables, i)
+		continue:variable=""
+		kill stream
+		set sc = ##class(isc.py.Main).GetVariable(variable, ##class(isc.py.Callout).#SerializationStr, .stream)
+		do response.Variables.SetAt(stream, variable)
 		quit:$$$ISERR(sc)
 	}
 	

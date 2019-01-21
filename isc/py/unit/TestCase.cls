@@ -173,5 +173,34 @@ Method TestMultiline()
 	do ##class(isc.py.Callout).SimpleString("del cube")
 }
 
+/// do ##class(isc.py.unit.TestCase).TestProductionStream()
+ClassMethod TestProductionStream(count As %Integer = 1000000, separateLines As %Boolean = {$$$YES})
+{
+	set variable = "x"
+	set stream = ##class(%Stream.GlobalCharacter).%New()
+	for i=1:1:count {
+		do stream.WriteLine((variable _ "=" _ i))
+	}
+	do stream.%Save()
+	
+	write "Count: ", count, !
+	write "SeparateLines: ", separateLines, !
+	write "Size: ", stream.Size, !
+	
+	set request = ##class(isc.py.msg.StreamExecutionRequest).%New()
+	set request.Code = stream
+	set request.Variables = variable
+	set request.SeparateLines = $$$YES
+	
+	#dim response As isc.py.msg.StreamExecutionResponse
+	set sc = ##class(EnsLib.Testing.Service).SendTestRequest("isc.py.ens.Operation", request, .response, .sessionId, $$$YES)
+	
+	set:$$$ISOK(sc) value = response.Variables.GetAt(variable).Read()
+	
+	write "Status: ", $select($$$ISOK(sc):sc, 1:$System.Status.GetErrorText(sc)), !
+	write "Value: ", $g(value), !
+	write "SessionId: ", $g(sessionId), !
+}
+
 }
 

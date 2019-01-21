@@ -1,7 +1,7 @@
 /// Raw callout wrapper. Use isc.py.Main
 /// To use:
 /// 1. Call: do ##class(isc.py.Callout).Setup() once per systems start
-/// 2. Call main method (can be called many times, context persists): write ##class(isc.py.Callout).SimpleString(code, data)
+/// 2. Call main method (can be called many times, context persists): write ##class(isc.py.Callout).SimpleString(code, variable)
 /// 3. Call: do ##class(isc.py.Callout).Finalize() to clear Python context
 /// 4. Call: write ##class(isc.py.Callout).Unload() to free callout library
 Class isc.py.Callout
