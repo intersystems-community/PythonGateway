@@ -1,4 +1,4 @@
-/// Main callout wrapper. 
+/// Raw callout wrapper. Use isc.py.Main
 /// To use:
 /// 1. Call: do ##class(isc.py.Callout).Setup() once per systems start
 /// 2. Call main method (can be called many times, context persists): write ##class(isc.py.Callout).SimpleString(code, data)
@@ -44,10 +44,29 @@ $g(^isc.py.Callout, $g(^%SYS("bindir")) _ "iscpython." _ $select($$$isWINDOWS:"d
 /// Should be executed once per system start. Idempotent.
 /// Add to ZSTART or production start.
 /// write ##class(isc.py.Callout).Setup()
-ClassMethod Setup()
+ClassMethod Setup() As %Status
 {
-	set sc = $ZF(-4,6,..#PyLibId)
-    set sc = $ZF(-4,5,..#PyLibId, ..GetLib())
+	#dim sc As %Status = $$$OK
+	set file = ..GetLib()
+	quit:'##class(%File).Exists(file) $$$ERROR($$$GeneralError, "Library file: " _ file _ " does not exist")	
+
+	try {
+		set result = $ZF(-4,6,..#PyLibId)
+		if result'=0 {
+			set sc = $$$ERROR($$$GeneralError, "Failed $ZF(-4, 6,..#PyLibId) call with result: " _ result _ " expected 0")
+			quit
+		}
+		
+		set result =$ZF(-4,5,..#PyLibId, file)
+		if result'=0 {
+			set sc = $$$ERROR($$$GeneralError, "Failed $ZF(-4, 5,..GetLib()) call with result: " _ result _ " expected 0")
+			quit
+		}
+	} catch ex {
+		set sc = ex.AsStatus()
+	}
+	
+	
     quit sc
 }
 
@@ -61,12 +80,18 @@ ClassMethod Setup()
 /// In cause of problems: do ##class(isc.py.Callout).Initialize("libpython3.6m.so") 
 ClassMethod Initialize(file As %String = "", debug As %Boolean = {$$$NO}) As %Integer
 {
-	if debug {
-		set sc = $ZF(-4,4,..#PyLibId)   			// unload current copy of inputlib
-		set sc = $ZF(-4,8)   						// delete existing process index, if any
-		set sc = $ZF(-4,7,..#PyLibId, ..GetLib())  	// override system index
+	#dim sc As %Status = $$$OK
+	try {
+		if debug {
+			set sc = $ZF(-4,4,..#PyLibId)   			// unload current copy of inputlib
+			set sc = $ZF(-4,8)   						// delete existing process index, if any
+			set sc = $ZF(-4,7,..#PyLibId, ..GetLib())  	// override system index
+		}
+		do $ZF(-6, ..#PyLibId, ..#Initialize, file)
+	} catch ex {
+		set sc = ex.AsStatus()
 	}
-	do $ZF(-6, ..#PyLibId, ..#Initialize, file)
+	quit sc
 }
 
 /// Test method. Get random number
@@ -169,18 +194,32 @@ ClassMethod StreamExecute() As %Status
 }
 
 /// Finalize Python. Idempotent.
-/// do ##class(isc.py.Callout).Finalize()
-ClassMethod Finalize() As %Integer
+/// write ##class(isc.py.Callout).Finalize()
+ClassMethod Finalize() As %Status
 {
-	do $ZF(-6, ..#PyLibId, ..#Finalize)
+	try {
+		do $ZF(-6, ..#PyLibId, ..#Finalize)
+	} catch ex {
+		#dim ex As %Exception.General
+		set sc = ex.AsStatus()
+	}
+	quit sc
 }
 
 /// Unload library. Idempotent.
 /// write ##class(isc.py.Callout).Unload()
-ClassMethod Unload() As %Integer
+ClassMethod Unload() As %Status
 {
-	set result = $ZF(-4, 4, ..#PyLibId)
-	quit result
+	#dim sc As %Status = $$$OK
+	
+	try {
+		set result = $ZF(-4, 4, ..#PyLibId)
+		set:result'=0 sc = $$$ERROR($$$GeneralError, "Failed $ZF(-4, 4,..#PyLibId) call with result: " _ result _ " expected 0")
+	} catch ex {
+		set sc = ex.AsStatus()
+	}
+
+	quit sc
 }
 
 }

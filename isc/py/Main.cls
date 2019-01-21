@@ -3,8 +3,8 @@ Class isc.py.Main
 {
 
 /// This method assumes that variable value is less than $$$MaxStringLength limit
-/// Eval code vaiable in initialized context and 
-/// optionally return value of variable str evaluation
+/// Eval code in initialized context and 
+/// optionally return variable value.
 /// serialization - currenlty: 0 - string serialization, 1 - repr serialization.
 /// write ##class(isc.py.Main).SimpleString()
 ClassMethod SimpleString(code As %String = "", variable As %String = "", serialization As %Integer = 0, Output result) As %Status
