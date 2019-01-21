@@ -12,7 +12,7 @@ XData BPL [ XMLNamespace = "http://www.intersystems.com/bpl" ]
 {
 <process language='objectscript' request='Ens.Request' response='Ens.Response' height='2000' width='2000' >
 <sequence xend='200' yend='1300' >
-<if name='is ODBC' condition='context=1' xpos='200' ypos='250' xend='200' yend='500' >
+<if name='is ODBC' condition='process.ConnectionType="ODBC"' xpos='200' ypos='250' xend='200' yend='500' >
 <true>
 <call name='ODBC connect' target='isc.py.ens.Operation' async='1' xpos='470' ypos='400' >
 <annotation><![CDATA[import pyodbc
