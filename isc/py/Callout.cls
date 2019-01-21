@@ -51,18 +51,22 @@ ClassMethod Setup()
     quit sc
 }
 
-/// Init Python context. Idempotent.
+/// Initializes Python environment. Idempotent.
 /// Currently this is done automatically on a C side of things.
-/// Left for debugging/dev purposes.
+/// file - path to a Python shared library. (Linux only, optional)
+/// Due to the problems with lib-dynload, sometimes library file should be loaded explicitly on Linux
+/// For more info see: https://bugs.python.org/issue4434
+/// Do not use it, unless you get errors like: undefined symbol: _Py_TrueStruct and so on
 /// do ##class(isc.py.Callout).Initialize()
-ClassMethod Initialize(debug As %Boolean = {$$$NO}) As %Integer
+/// In cause of problems: do ##class(isc.py.Callout).Initialize("libpython3.6m.so") 
+ClassMethod Initialize(file As %String = "", debug As %Boolean = {$$$NO}) As %Integer
 {
 	if debug {
 		set sc = $ZF(-4,4,..#PyLibId)   			// unload current copy of inputlib
 		set sc = $ZF(-4,8)   						// delete existing process index, if any
 		set sc = $ZF(-4,7,..#PyLibId, ..GetLib())  	// override system index
 	}
-	do $ZF(-6, ..#PyLibId, ..#Initialize)
+	do $ZF(-6, ..#PyLibId, ..#Initialize, file)
 }
 
 /// Test method. Get random number

@@ -1,6 +1,21 @@
 Class isc.py.ens.OutboundAdapter Extends Ens.OutboundAdapter
 {
 
+/// Linux only. Path (or just the filename) to python shared lib 
+/// Due to the problems with lib-dynload, sometimes library file should be loaded explicitly on Linux
+/// For more info see: https://bugs.python.org/issue4434
+/// Do not use it, unless you get errors like: undefined symbol: _Py_TrueStruct and similar
+/// In cause of problems set to: "libpython3.6m.so"
+Property PythonLib As %String(MAXLEN = 1000);
+
+Parameter SETTINGS = "PythonLib:Basic";
+
+Method OnInit() As %Status
+{
+	do:..PythonLib'="" ##class(isc.py.Callout).Initialize(..PythonLib)
+	quit $$$OK
+}
+
 /// Free Python library
 Method OnTearDown() As %Status
 {

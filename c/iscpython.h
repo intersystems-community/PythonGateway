@@ -10,7 +10,7 @@
 
 
 // Production methods
-int Initialize();
+int Initialize(char *file);
 int Finalize();
 int SimpleString(CACHE_EXSTRP command, char *resultVar, int serialization, CACHE_EXSTRP result);
 

@@ -16,6 +16,10 @@
 #include <Python.h>
 #include <stdbool.h>
 
+#ifdef __linux__ 
+	#include <dlfcn.h>
+#endif
+
 #undef ERROR
 /*
  *
@@ -41,10 +45,23 @@ int curpos = 0;
 // Size of inStream pointer
 int maxpos = 0;
 
+// Haldle for a library if we want to load it explicitly
+void *libHandle = NULL;
+
 // Initializes Python environment
-// and obtains reference to the main module, to be used by
-int Initialize() {
+// and obtains reference to the main module.
+// Due to the problems with lib-dynload, sometimes library file should be loaded explicitly
+// https://bugs.python.org/issue4434
+// Do not use it, unless you get errors like: undefined symbol: _Py_TrueStruct and so on)
+int Initialize(char *file) {
 	if (isInitialized == false) {
+		if ((file) && (!libHandle)) {
+			#ifdef __linux__ 
+				//linux code goes here
+				//http://tldp.org/HOWTO/Program-Library-HOWTO/dl-libraries.html
+				libHandle = dlopen(file, RTLD_LAZY |RTLD_GLOBAL);
+			#endif
+		}
 		Py_Initialize();
 		mainModule = PyImport_AddModule("__main__");
 		isInitialized = true;
@@ -58,6 +75,14 @@ int Finalize() {
 		Py_DECREF(mainModule);
 		Py_Finalize();
 	}
+	
+	if (libHandle) {
+		#ifdef __linux__ 
+			dlclose(libHandle);
+		#endif
+		libHandle = NULL;
+	}
+	
 	return ZF_SUCCESS;
 }
 
@@ -126,7 +151,7 @@ int SimpleStringFull(char *command, double* result) {
 int SimpleString(CACHE_EXSTRP command, char *resultVar, int serialization, CACHE_EXSTRP result) {
 
 	if (isInitialized == false) {
-		Initialize();
+		Initialize(NULL);
 	}
 
 	// Copy command text to a new pointer and add null at the end
@@ -201,7 +226,7 @@ int StreamWrite(CACHE_EXSTRP command)
 int StreamExecute()
 {
 	if (isInitialized == false) {
-		Initialize();
+		Initialize(NULL);
 	}
 
 	if (!inStream) {
@@ -229,7 +254,7 @@ int main(int argc, char **argv) {
 
 	char* result = malloc(sizeof(char) * 1024);
 
-	Initialize();
+	Initialize(NULL);
 	//SimpleString("x=2", "x", result);
 	Finalize();
 
@@ -238,7 +263,7 @@ int main(int argc, char **argv) {
 }
 
 ZFBEGIN
-	ZFENTRY("Initialize","",Initialize)
+	ZFENTRY("Initialize","c",Initialize)
 	ZFENTRY("Finalize","",Finalize)
 	ZFENTRY("GetRandom","D",GetRandom)
 	ZFENTRY("GetRandomSimple","D",GetRandomSimple)
