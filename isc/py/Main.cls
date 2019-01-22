@@ -157,11 +157,64 @@ ClassMethod GetVariableInfo(variable As %String = "", serialization As %Integer 
 	quit sc
 }
 
+/// Import module with alias.
+/// If module is already imported, imported value would be set to 1 and alias to existing alias.
+/// If module is already imported, actual import would be skipped
+ClassMethod ImportModule(module As %String, Output imported As %Boolean, Output alias As %String) As %Status
+{
+	kill imported
+	set sc = ..GetModuleInfo(module, .imported, .existingAlias)
+	quit:$$$ISERR(sc) sc
+	
+	if imported {
+		set alias = existingAlias
+	} else {
+		if $g(alias)'="" {
+			set sc = ..SimpleString("import " _ module _ " as " _ alias)
+		} else {
+			set sc = ..SimpleString("import " _ module)
+			set alias = module
+		}
+	}
+	
+	quit sc
+}
+
+/// Get information about modules.
+/// If it was imported without alias, then alias is the module name
+/// set sc = ##class(isc.py.Main).GetModuleInfo("", .imported, .alias)
+ClassMethod GetModuleInfo(module As %String, Output imported As %Boolean, Output alias As %String) As %Status
+{
+	#dim sc As %Status = $$$OK
+	kill imported, alias
+	
+	quit:module="" $$$ERROR($$$GeneralError, "Module argument should be set")
+	set imported = ##class(isc.py.Callout).SimpleString("zzzdef='" _ module _ "' in dir()", "zzzdef")
+	set imported = $case(imported, "True":$$$YES, "False":$$$NO, :"")
+	
+	if imported {
+		do ..SimpleString("import types")
+		do ##class(isc.py.Callout).SimpleString("def zzzgetalias(module):" _ $c(10) _ 
+												"    for name, val in globals().items():" _ $c(10) _ 
+												"        if isinstance(val, types.ModuleType):" _ $c(10) _ 
+												"            if val.__name__ == module:" _ $c(10) _ 
+												"                return name" _ $c(10) _ 
+												"    return None")
+		
+		set alias = ##class(isc.py.Callout).SimpleString("zzzalias=zzzgetalias('" _ module _ "')", "zzzalias")
+		do ..SimpleString("del zzzalias")
+	}
+	
+	do ..SimpleString("del zzzdef")
+	set sc = ..GetStatus()
+	quit sc
+}
+
 /// Returns last occured exception in Python and clears it
 /// zwrite ##class(isc.py.Main).GetStatus()
 ClassMethod GetStatus() As %Status
 {
-	do ##class(isc.py.Callout).SimpleString("import sys, traceback;")
+	do ##class(isc.py.Callout).SimpleString("import sys, traceback")
 	set haxExc = ##class(isc.py.Callout).SimpleString("zzzerr = hasattr(sys, 'last_type')", "zzzerr")
 	do ##class(isc.py.Callout).SimpleString("del zzzerr")
 	quit:haxExc="False" $$$OK
@@ -181,7 +234,7 @@ ClassMethod GetVariableJson(variable As %String, ByRef stream As %Stream.Object,
 	quit:$$$ISERR(sc) sc
 	quit:'defined $$$ERROR($$$GeneralError, "Variable '" _ variable _ "' is not defined")
 	
-	do ##class(isc.py.Callout).SimpleString("import json;")
+	do ##class(isc.py.Callout).SimpleString("import json")
 	do ##class(isc.py.Callout).SimpleString("def zzzempty(obj):" _ $c(10) _ "    return ''")
 	
 	if type = "DataFrame" {
