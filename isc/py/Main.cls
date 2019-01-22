@@ -84,6 +84,96 @@ ClassMethod ExcuteCode(code As %Stream.Object, variable As %String = "") As %Sta
 	quit sc
 }
 
+/// Populate variable from sql query
+/// variable - python variable to set
+/// type - variable type (Currently supported: dataframe (pandas dataframe) and list.
+/// query - text of the SQL query
+/// set sc = ##class(isc.py.Main).ExecuteQuery("SELECT * FROM isc_py_test.CannibalizationData", "df")
+ClassMethod ExecuteQuery(query As %String, variable, type As %String(VALUELIST=",dataframe,list") = "list") As %Status
+{
+	#include %occODBC
+	#dim sc As %Status = $$$OK	
+	quit:",dataframe,list"'[type $$$ERROR($$$GeneralError, "Invalid type: " _ $g(type) _ ". Expected types: dataframe or list")
+	
+	if type="dataframe" {
+		set sc = ..ImportModule("pandas", , .pandas)
+		quit:$$$ISERR(sc) sc
+	}
+	
+	/// Really %sqlcq.<NAMESPACE>.cls<NUMBER>
+	#dim result As %SQL.ISelectResult
+	set result = ##class(%SQL.Statement).%ExecDirect(,query)
+
+	set start = $zh
+	#dim metadata As SQL.StatementMetadata
+	set metadata = result.%GetMetadata()
+	set columnCount = metadata.columns.Count()
+	
+	set columnList = ""
+	for i=1:1:columnCount {
+		#dim column As %SQL.StatementColumn
+		set column = metadata.columns.GetAt(i)
+		
+		set class(i) = $lb(column.colName)
+		if column.IsNumeric() {
+			set class(i) = class(i) _ $lb("numeric")
+		} elseif ((column.ODBCType=$$$ODBCTYPEtimestamp) || (column.ODBCType=$$$ODBCTYPEdate)) {
+			set class(i) = class(i) _ $lb("date")
+		} elseif column.ODBCType = $$$ODBCTYPEtime  {
+			set class(i) = class(i) _ $lb("time")
+		} else {
+			set class(i) = class(i) _ $lb("string")
+		}
+		
+		set columnList = columnList _ $lb("'" _ column.colName _ "'")
+	}
+	
+	// zzzcolumns = ['col1', 'col2', 'col3']
+	if type="dataframe" { 
+		set code = "zzzcolumns=[" _ $lts(columnList, ",") _ "]"
+	} elseif type="list" {
+		set code = "zzzcolumns=[(" _ $lts(columnList, ",") _ ")]"
+	}
+	set sc = ..SimpleString(code)
+	quit:$$$ISERR(sc) sc
+	
+	set data = ##class(%Stream.GlobalCharacter).%New()
+	do data.Write("[")
+	
+	set first = $$$YES
+	while result.%Next() {		
+		// TODO get isLastRow in a sane way
+		if first {
+			set first = $$$NO
+		} else {
+			do data.Write(",")
+		}
+		set rowList = ""
+		for i=1:1:columnCount {
+			set value = result.%GetData(i)
+			set:$lv(value) value = $lts(value)
+			set rowList = rowList _ $lb("'" _ value _ "'")
+		}
+		do data.Write("(" _	$lts(rowList, ",") _ ")")
+		
+	}
+	do data.Write("]")
+	
+	set sc = ..ExcuteCode(data, "zzzdata")
+	quit:$$$ISERR(sc) sc
+	
+	if type="dataframe" {	
+		set sc = ..SimpleString(variable _ "=" _ pandas _ ".DataFrame(zzzdata, columns=zzzcolumns)")
+	} elseif type="list" {
+		set sc = ..SimpleString(variable _ "= zzzcolumns + zzzdata")
+	}
+	do ..SimpleString("del zzzdata, zzzcolumns")	
+	
+	set end = $zh
+	write "Time: ", end-start,!
+	quit sc
+}
+
 /// variable - variable name
 /// useString - if variable length is less than $$$MaxStringLength, return string instead of stream. Ignored if variable length is more than $$$MaxStringLength
 /// set sc = ##class(isc.py.Main).GetVariable()
