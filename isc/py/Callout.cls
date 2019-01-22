@@ -155,7 +155,8 @@ ClassMethod StreamInit(length As %Integer) As %Status
 	quit sc
 }
 
-/// Write piece into incoming Stream
+/// Write piece into incoming Stream.
+/// If initial length is not enough, additional allocation is performed.
 /// write ##class(isc.py.Callout).StreamWrite()
 ClassMethod StreamWrite(code As %String = "") As %Status
 {
@@ -197,6 +198,7 @@ ClassMethod StreamExecute() As %Status
 /// write ##class(isc.py.Callout).Finalize()
 ClassMethod Finalize() As %Status
 {
+	#dim sc As %Status = $$$OK
 	try {
 		do $ZF(-6, ..#PyLibId, ..#Finalize)
 	} catch ex {

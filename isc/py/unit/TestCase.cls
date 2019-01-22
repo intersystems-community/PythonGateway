@@ -173,8 +173,9 @@ Method TestMultiline()
 	do ##class(isc.py.Callout).SimpleString("del cube")
 }
 
+/// Manually test production.
 /// do ##class(isc.py.unit.TestCase).TestProductionStream()
-ClassMethod TestProductionStream(count As %Integer = 1000000, separateLines As %Boolean = {$$$YES})
+ClassMethod PassProductionStream(count As %Integer = 1000000, separateLines As %Boolean = {$$$YES})
 {
 	set variable = "x"
 	set stream = ##class(%Stream.GlobalCharacter).%New()
