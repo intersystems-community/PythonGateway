@@ -165,7 +165,7 @@ ClassMethod StreamWrite(code As %String = "") As %Status
 	} catch ex {
 		#dim ex As %Exception.General
 		if (ex.Name = "<FUNCTION>") {
-			set sc = $$$ERROR($$$GeneralError, "Call StreamInit before calling StreamWrite. Or attempted to write into stream more than allocated data.")
+			set sc = $$$ERROR($$$GeneralError, "Call StreamInit before calling StreamWrite. Or reallocation failed as initial allocation in StreamInit could not hold all the data.")
 		} else {
 			set sc = ex.AsStatus()
 		}

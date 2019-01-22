@@ -16,7 +16,7 @@
 #include <Python.h>
 #include <stdbool.h>
 
-#ifdef __linux__ 
+#ifdef __linux__
 	#include <dlfcn.h>
 #endif
 
@@ -56,7 +56,7 @@ void *libHandle = NULL;
 int Initialize(char *file) {
 	if (isInitialized == false) {
 		if ((file) && (!libHandle)) {
-			#ifdef __linux__ 
+			#ifdef __linux__
 				//linux code goes here
 				//http://tldp.org/HOWTO/Program-Library-HOWTO/dl-libraries.html
 				libHandle = dlopen(file, RTLD_LAZY |RTLD_GLOBAL);
@@ -75,14 +75,14 @@ int Finalize() {
 		Py_DECREF(mainModule);
 		Py_Finalize();
 	}
-	
+
 	if (libHandle) {
-		#ifdef __linux__ 
+		#ifdef __linux__
 			dlclose(libHandle);
 		#endif
 		libHandle = NULL;
 	}
-	
+
 	return ZF_SUCCESS;
 }
 
@@ -195,14 +195,18 @@ int SimpleString(CACHE_EXSTRP command, char *resultVar, int serialization, CACHE
 // Init incoming stream (inStream) to length bytes + 1
 int StreamInit(int length)
 {
-	if (!inStream) {
+	// Free previous stream, if any.
+	if (inStream) {
 		free(inStream);
 		inStream = NULL;
 	}
+
+	// Allocate stream
 	inStream = calloc(length + 1, sizeof(char));
 	curpos = 0;
 	maxpos = length;
 
+	// Return failure if allocation failed
 	if (!inStream) {
 		return ZF_FAILURE;
 	}
@@ -213,8 +217,24 @@ int StreamInit(int length)
 // Write piece of inStream
 int StreamWrite(CACHE_EXSTRP command)
 {
-	if ((!inStream) || ((int)command->len + curpos > maxpos)) {
+	// Stream should be initiate first
+	if (!inStream) {
 		return ZF_FAILURE;
+	}
+
+	// We want to write more bytes, then available.
+	// Need to extend the pointer first
+	if ((int)command->len + curpos > maxpos) {
+		maxpos = (int)command->len + curpos + 1;
+		char *inStreamTemp = realloc(inStream, maxpos);
+
+		if (inStreamTemp) {
+			inStream = inStreamTemp;
+			memset(inStream + curpos, '0', maxpos - curpos);
+		} else {
+			// Reallocation failed
+			return ZF_FAILURE;
+		}
 	}
 
 	memcpy(inStream + curpos, command->str.ch,  command->len);
