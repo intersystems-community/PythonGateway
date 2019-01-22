@@ -4,18 +4,18 @@ Python adapter via callout for InterSystems Data Platforms.
 # Installation
 
 1. Load ObjectScript code (i.e. `do $system.OBJ.LoadDir("C:\InterSystems\Repos\Python\isc\py\","*.cls",,1)`).
-2. Place [callout DLL/SO](https://github.com/intersystems-ru/PythonAdapter/releases) in the `bin` folder of your InterSystems IRIS installation. Library file should be placed into a path returned by `write ##class(isc.py.Callout).GetLib()`. 
+2. Place [callout DLL/SO/DYLIB](https://github.com/intersystems-ru/PythonAdapter/releases) in the `bin` folder of your InterSystems IRIS installation. Library file should be placed into a path returned by `write ##class(isc.py.Callout).GetLib()`. 
 
 ## Windows 
 
 3. Check that your `PYTHONHOME` environment variable points to Python 3.6. 
 4. Check that your SYSTEM `PATH` environment variable has `PYTHONHOME` variable (or directory it points to).
 
-## Linux 
+## Linux && Mac
 
-3. Check that your SYSTEM `PATH` environment variable has `/usr/lib`, preferably at the begining
+3. Check that your SYSTEM `PATH` environment variable has `/usr/lib` and `/usr/lib/x86_64-linux-gnu`, preferably at the begining. Use `/etc/environment` file to set environment variables.
 
-If you modified environment variables (for Windows or Linux) restart your InterSystems product.
+If you modified environment variables restart your InterSystems product.
 
 # Use
 
@@ -26,7 +26,7 @@ If you modified environment variables (for Windows or Linux) restart your InterS
 
 ```
 set sc = ##class(isc.py.Callout).Setup() 
-set sc = ##class(isc.py.Callout).SimpleString("x='HELLO'", "x", , .x)
+set sc = ##class(isc.py.Main).SimpleString("x='HELLO'", "x", , .x)
 write x
 set sc = ##class(isc.py.Callout).Finalize()
 set sc = ##class(isc.py.Callout).Unload()
@@ -41,6 +41,9 @@ Generally the main interface to Python is `isc.py.Main`. It offers these methods
 - `GetStatus()` - returns last occured exception in Python and clears it.
 - `GetVariableJson(variable, .stream, useString)` - get JSON serialization of variable.
 - `GetVariablePickle(variable, .stream, useString)` - get Pickle serialization of variable.
+- `ExecuteQuery(query, variable, type)` - create resultset (pandas `dataframe` or `list`) from sql query and set it into `variable`.
+- `ImportModule(module, .imported, .alias)` -  import module with alias.
+- `GetModuleInfo(module, .imported, .alias)` - get module alias and is it currently imported.
 
 Possible Serializations:
 - `##class(isc.py.Callout).SerializationStr` - Serialization by str() function
@@ -62,6 +65,7 @@ Interoperability adapter `isc.py.ens.Operation` offers abulity to interact with 
 
 - Execute Python code via `isc.py.msg.ExecutionRequest`. Returns `isc.py.msg.ExecutionResponse` with requested variable values
 - Execute Python code via `isc.py.msg.StreamExecutionRequest`. Returns `isc.py.msg.StreamExecutionResponse` with requested variable values. Same as above, but accepts and returns streams instead of strings.
+- Set dataset from SQL Query with `isc.py.msg.QueryRequest`. Returns `Ens.Response`.
 - Save Python conext via `isc.py.msg.SaveRequest`. Returns `Ens.StringResponse` with context id.
 - Restore Python context via `isc.py.msg.RestoreRequest`.
 
@@ -71,7 +75,7 @@ Check request/response classes documentation for details.
 
 Along with callout code and Interoperability adapter there's also a test Interoperability Production and test Business Process. To use them:
 
-1. In OS bash execute `pip install pyodbc pandas matplotlib seaborn`. 
+1. In OS bash execute `pip install  pandas matplotlib seaborn`. 
 2. Execute: `do ##class(isc.py.test.CannibalizationData).Import()` to populate test data.
 3. Create ODBC or JDBC connection to the namespace with data.
 4. In test Business Process `isc.py.test.Process` edit annotation for `ODBC connection` or `JDBC connection` call, specifying correct DSN.
@@ -83,8 +87,9 @@ Along with callout code and Interoperability adapter there's also a test Interop
 
 Notes.
 
-- If you want to use JDBC connection, install JayDeBeApi: `pip install JayDeBeApi`. On linux you might need to install `apt-get install python-apt`. 
+- If you want to use `ODBC` connection, install pyodbc: `pip install pyodbc`.
 - For ODBC on Linux insall `unixodbc unixodbc-dev python-pyodbc`. 
+- If you want to use `JDBC` connection, install JayDeBeApi: `pip install JayDeBeApi`. On linux you might need to install `apt-get install python-apt`. 
 - If you get errors similar to `undefined symbol: _Py_TrueStruct` in `isc.py.ens.Operation`operation set setting `PythonLib` to `libpython3.6m.so` or even to a full path of the shared library.
 
 
@@ -131,3 +136,18 @@ Development of C code is done in Eclipse.
 4. Set environment variable `PYTHONVER` to the python version you want to build, i.e.: ` export PYTHONVER=3.6`
 5. In `<Repository>/c/` execute `make`.
 
+
+## Mac OS X
+
+1. Install Python 3.6 and gcc compiler.
+2. Set `GLOBALS_HOME` environment variable to the root of Caché or Ensemble installation.
+3. Set environment variable `PYTHONVER` to the python version you want to build, i.e.: ` export PYTHONVER=3.6`
+2. In `<Repository>/c/` execute:
+
+```
+gcc -Wall -Wextra -fpic -O3 -fno-strict-aliasing -Wno-unused-parameter -I/Library/Frameworks/Python.framework/Versions/${PYTHONVER}/Headers -I${GLOBALS_HOME}/dev/iris-callin/include -c -o iscpython.o iscpython.c
+
+gcc -dynamiclib -L/Library/Frameworks/Python.framework/Versions/${PYTHONVER}/lib -L/usr/lib -lpython3.6m -lpthread -ldl -lutil -lm -Xlinker iscpython.o -o iscpython.dylib
+```
+
+If you have a Mac please update makefile so we can build Mac version via Make. 
