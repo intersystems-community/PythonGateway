@@ -21,6 +21,9 @@ XData MessageMap
   <MapItem MessageType="isc.py.msg.RestoreRequest">
     <Method>RestoreContext</Method>
   </MapItem>
+  <MapItem MessageType="isc.py.msg.QueryRequest">
+    <Method>ExecuteQuery</Method>
+  </MapItem>
 </MapItems>
 }
 
@@ -74,6 +77,15 @@ Method StreamExecute(request As isc.py.msg.StreamExecutionRequest, Output respon
 		quit:$$$ISERR(sc)
 	}
 	
+	quit sc
+}
+
+/// Create pandas dataframe or list form sql.
+Method ExecuteQuery(request As isc.py.msg.QueryRequest, Output response As Ens.Response) As %Status
+{
+	#dim sc As %Status = $$$OK
+	set response = ##class(Ens.Response).%New()	
+	set sc = ##class(isc.py.Main).ExecuteQuery(request.Query, request.Variable, request.Type)
 	quit sc
 }
 
