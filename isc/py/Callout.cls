@@ -38,7 +38,7 @@ Parameter StreamExecute As Integer = 9;
 /// write ##class(isc.py.Callout).GetLib()
 ClassMethod GetLib() [ CodeMode = expression ]
 {
-$g(^isc.py.Callout, $g(^%SYS("bindir")) _ "iscpython." _ $select($$$isWINDOWS:"dll", 1:"so"))
+$g(^isc.py.Callout, $g(^%SYS("bindir")) _ "iscpython." _ $select($$$isWINDOWS:"dll", $$$isMACOSX:"dylib", 1:"so"))
 }
 
 /// Should be executed once per system start. Idempotent.
