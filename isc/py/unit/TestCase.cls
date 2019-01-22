@@ -173,16 +173,37 @@ Method TestMultiline()
 	do ##class(isc.py.Callout).SimpleString("del cube")
 }
 
+Method TestStream()
+{
+	set variable = "x"
+	set iterations = 1000000
+	set code = ..GetCodeStream(variable, iterations)
+	
+	set sc = ##class(isc.py.Main).ExcuteCode(code)
+	do $$$AssertStatusOK(sc, "Stream executed")
+	
+	set sc = ##class(isc.py.Main).GetVariable(variable,, .result, $$$YES)
+	do $$$AssertStatusOK(sc, "Variable returned")
+	
+	do $$$AssertEquals(iterations, result, "Variable value is correct")
+}
+
+ClassMethod GetCodeStream(variable As %String, iterations As %Integer = 1000000) As %Stream.GlobalCharacter
+{
+	set stream = ##class(%Stream.GlobalCharacter).%New()
+	for i=1:1:iterations {
+		do stream.WriteLine((variable _ "=" _ i))
+	}
+	do stream.%Save()
+	quit stream
+}
+
 /// Manually test production.
 /// do ##class(isc.py.unit.TestCase).TestProductionStream()
 ClassMethod PassProductionStream(count As %Integer = 1000000, separateLines As %Boolean = {$$$YES})
 {
 	set variable = "x"
-	set stream = ##class(%Stream.GlobalCharacter).%New()
-	for i=1:1:count {
-		do stream.WriteLine((variable _ "=" _ i))
-	}
-	do stream.%Save()
+	set stream = ..GetCodeStream(variable, count)
 	
 	write "Count: ", count, !
 	write "SeparateLines: ", separateLines, !

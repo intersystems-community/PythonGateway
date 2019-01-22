@@ -7,7 +7,7 @@ Class isc.py.Main
 /// optionally return variable value.
 /// serialization - currenlty: 0 - string serialization, 1 - repr serialization.
 /// write ##class(isc.py.Main).SimpleString()
-ClassMethod SimpleString(code As %String = "", variable As %String = "", serialization As %Integer = 0, Output result) As %Status
+ClassMethod SimpleString(code As %String = "", variable As %String = "", serialization As %Integer = {##class(isc.py.Callout).#SerializationStr}, Output result) As %Status
 {
 	#dim sc As %Status = $$$OK
 	
@@ -53,7 +53,7 @@ ClassMethod ExcuteCode(code As %Stream.Object, variable As %String = "") As %Sta
 	if length>$$$MaxStringLength {
 		set sc = ##class(isc.py.Callout).StreamInit(length)
 		quit:$$$ISERR(sc) sc
-		set sc = ##class(isc.py.Callout).StreamWrite(variable _ "=")
+		set:hasVar sc = ##class(isc.py.Callout).StreamWrite(variable _ "=")
 		quit:$$$ISERR(sc) sc
 		
 		if $isObject(code) { 
@@ -87,7 +87,7 @@ ClassMethod ExcuteCode(code As %Stream.Object, variable As %String = "") As %Sta
 /// variable - variable name
 /// useString - if variable length is less than $$$MaxStringLength, return string instead of stream. Ignored if variable length is more than $$$MaxStringLength
 /// set sc = ##class(isc.py.Main).GetVariable()
-ClassMethod GetVariable(variable As %String, serialization As %Integer = 0, ByRef stream As %Stream.Object, useString As %Boolean = {$$$NO}) As %Status
+ClassMethod GetVariable(variable As %String, serialization As %Integer = {##class(isc.py.Callout).#SerializationStr}, ByRef stream As %Stream.Object, useString As %Boolean = {$$$NO}) As %Status
 {
 	#dim sc As %Status = $$$OK
 	set sc = ..GetVariableInfo(variable, serialization, .defined, .type, .length)
@@ -130,7 +130,7 @@ ClassMethod GetVariable(variable As %String, serialization As %Integer = 0, ByRe
 /// type - variable type
 /// length - length (in symbols) of variable chosen serialization
 /// set sc = ##class(isc.py.Main).GetVariableInfo()
-ClassMethod GetVariableInfo(variable As %String = "", serialization As %Integer = 0, Output defined As %Boolean, Output type As %String, Output length As %String) As %Status
+ClassMethod GetVariableInfo(variable As %String = "", serialization As %Integer = {##class(isc.py.Callout).#SerializationStr}, Output defined As %Boolean, Output type As %String, Output length As %String) As %Status
 {
 	#dim sc As %Status = $$$OK
 	kill defined, type, length
