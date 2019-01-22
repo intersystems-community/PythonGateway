@@ -2,10 +2,14 @@
 Class isc.py.msg.QueryRequest Extends Ens.Request
 {
 
+/// Text of the SQL query
 Property Query As %VarString;
 
+/// Python variable to set
 Property Variable As %String;
 
+/// Variable type (Currently supported: dataframe (pandas dataframe) and list.
+/// Pandas automatically imported if required.
 Property Type As %String(VALUELIST = ",dataframe,list") [ InitialExpression = "list" ];
 
 Storage Default
@@ -17,6 +21,9 @@ Storage Default
 </Value>
 <Value name="2">
 <Value>Variable</Value>
+</Value>
+<Value name="3">
+<Value>Type</Value>
 </Value>
 </Data>
 <DefaultData>QueryRequestDefaultData</DefaultData>

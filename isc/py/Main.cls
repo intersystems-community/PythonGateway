@@ -88,6 +88,7 @@ ClassMethod ExcuteCode(code As %Stream.Object, variable As %String = "") As %Sta
 /// variable - python variable to set
 /// type - variable type (Currently supported: dataframe (pandas dataframe) and list.
 /// query - text of the SQL query
+/// Pandas automatically imported if required.
 /// set sc = ##class(isc.py.Main).ExecuteQuery("SELECT * FROM isc_py_test.CannibalizationData", "df")
 ClassMethod ExecuteQuery(query As %String, variable, type As %String(VALUELIST=",dataframe,list") = "list") As %Status
 {
