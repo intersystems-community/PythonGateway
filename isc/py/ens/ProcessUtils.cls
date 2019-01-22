@@ -57,6 +57,8 @@ ClassMethod ParseActivities(activities As Ens.BPL.ActivityList)
 		} elseif (class="Ens.BPL.If") {
 			do ..ParseActivities(activity.True)
 			do ..ParseActivities(activity.False)
+		} elseif (class ="Ens.BPL.Switch"){
+			do ..ParseActivities(activity.Cases)
 		} else {
 			set annotationText = $$$quote(activity.Annotation)
 			do:activity.Annotation'="" %code.WriteLine(" quit:name=""" _ activity.Name _ """ " _ annotationText)

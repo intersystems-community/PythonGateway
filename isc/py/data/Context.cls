@@ -89,7 +89,7 @@ Method PopulateVariables(maxLength As %Integer = {$$$MaxStringLength}, mask As %
 /// ToDo move to %OnNew?
 Method Init()
 {
-	do ##class(isc.py.Callout).SimpleString("import types, json;") // readline
+	do ##class(isc.py.Callout).SimpleString("import types, json") // readline
 	do ##class(isc.py.Callout).SimpleString("def zzzmodulesfunc():"_ $c(10) _ 
 											"    for name, val in globals().items():"_ $c(10) _
 											"        if isinstance(val, types.ModuleType):"_ $c(10) _
