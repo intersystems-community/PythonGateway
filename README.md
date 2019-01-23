@@ -77,21 +77,18 @@ Along with callout code and Interoperability adapter there's also a test Interop
 
 1. In OS bash execute `pip install  pandas matplotlib seaborn`. 
 2. Execute: `do ##class(isc.py.test.CannibalizationData).Import()` to populate test data.
-3. Create ODBC or JDBC connection to the namespace with data.
-4. In test Business Process `isc.py.test.Process` edit annotation for `ODBC connection` or `JDBC connection` call, specifying correct DSN.
-5. Edit annotation for `Correlation Matrix: Graph` call, specifying valid filepath for `f.savefig` function.
-6. Save and compile business process.
-7. Configure `ConnectionType` setting for a business process.
-7. Start `isc.py.test.Production` production.
-8. Send empty `Ens.Request` mesage to the `isc.py.test.Process`.
+3. In test Business Process `isc.py.test.Process` edit annotation for `Correlation Matrix: Graph` call, specifying valid filepath for `f.savefig` function.
+4. Save and compile business process.
+5. Start `isc.py.test.Production` production.
+6. Send empty `Ens.Request` mesage to the `isc.py.test.Process`.
 
-Notes.
+### Notes
 
-- If you want to use `ODBC` connection, install pyodbc: `pip install pyodbc`.
-- For ODBC on Linux insall `unixodbc unixodbc-dev python-pyodbc`. 
-- If you want to use `JDBC` connection, install JayDeBeApi: `pip install JayDeBeApi`. On linux you might need to install `apt-get install python-apt`. 
+- If you want to use `ODBC` connection, on Windows install pyodbc: `pip install pyodbc`, on Linux install: `apt-get install unixodbc unixodbc-dev python-pyodbc`. 
+- If you want to use `JDBC` connection, install JayDeBeApi: `pip install JayDeBeApi`. On linux you might need to install: `apt-get install python-apt` beforehand. 
 - If you get errors similar to `undefined symbol: _Py_TrueStruct` in `isc.py.ens.Operation`operation set setting `PythonLib` to `libpython3.6m.so` or even to a full path of the shared library.
-
+- In test Business Process `isc.py.test.Process` edit annotation for `ODBC` or `JDBC` calls, specifying correct connection string.
+- In production, `isc.py.test.Process` host set `ConnectionType` setting to a preferred connection type (defaults to `RAW`, change only if you need to test xDBC connectivity).
 
 # Unit tests
 
