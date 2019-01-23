@@ -199,7 +199,7 @@ ClassMethod GetCodeStream(variable As %String, iterations As %Integer = 1000000)
 }
 
 /// Manually test production.
-/// do ##class(isc.py.unit.TestCase).TestProductionStream()
+/// do ##class(isc.py.unit.TestCase).PassProductionStream()
 ClassMethod PassProductionStream(count As %Integer = 1000000, separateLines As %Boolean = {$$$YES})
 {
 	set variable = "x"

@@ -29,7 +29,7 @@ ClassMethod SimpleString(code As %String = "", variable As %String = "", seriali
 }
 
 /// Executes code. If variable is not empty sets variable=code.
-/// If variable is undefined
+/// If variable is undefined just executes the code
 /// code may be a string or a stream
 /// write ##class(isc.py.Main).ExcuteCode()
 ClassMethod ExcuteCode(code As %Stream.Object, variable As %String = "") As %Status
@@ -44,7 +44,7 @@ ClassMethod ExcuteCode(code As %Stream.Object, variable As %String = "") As %Sta
 		set codeLength = $l(code)
 	}
 	
-	#dim hasVar As %Boolean = $l($g(variable))>0
+	#dim hasVar As %Boolean = $l(variable)>0
 	
 	// length of code + length of var name + 1 char for '='
 	set length = codeLength + $select(hasVar :$l(variable) + 1, 1:0)
@@ -56,7 +56,7 @@ ClassMethod ExcuteCode(code As %Stream.Object, variable As %String = "") As %Sta
 		set:hasVar sc = ##class(isc.py.Callout).StreamWrite(variable _ "=")
 		quit:$$$ISERR(sc) sc
 		
-		if $isObject(code) { 
+		if $isObject(code) {
 			while 'code.AtEnd {
 				set codePiece = code.Read($$$MaxStringLength)
 				set sc = ##class(isc.py.Callout).StreamWrite(codePiece)
@@ -68,7 +68,7 @@ ClassMethod ExcuteCode(code As %Stream.Object, variable As %String = "") As %Sta
 		}
 		quit:$$$ISERR(sc) sc
 		set sc = ##class(isc.py.Callout).StreamExecute()
-	} else {		
+	} else {
 		set tempCode = $select(hasVar : variable _ "=", 1:"")
 		if $isObject(code) {
 			set tempCode = tempCode _ code.Read($$$MaxStringLength)
@@ -76,10 +76,8 @@ ClassMethod ExcuteCode(code As %Stream.Object, variable As %String = "") As %Sta
 			set tempCode = tempCode _ code
 		}
 		
-		do ##class(isc.py.Callout).SimpleString(tempCode)
+		set sc = ..SimpleString(tempCode)
 	}
-	
-	set sc = $$$ADDSC(sc, ..GetStatus())
 	
 	quit sc
 }
@@ -186,25 +184,27 @@ ClassMethod GetVariable(variable As %String, serialization As %Integer = {##clas
 	quit:'defined $$$ERROR($$$GeneralError, "Variable '" _ variable _ "' is not defined")
 	
 	if ((length<=$$$MaxStringLength) && useString) {
-		set stream = ##class(isc.py.Callout).SimpleString(, variable, serialization)
+		set sc = ..SimpleString(, variable, serialization, .stream)
 	} else {
 		set:'$isObject($g(stream)) stream = ##class(%Stream.GlobalCharacter).%New()
 		
 		if (length<=$$$MaxStringLength) {
-			set zzzvar = ##class(isc.py.Callout).SimpleString(, variable, serialization)
+			set sc = ..SimpleString(, variable, serialization, .zzzvar)
 			do stream.Write(zzzvar)
 		} else {
 			set step = $$$MaxStringLength
 			for i=0:step:length+1 {
 				if serialization = ##class(isc.py.Callout).#SerializationRepr {
-					set zzzvar = ##class(isc.py.Callout).SimpleString("zzzvar=repr(" _ variable _ ")[" _ i _ ":" _ (i + step) _ "]", "zzzvar")
+					set sc = ..SimpleString("zzzvar=repr(" _ variable _ ")[" _ i _ ":" _ (i + step) _ "]", "zzzvar", ##class(isc.py.Callout).#SerializationStr, .zzzvar)
 				} else {
-					set zzzvar = ##class(isc.py.Callout).SimpleString("zzzvar=" _ variable _ "[" _ i _ ":" _ (i + step) _ "]", "zzzvar", serialization)
+					set sc = ..SimpleString("zzzvar=" _      variable _  "[" _ i _ ":" _ (i + step) _ "]", "zzzvar", ##class(isc.py.Callout).#SerializationStr, .zzzvar)
 				}
+				quit:$$$ISERR(sc)
 				do stream.Write(zzzvar)
 			}
-			do ##class(isc.py.Callout).SimpleString("del zzzvar")
+			set sc = ..SimpleString("del zzzvar")
 		}
+		quit:$$$ISERR(sc) sc
 		set sc = stream.%Save()
 		do stream.Rewind()
 	}
@@ -227,24 +227,27 @@ ClassMethod GetVariableInfo(variable As %String = "", serialization As %Integer 
 	kill defined, type, length
 	
 	quit:variable="" $$$ERROR($$$GeneralError, "Variable argument should be set")
-	set defined = ##class(isc.py.Callout).SimpleString("zzzdef='" _ variable _ "' in vars() or '" _ variable _ "' in globals()", "zzzdef")
+	set sc = ..SimpleString("zzzdef='" _ variable _ "' in vars() or '" _ variable _ "' in globals()", "zzzdef", , .defined)
+	quit:$$$ISERR(sc) sc
 	set defined = $case(defined, "True":$$$YES, "False":$$$NO, :"")
 	
 	if defined {	
-		set type = ##class(isc.py.Callout).SimpleString("zzztype=type(" _ variable _ ").__name__", "zzztype")
-
-		if serialization = ##class(isc.py.Callout).#SerializationRepr {
-			set length = ##class(isc.py.Callout).SimpleString("zzzlen=len(repr(" _ variable _ "))", "zzzlen")
-		} else {
-			set length = ##class(isc.py.Callout).SimpleString("zzzlen=len(str(" _ variable _ "))",  "zzzlen")
-		}
+		set sc = ..SimpleString("zzztype=type(" _ variable _ ").__name__", "zzztype", , .type)
+		quit:$$$ISERR(sc) sc
 		
-		do ..SimpleString("del zzztype, zzzlen")
+		if serialization = ##class(isc.py.Callout).#SerializationRepr {
+			set sc = ..SimpleString("zzzlen=len(repr(" _ variable _ "))", "zzzlen", , .length)
+		} else {
+			set sc = ..SimpleString("zzzlen=len(str(" _ variable _ "))",  "zzzlen", , .length)
+		}
+		quit:$$$ISERR(sc) sc
+		
+		set sc = ..SimpleString("del zzztype, zzzlen")
 	}
+	quit:$$$ISERR(sc) sc
 	
-	do ..SimpleString("del zzzdef")
-	set sc = ..GetStatus()
-	
+	set sc = ..SimpleString("del zzzdef")
+
 	quit sc
 }
 
@@ -280,24 +283,29 @@ ClassMethod GetModuleInfo(module As %String, Output imported As %Boolean, Output
 	kill imported, alias
 	
 	quit:module="" $$$ERROR($$$GeneralError, "Module argument should be set")
-	set imported = ##class(isc.py.Callout).SimpleString("zzzdef='" _ module _ "' in dir()", "zzzdef")
+	set sc = ..SimpleString("zzzdef='" _ module _ "' in dir()", "zzzdef", , .imported)
+	quit:$$$ISERR(sc) sc
+	
 	set imported = $case(imported, "True":$$$YES, "False":$$$NO, :"")
 	
 	if imported {
-		do ..SimpleString("import types")
-		do ##class(isc.py.Callout).SimpleString("def zzzgetalias(module):" _ $c(10) _ 
-												"    for name, val in globals().items():" _ $c(10) _ 
-												"        if isinstance(val, types.ModuleType):" _ $c(10) _ 
-												"            if val.__name__ == module:" _ $c(10) _ 
-												"                return name" _ $c(10) _ 
-												"    return None")
+		set sc = ..SimpleString("import types")
+		quit:$$$ISERR(sc) sc
+		set sc = ..SimpleString(  "def zzzgetalias(module):" _ $c(10) _ 
+														"    for name, val in globals().items():" _ $c(10) _ 
+														"        if isinstance(val, types.ModuleType):" _ $c(10) _ 
+														"            if val.__name__ == module:" _ $c(10) _ 
+														"                return name" _ $c(10) _ 
+														"    return None")
+		quit:$$$ISERR(sc) sc
 		
-		set alias = ##class(isc.py.Callout).SimpleString("zzzalias=zzzgetalias('" _ module _ "')", "zzzalias")
-		do ..SimpleString("del zzzalias")
+		set sc = ##class(isc.py.Callout).SimpleString("zzzalias=zzzgetalias('" _ module _ "')", "zzzalias", , .alias)
+		quit:$$$ISERR(sc) sc
+		set sc = ..SimpleString("del zzzalias")
+		quit:$$$ISERR(sc) sc
 	}
 	
-	do ..SimpleString("del zzzdef")
-	set sc = ..GetStatus()
+	set sc = ..SimpleString("del zzzdef")
 	quit sc
 }
 
@@ -305,16 +313,21 @@ ClassMethod GetModuleInfo(module As %String, Output imported As %Boolean, Output
 /// zwrite ##class(isc.py.Main).GetStatus()
 ClassMethod GetStatus() As %Status
 {
-	do ##class(isc.py.Callout).SimpleString("import sys, traceback")
-	set haxExc = ##class(isc.py.Callout).SimpleString("zzzerr = hasattr(sys, 'last_type')", "zzzerr")
-	do ##class(isc.py.Callout).SimpleString("del zzzerr")
-	quit:haxExc="False" $$$OK
-	
-	set excText = ##class(isc.py.Callout).SimpleString("zzzerr = traceback.format_exception(sys.last_type, sys.last_value, sys.last_traceback)", "zzzerr")
-	set excText = $zcvt($zcvt(excText, "I", "UTF8"), "I", "JSON")
-	do ##class(isc.py.Callout).SimpleString("del zzzerr, sys.last_type, sys.last_value, sys.last_traceback")
-	
-	quit $$$ERROR($$$GeneralError, excText)
+	try {
+		#dim sc As %Status = $$$OK
+		do ##class(isc.py.Callout).SimpleString("import sys, traceback")
+		set haxExc = ##class(isc.py.Callout).SimpleString("zzzerr = hasattr(sys, 'last_type')", "zzzerr")
+		do ##class(isc.py.Callout).SimpleString("del zzzerr")
+		quit:haxExc="False"
+		
+		set excText = ##class(isc.py.Callout).SimpleString("zzzerr = traceback.format_exception(sys.last_type, sys.last_value, sys.last_traceback)", "zzzerr")
+		set excText = $zcvt(excText, "I", "JSON")
+		do ##class(isc.py.Callout).SimpleString("del zzzerr, sys.last_type, sys.last_value, sys.last_traceback")
+		set sc = $$$ERROR($$$GeneralError, excText)
+	} catch ex {
+		set sc = ex.AsStatus()
+	}
+	quit sc
 }
 
 /// Returns last occured exception in Python and clears it
@@ -325,8 +338,11 @@ ClassMethod GetVariableJson(variable As %String, ByRef stream As %Stream.Object,
 	quit:$$$ISERR(sc) sc
 	quit:'defined $$$ERROR($$$GeneralError, "Variable '" _ variable _ "' is not defined")
 	
-	do ##class(isc.py.Callout).SimpleString("import json")
-	do ##class(isc.py.Callout).SimpleString("def zzzempty(obj):" _ $c(10) _ "    return ''")
+	set sc = ..SimpleString("import json")
+	quit:$$$ISERR(sc) sc
+	
+	set sc = ..SimpleString("def zzzempty(obj):" _ $c(10) _ "    return ''")
+	quit:$$$ISERR(sc) sc
 	
 	if type = "DataFrame" {
 		set sc = ..ExcuteCode(variable _ ".to_json()", "zzzjson")
@@ -335,10 +351,11 @@ ClassMethod GetVariableJson(variable As %String, ByRef stream As %Stream.Object,
 		set sc = ..ExcuteCode("json.dumps(" _variable _ ", default=zzzempty)", "zzzjson")
 	}
 	if $$$ISOK(sc) {
-		set sc = ##class(isc.py.Main).GetVariable("zzzjson", ##class(isc.py.Callout).#SerializationStr, .stream, useString)
-		do ..SimpleString("del zzzjson")
+		set sc = ..GetVariable("zzzjson", ##class(isc.py.Callout).#SerializationStr, .stream, useString)
 		
 		if $$$ISOK(sc) {
+			do ..SimpleString("del zzzjson")
+			
 			if $isObject(stream) {
 				if (stream.Size=2) {
 					set content = stream.Read()
@@ -376,11 +393,13 @@ ClassMethod GetVariablePickle(variable As %String, ByRef stream As %Stream.Objec
 	quit:$$$ISERR(sc) sc
 	quit:'defined $$$ERROR($$$GeneralError, "Variable '" _ variable _ "' is not defined")
 
-	do ##class(isc.py.Callout).SimpleString("import pickle;")
+	set sc = ..SimpleString("import pickle;")
+	quit:$$$ISERR(sc) sc
 	
-	set sc = ##class(isc.py.Main).ExcuteCode("pickle.dumps(" _ variable _ ")", "zzzpickle")
+	set sc = ..ExcuteCode("pickle.dumps(" _ variable _ ")", "zzzpickle")
 	if $$$ISOK(sc) {
-		set sc = ##class(isc.py.Main).GetVariable("zzzpickle", ##class(isc.py.Callout).#SerializationStr, .stream, useString)
+		set sc = ..GetVariable("zzzpickle", ##class(isc.py.Callout).#SerializationStr, .stream, useString)
+		quit:$$$ISERR(sc) sc
 		do ##class(isc.py.Callout).SimpleString("del zzzpickle")
 	}
 
