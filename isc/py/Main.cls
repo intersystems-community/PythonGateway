@@ -281,31 +281,28 @@ ClassMethod GetModuleInfo(module As %String, Output imported As %Boolean, Output
 {
 	#dim sc As %Status = $$$OK
 	kill imported, alias
-	
 	quit:module="" $$$ERROR($$$GeneralError, "Module argument should be set")
-	set sc = ..SimpleString("zzzdef='" _ module _ "' in dir()", "zzzdef", , .imported)
+	
+	set sc = ..SimpleString("import types")
+	quit:$$$ISERR(sc) sc
+	set sc = ..SimpleString(  "def zzzgetalias(module):" _ $c(10) _ 
+													"    for name, val in globals().items():" _ $c(10) _ 
+													"        if isinstance(val, types.ModuleType):" _ $c(10) _ 
+													"            if val.__name__ == module:" _ $c(10) _ 
+													"                return name" _ $c(10) _ 
+													"    return ''")
 	quit:$$$ISERR(sc) sc
 	
-	set imported = $case(imported, "True":$$$YES, "False":$$$NO, :"")
+	set sc = ..SimpleString("zzzalias=zzzgetalias('" _ module _ "')", "zzzalias", , .alias)
+	quit:$$$ISERR(sc) sc
+	set sc = ..SimpleString("del zzzalias")
 	
-	if imported {
-		set sc = ..SimpleString("import types")
-		quit:$$$ISERR(sc) sc
-		set sc = ..SimpleString(  "def zzzgetalias(module):" _ $c(10) _ 
-														"    for name, val in globals().items():" _ $c(10) _ 
-														"        if isinstance(val, types.ModuleType):" _ $c(10) _ 
-														"            if val.__name__ == module:" _ $c(10) _ 
-														"                return name" _ $c(10) _ 
-														"    return None")
-		quit:$$$ISERR(sc) sc
-		
-		set sc = ##class(isc.py.Callout).SimpleString("zzzalias=zzzgetalias('" _ module _ "')", "zzzalias", , .alias)
-		quit:$$$ISERR(sc) sc
-		set sc = ..SimpleString("del zzzalias")
-		quit:$$$ISERR(sc) sc
+	if alias="" {
+		set imported = $$$NO
+	} else {
+		set imported = $$$YES
 	}
 	
-	set sc = ..SimpleString("del zzzdef")
 	quit sc
 }
 
