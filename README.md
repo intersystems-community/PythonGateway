@@ -61,7 +61,7 @@ Context is saved into `isc.py.data` package and can be viewed/edited by SQL and 
 
 # Interoperability adapter
 
-Interoperability adapter `isc.py.ens.Operation` offers abulity to interact with Python process from Interoperability productions. Currently three operations are supported:
+Interoperability adapter `isc.py.ens.Operation` offers ability to interact with Python process from Interoperability productions. Currently five requests are supported:
 
 - Execute Python code via `isc.py.msg.ExecutionRequest`. Returns `isc.py.msg.ExecutionResponse` with requested variable values
 - Execute Python code via `isc.py.msg.StreamExecutionRequest`. Returns `isc.py.msg.StreamExecutionResponse` with requested variable values. Same as above, but accepts and returns streams instead of strings.
@@ -98,6 +98,17 @@ To run tests execute:
 set repo = ##class(%SourceControl.Git.Utils).TempFolder()
 set ^UnitTestRoot = ##class(%File).SubDirectoryName(##class(%File).SubDirectoryName(##class(%File).SubDirectoryName(repo,"isc"),"py"),"unit",1)
 set sc = ##class(%UnitTest.Manager).RunTest(,"/nodelete")
+```
+
+# ZLANGC00
+
+Install [this ZLANG routine](https://gist.githubusercontent.com/eduard93/2c3159c7dc71f03c4081a99093d8ff37/raw/3bc83f2dc7348ea11ab982b0e3d54cfcef198d17/%2525ZLANGC00.xml) to add `zpy` command:
+
+```
+zpy "import random"
+zpy "x=random.random()"
+zpy "x"
+>0.4157151243124494
 ```
 
 # Limitations
