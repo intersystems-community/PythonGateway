@@ -11,7 +11,7 @@ ClassMethod OnStart(pTimeStarted As %String) As %Status
 
 XData ProductionDefinition
 {
-<Production Name="isc.py.test.Production" TestingEnabled="true" LogGeneralTraceEvents="false">
+<Production Name="isc.py.test.Production" TestingEnabled="true" LogGeneralTraceEvents="true">
   <Description></Description>
   <ActorPoolSize>2</ActorPoolSize>
   <Item Name="isc.py.ens.Operation" Category="" ClassName="isc.py.ens.Operation" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule="">

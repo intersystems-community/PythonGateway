@@ -31,8 +31,8 @@ ClassMethod SimpleString(code As %String = "", variable As %String = "", seriali
 /// Executes code. If variable is not empty sets variable=code.
 /// If variable is undefined just executes the code
 /// code may be a string or a stream
-/// write ##class(isc.py.Main).ExcuteCode()
-ClassMethod ExcuteCode(code As %Stream.Object, variable As %String = "") As %Status
+/// write ##class(isc.py.Main).ExecuteCode()
+ClassMethod ExecuteCode(code As %Stream.Object, variable As %String = "") As %Status
 {
 	#dim sc As %Status = $$$OK
 	quit:$d(code)'=1 $$$ERROR($$$GeneralError, "Code argument should be set to stream or to string") 
@@ -158,7 +158,7 @@ ClassMethod ExecuteQuery(query As %String, variable, type As %String(VALUELIST="
 	}
 	do data.Write("]")
 	
-	set sc = ..ExcuteCode(data, "zzzdata")
+	set sc = ..ExecuteCode(data, "zzzdata")
 	quit:$$$ISERR(sc) sc
 	
 	if type="dataframe" {	
@@ -355,7 +355,7 @@ ClassMethod GetVariableJson(variable As %String, ByRef stream As %Stream.Object,
 
 	quit:$$$ISERR(sc) sc
 	
-	set sc = ..ExcuteCode("json.dumps(" _variable _ ", default=zzztoserializable)", "zzzjson")
+	set sc = ..SimpleString("zzzjson=json.dumps(" _variable _ ", default=zzztoserializable)")
 	
 	if $$$ISOK(sc) {
 		set sc = ..GetVariable("zzzjson", ##class(isc.py.Callout).#SerializationStr, .stream, useString)
@@ -403,7 +403,7 @@ ClassMethod GetVariablePickle(variable As %String, ByRef stream As %Stream.Objec
 	set sc = ..SimpleString("import pickle;")
 	quit:$$$ISERR(sc) sc
 	
-	set sc = ..ExcuteCode("pickle.dumps(" _ variable _ ")", "zzzpickle")
+	set sc = ..SimpleString("zzzpickle=pickle.dumps(" _ variable _ ")")
 	if $$$ISOK(sc) {
 		set sc = ..GetVariable("zzzpickle", ##class(isc.py.Callout).#SerializationStr, .stream, useString)
 		quit:$$$ISERR(sc) sc

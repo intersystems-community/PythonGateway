@@ -72,7 +72,7 @@ Method Restore(context As isc.py.data.Context) As %Status
 		do stream.Write(context.%PickleAlias _ ".loads(")
 		do stream.CopyFrom(..Pickle)
 		do stream.Write(")")
-		set sc = ##class(isc.py.Main).ExcuteCode(stream, ..Name)
+		set sc = ##class(isc.py.Main).ExecuteCode(stream, ..Name)
 	}
 	
 	quit sc

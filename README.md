@@ -35,7 +35,7 @@ set sc = ##class(isc.py.Callout).Unload()
 Generally the main interface to Python is `isc.py.Main`. It offers these methods (all return `%Status`):
 
 - `SimpleString(code, returnVariable, serialization, .result)` - for cases where both code and variable are strings.
-- `ExcuteCode(code, variable)` - execute `code` (it may be a stream or string), optionally ser result into `variable`.
+- `ExecuteCode(code, variable)` - execute `code` (it may be a stream or string), optionally ser result into `variable`.
 - `GetVariable(variable, serialization, .stream, useString)` - get `serialization` of `variable` in `stream`. If `useString` is 1 and variable serialization can fit into string then string is returned instead of the stream.
 -  `GetVariableInfo(variable, serialization, .defined, .type, .length)` - get info about variable: is it defined, type,and serialization length.
 - `GetStatus()` - returns last occured exception in Python and clears it.

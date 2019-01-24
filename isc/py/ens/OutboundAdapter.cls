@@ -72,7 +72,7 @@ Method StreamExecute(code As %Stream.GlobalCharacter, separateLines As %Boolean 
 			quit:$$$ISERR(sc)
 		}	
 	} else {
-		set sc = ##class(isc.py.Main).ExcuteCode(code)
+		set sc = ##class(isc.py.Main).ExecuteCode(code)
 	}
 	
 	quit sc

@@ -114,7 +114,7 @@ Method TestUnicode()
 }
 
 /// Test streams work
-/// To do all variants of calling ExcuteCode and GetVariable
+/// To do all variants of calling ExecuteCode and GetVariable
 Method TestStreams()
 {
 	set stream = ##class(%Stream.TmpCharacter).%New()
@@ -125,8 +125,8 @@ Method TestStreams()
 		do stream.Write(str)
 	}
 	do stream.Write("'")
-	set sc = ##class(isc.py.Main).ExcuteCode(stream, "stream")
-	do $$$AssertStatusOK(sc, "ExcuteCode")
+	set sc = ##class(isc.py.Main).ExecuteCode(stream, "stream")
+	do $$$AssertStatusOK(sc, "ExecuteCode")
 	
 	set hash = $system.Encryption.Base64Encode($system.Encryption.MD5HashStream(stream))
 	set length = stream.Size
@@ -167,7 +167,7 @@ Method TestStream()
 	set iterations = 1000000
 	set code = ..GetCodeStream(variable, iterations)
 	
-	set sc = ##class(isc.py.Main).ExcuteCode(code)
+	set sc = ##class(isc.py.Main).ExecuteCode(code)
 	do $$$AssertStatusOK(sc, "Stream executed")
 	
 	set sc = ##class(isc.py.Main).GetVariable(variable,, .result, $$$YES)
@@ -185,7 +185,7 @@ Method TestGetVariableInfo()
 	do $$$AssertStatusOK(sc, "Variable info returned")
 	do $$$AssertEquals(defined, $$$NO, "Variable not defined")
 	
-	set sc = ##class(isc.py.Main).ExcuteCode(value, variable)
+	set sc = ##class(isc.py.Main).ExecuteCode(value, variable)
 	
 	kill defined, type, length
 	set sc = ##class(isc.py.Main).GetVariableInfo(variable, , .defined, .type, .length)
@@ -238,7 +238,7 @@ Method TestJSON()
 	set variable = "list"
 	set arg1 = 1
 	set arg2 = "abc"
-	set sc = ##class(isc.py.Main).ExcuteCode("(" _ arg1 _ ",'" _ arg2 _ "')", variable)
+	set sc = ##class(isc.py.Main).ExecuteCode("(" _ arg1 _ ",'" _ arg2 _ "')", variable)
 	do $$$AssertStatusOK(sc, "List set")
 	
 	set sc = ##class(isc.py.Main).GetVariableJson(variable, .string, $$$YES)
