@@ -337,16 +337,26 @@ ClassMethod GetVariableJson(variable As %String, ByRef stream As %Stream.Object,
 	
 	set sc = ..SimpleString("import json")
 	quit:$$$ISERR(sc) sc
-	
-	set sc = ..SimpleString("def zzzempty(obj):" _ $c(10) _ "    return ''")
+
+	// More info https://hynek.me/articles/serialization/
+	set sc = ..SimpleString("def zzztoserializable(val):" _ $c(10) _ 
+							"    if hasattr(val, 'to_json'):" _ $c(10) _ 
+							"        return json.loads(val.to_json())" _ $c(10) _ 
+							"    elif hasattr(val, '__dict__'):" _ $c(10) _ 
+							"        return val.__dict__" _ $c(10) _ 
+							"    elif hasattr(val, 'for_json'):" _ $c(10) _ 
+							"        return json.loads(val.for_json()) " _ $c(10) _ 
+							"    elif isinstance(val, Exception):" _ $c(10) _ 
+							"        return {" _ $c(10) _ 
+							"            'error': val.__class__.__name__," _ $c(10) _ 
+							"            'args': val.args," _ $c(10) _ 
+							"        }" _ $c(10) _ 
+							"    return str(val)")
+
 	quit:$$$ISERR(sc) sc
 	
-	if type = "DataFrame" {
-		set sc = ..ExcuteCode(variable _ ".to_json()", "zzzjson")
-	/*} elseif type="DatetimeIndex" { TODO*/
-	} else {
-		set sc = ..ExcuteCode("json.dumps(" _variable _ ", default=zzzempty)", "zzzjson")
-	}
+	set sc = ..ExcuteCode("json.dumps(" _variable _ ", default=zzztoserializable)", "zzzjson")
+	
 	if $$$ISOK(sc) {
 		set sc = ..GetVariable("zzzjson", ##class(isc.py.Callout).#SerializationStr, .stream, useString)
 		
