@@ -54,6 +54,22 @@ ClassMethod SaveVariable(variable As %String = "", maxLength As %Integer = {$$$M
 	quit sc
 }
 
+/// Get saved JSON stream as dynamic object.
+/// set sc = ##class(isc.py.data.Variable).AsDynamicObject(,.obj)
+ClassMethod AsDynamicObject(id As %Integer = "", Output dynObj) As %Status
+{
+	kill dynObj
+	quit:'..%ExistsId(id) $$$ERROR($$$LoadObjectNotFound, $classname(), id)  
+	set stream = ##class(%Stream.GlobalCharacter).%Open($listbuild(..JSONGetStored(id), "%Stream.GlobalCharacter", "^isc.py.data.VariableS"),,.sc)
+	
+	try {
+		set dynObj = {}.%FromJSON(stream)
+	} catch ex {
+		set sc = ex.AsStatus()
+	}
+	quit sc
+}
+
 /// Dispaly variable on the current device.
 Method Display(indent As %String = "")
 {
