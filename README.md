@@ -106,7 +106,7 @@ There are several limitaions associated with the use of PythonAdapter.
 
 1. Modules reinitialization. Some modules may only be loaded once diring process lifetime (i.e. numpy). While Finalization clears the context of the process, repeated load of such libraries terminates the process. Discussions: [1](https://stackoverflow.com/questions/14843408/python-c-embedded-segmentation-fault), [2](https://stackoverflow.com/questions/7676314/py-initialize-py-finalize-not-working-twice-with-numpy).
 2. Variables. Do not use these variables: `zzzcolumns`, `zzzdata`, `zzzdef`, `zzzalias`, `zzzerr`, `zzzvar`, `zzztype`, `zzzlen`, `zzzjson`, `zzzpickle`, `zzzcount`, `zzzitem`, `zzzmodules`, `zzzvars`. Please report any leakage of these variables. System code should always clear them.
-3. Functions  Do not redefine these functions `zzzmodulesfunc()`, `zzzvarsfunc()`, `zzzgetalias()`, `zzzempty()`.
+3. Functions  Do not redefine these functions `zzzmodulesfunc()`, `zzzvarsfunc()`, `zzzgetalias()`, `zzztoserializable()`.
 4. Context persistence. Only pickled variables could be restored correctly. User functions are currently not supported. Module imports are supported.
 
 # Development
