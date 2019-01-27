@@ -85,21 +85,6 @@ Method PopulateVariables(maxLength As %Integer = {$$$MaxStringLength}, mask As %
 	quit sc
 }
 
-/// Define basic methods.
-/// ToDo move to %OnNew?
-Method Init()
-{
-	do ##class(isc.py.Callout).SimpleString("import types, json") // readline
-	do ##class(isc.py.Callout).SimpleString("def zzzmodulesfunc():"_ $c(10) _ 
-											"    for name, val in globals().items():"_ $c(10) _
-											"        if isinstance(val, types.ModuleType):"_ $c(10) _
-											"            yield val.__name__, name")
-	do ##class(isc.py.Callout).SimpleString("def zzzvarsfunc():"_ $c(10) _ 
-											"    for name, val in globals().items():"_ $c(10) _
-											"        if not (isinstance(val, types.ModuleType) or name.startswith('_') or hasattr(val, '__call__')):"_ $c(10) _
-											"            yield name")
-}
-
 /// Save Python context on disk
 /// context - resulting context
 /// maxLength - maximum length of saved variable. If veriable serialization is longer than that, it would be ignored. Set to 0 to get them all.
@@ -109,8 +94,7 @@ ClassMethod SaveContext(Output context As isc.py.data.Context, maxLength As %Int
 {
 	kill context
 	set context = ..%New()
-	do context.Init()
-	//do obj.PopulateHistory()
+	set sc = ##class(isc.py.init.Default).Initialize(, verbose)
 	set sc = context.PopulateModules()
 	quit:$$$ISERR(sc) sc
 	set sc = context.PopulateVariables(maxLength, mask)
@@ -134,15 +118,20 @@ ClassMethod RestoreContext(id As %Integer, verbose As %Boolean = {$$$NO}, clear 
 /// clear - destroy environment before populating the context.
 Method Restore(verbose As %Boolean = {$$$NO}, clear As %Boolean = {$$$NO}) As %Status
 {
+	#dim sc As %Status = $$$OK
 	do:clear ##class(isc.py.Callout).Finalize()
 	
-	do ..InitPickle()
+	set sc = ##class(isc.py.init.Default).Initialize(, verbose)
+	quit:$$$ISERR(sc) sc
+	set sc = ..InitPickle()
+	quit:$$$ISERR(sc) sc
 	
 	// Restoring modules
 	for {
   		set alias = ..Modules.GetNext(.module)
   		quit:(module = "")
-  		do ##class(isc.py.Callout).SimpleString("import " _ module _ " as " _ alias)
+  		set scModule = ##class(isc.py.Main).ImportModule(module, , alias)
+  		set sc = $$$ADDSC(sc, scModule)
 	}
 		
 	// Restoring variables
@@ -155,25 +144,23 @@ Method Restore(verbose As %Boolean = {$$$NO}, clear As %Boolean = {$$$NO}) As %S
 	
 	do:verbose ..Display()
 	
-	quit $$$OK
+	quit sc
 }
 
 /// Calculate Pickle alias and import pickle if required
-Method InitPickle()
+Method InitPickle(pickleName = "pickle") As %Status
 {
-	#dim importedPickle As %Boolean = $$$NO
-
 	for {
   		set alias = ..Modules.GetNext(.module)
   		quit:(module = "")
 
-  		if (module="pickle") {
+  		if (module=pickleName) {
 	  		set ..%PickleAlias = alias
 	  		set importedPickle = $$$YES
   		}
 	}
 	
-	do:'importedPickle ##class(isc.py.Callout).SimpleString("import pickle as " _ ..%PickleAlias)
+	quit ##class(isc.py.Main).ImportModule(pickleName, ,..%PickleAlias)
 }
 
 /// Wrapper for Display() method.
@@ -186,7 +173,7 @@ ClassMethod DisplayContext(id As %Integer = "")
 		quit:$$$ISERR(sc) sc
 	} else {
 		set context = ..%New()
-		do context.Init()
+		set sc = ##class(isc.py.init.Default).Initialize()
 		do context.PopulateModules()
 		do context.PopulateVariables()
 	}

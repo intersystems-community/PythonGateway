@@ -4,7 +4,8 @@ Class isc.py.unit.TestCase Extends %UnitTest.TestCase
 Method OnBeforeAllTests() As %Status
 {
 	do ##class(isc.py.Callout).Setup()
-	quit $$$OK
+	set sc = ##class(isc.py.init.Default).Initialize(, $$$YES)
+	quit sc
 }
 
 Method TestSimpleString()

@@ -254,10 +254,11 @@ ClassMethod GetVariableInfo(variable As %String = "", serialization As %Integer 
 /// Import module with alias.
 /// If module is already imported, imported value would be set to 1 and alias to existing alias.
 /// If module is already imported, actual import would be skipped
-ClassMethod ImportModule(module As %String, Output imported As %Boolean, Output alias As %String) As %Status
+/// If imported = 0, then check is skipped and we try to import the module anyway
+ClassMethod ImportModule(module As %String, ByRef imported As %Boolean = "", Output alias As %String) As %Status
 {
-	kill imported
-	set sc = ..GetModuleInfo(module, .imported, .existingAlias)
+	#dim sc As %Status = $$$OK
+	set:(imported'=0) sc = ..GetModuleInfo(module, .imported, .existingAlias)
 	quit:$$$ISERR(sc) sc
 	
 	if imported {
@@ -283,16 +284,6 @@ ClassMethod GetModuleInfo(module As %String, Output imported As %Boolean, Output
 	kill imported, alias
 	quit:module="" $$$ERROR($$$GeneralError, "Module argument should be set")
 	
-	set sc = ..SimpleString("import types")
-	quit:$$$ISERR(sc) sc
-	set sc = ..SimpleString(  "def zzzgetalias(module):" _ $c(10) _ 
-													"    for name, val in globals().items():" _ $c(10) _ 
-													"        if isinstance(val, types.ModuleType):" _ $c(10) _ 
-													"            if val.__name__ == module:" _ $c(10) _ 
-													"                return name" _ $c(10) _ 
-													"    return ''")
-	quit:$$$ISERR(sc) sc
-	
 	set sc = ..SimpleString("zzzalias=zzzgetalias('" _ module _ "')", "zzzalias", , .alias)
 	quit:$$$ISERR(sc) sc
 	set sc = ..SimpleString("del zzzalias")
@@ -312,10 +303,10 @@ ClassMethod GetStatus() As %Status
 {
 	try {
 		#dim sc As %Status = $$$OK
-		do ##class(isc.py.Callout).SimpleString("import sys, traceback")
 		set haxExc = ##class(isc.py.Callout).SimpleString("zzzerr = hasattr(sys, 'last_type')", "zzzerr")
 		do ##class(isc.py.Callout).SimpleString("del zzzerr")
 		quit:haxExc="False"
+		
 		
 		set excText = ##class(isc.py.Callout).SimpleString("zzzerr = traceback.format_exception(sys.last_type, sys.last_value, sys.last_traceback)", "zzzerr")
 		set excText = $zcvt(excText, "I", "JSON")
@@ -334,26 +325,6 @@ ClassMethod GetVariableJson(variable As %String, ByRef stream As %Stream.Object,
 	set sc = ..GetVariableInfo(variable, ##class(isc.py.Callout).#SerializationStr, .defined, .type, .length)
 	quit:$$$ISERR(sc) sc
 	quit:'defined $$$ERROR($$$GeneralError, "Variable '" _ variable _ "' is not defined")
-	
-	set sc = ..SimpleString("import json")
-	quit:$$$ISERR(sc) sc
-
-	// More info https://hynek.me/articles/serialization/
-	set sc = ..SimpleString("def zzztoserializable(val):" _ $c(10) _ 
-							"    if hasattr(val, 'to_json'):" _ $c(10) _ 
-							"        return json.loads(val.to_json())" _ $c(10) _ 
-							"    elif hasattr(val, '__dict__'):" _ $c(10) _ 
-							"        return val.__dict__" _ $c(10) _ 
-							"    elif hasattr(val, 'for_json'):" _ $c(10) _ 
-							"        return json.loads(val.for_json()) " _ $c(10) _ 
-							"    elif isinstance(val, Exception):" _ $c(10) _ 
-							"        return {" _ $c(10) _ 
-							"            'error': val.__class__.__name__," _ $c(10) _ 
-							"            'args': val.args," _ $c(10) _ 
-							"        }" _ $c(10) _ 
-							"    return str(val)")
-
-	quit:$$$ISERR(sc) sc
 	
 	set sc = ..SimpleString("zzzjson=json.dumps(" _variable _ ", default=zzztoserializable)")
 	
@@ -399,9 +370,6 @@ ClassMethod GetVariablePickle(variable As %String, ByRef stream As %Stream.Objec
 	set sc = ..GetVariableInfo(variable, ##class(isc.py.Callout).#SerializationStr, .defined, .type, .length)
 	quit:$$$ISERR(sc) sc
 	quit:'defined $$$ERROR($$$GeneralError, "Variable '" _ variable _ "' is not defined")
-
-	set sc = ..SimpleString("import pickle;")
-	quit:$$$ISERR(sc) sc
 	
 	set sc = ..SimpleString("zzzpickle=pickle.dumps(" _ variable _ ")")
 	if $$$ISOK(sc) {
