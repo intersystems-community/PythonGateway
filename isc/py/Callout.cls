@@ -78,15 +78,10 @@ ClassMethod Setup() As %Status
 /// Do not use it, unless you get errors like: undefined symbol: _Py_TrueStruct and so on
 /// do ##class(isc.py.Callout).Initialize()
 /// In cause of problems: do ##class(isc.py.Callout).Initialize("libpython3.6m.so") 
-ClassMethod Initialize(file As %String = "", debug As %Boolean = {$$$NO}) As %Integer
+ClassMethod Initialize(file As %String = "") As %Integer
 {
 	#dim sc As %Status = $$$OK
 	try {
-		if debug {
-			set sc = $ZF(-4,4,..#PyLibId)   			// unload current copy of inputlib
-			set sc = $ZF(-4,8)   						// delete existing process index, if any
-			set sc = $ZF(-4,7,..#PyLibId, ..GetLib())  	// override system index
-		}
 		do $ZF(-6, ..#PyLibId, ..#Initialize, file)
 	} catch ex {
 		set sc = ex.AsStatus()
