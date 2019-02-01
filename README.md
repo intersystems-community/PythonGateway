@@ -3,6 +3,7 @@ Python adapter via callout for InterSystems Data Platforms.
 
 # Installation
 
+0. Install Python 3.6.7 with the same bitness (probably 64) as your Cache/Ensemble/IRIS installation.
 1. Load ObjectScript code (i.e. `do $system.OBJ.LoadDir("C:\InterSystems\Repos\Python\isc\py\","*.cls",,1)`).
 2. Place [callout DLL/SO/DYLIB](https://github.com/intersystems-ru/PythonAdapter/releases) in the `bin` folder of your InterSystems IRIS installation. Library file should be placed into a path returned by `write ##class(isc.py.Callout).GetLib()`. 
 
