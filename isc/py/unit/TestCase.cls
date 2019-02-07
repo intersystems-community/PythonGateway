@@ -161,6 +161,25 @@ Method TestMultiline()
 	do ##class(isc.py.Callout).SimpleString("del cube")
 }
 
+/// Test how fast we can pass and execute the stream
+Method TestPassSpeedInStream()
+{
+	set variable = "x"
+	set length = 1024 * 1024 * 10
+	set code = ..GetCodeStreamOneVar(variable, length) 
+	
+	set start = $zh
+	set sc = ##class(isc.py.Main).ExecuteCode(code)
+	set end = $zh
+	do $$$AssertStatusOK(sc, "Stream set")
+	
+	set time = end - start
+	set megabytes = $fnumber(length/(1024**2), "", 2)
+	set speed = $fnumber(megabytes/time, "", 2)
+	
+	do $$$LogMessage($$$FormatText("Passed in %1 Mb in %2 sec. Speed: %3 Mb/sec.", megabytes, time, speed))
+}
+
 Method TestStream()
 {
 	set variable = "x"
@@ -289,6 +308,30 @@ ClassMethod GetCodeStream(variable As %String, iterations As %Integer = 1000000)
 		do stream.WriteLine((variable _ "=" _ i))
 	}
 	do stream.%Save()
+	quit stream
+}
+
+/// Get code stream which contains assignment on ne variable to a string with length - length(var+2) symbols
+/// do ##class(isc.py.unit.TestCase).GetCodeStreamOneVar("x",10)
+ClassMethod GetCodeStreamOneVar(variable, length) As %Stream.GlobalCharacter
+{
+	set stream = ##class(%Stream.TmpCharacter).%New()
+	set str = $tr($j("", $$$MaxStringLength), " ", "A")
+	
+	do stream.Write(variable _ "='")
+	set length = length - $l(variable) - 2
+	
+	while length>1 {
+		if length>$$$MaxStringLength {
+			do stream.Write(str)
+			set length = length - $$$MaxStringLength
+		} else {
+			do stream.Write($e(str,1,length - 1))
+			set length = 1
+		}
+	}
+	do stream.Write("'")
+	
 	quit stream
 }
 
