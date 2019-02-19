@@ -186,13 +186,13 @@ ClassMethod GetVariable(variable As %String, serialization As %Integer = {##clas
 	if ((length<=$$$MaxStringLength) && useString) {
 		set sc = ..SimpleString(, variable, serialization, .stream)
 	} else {
+		set step = $$$MaxStringLength \ 2
 		set:'$isObject($g(stream)) stream = ##class(%Stream.GlobalCharacter).%New()
 		
-		if (length<=$$$MaxStringLength) {
+		if (length<=step) {
 			set sc = ..SimpleString(, variable, serialization, .zzzvar)
 			do stream.Write(zzzvar)
 		} else {
-			set step = $$$MaxStringLength
 			for i=0:step:length+1 {
 				if serialization = ##class(isc.py.Callout).#SerializationRepr {
 					set sc = ..SimpleString("zzzvar=repr(" _ variable _ ")[" _ i _ ":" _ (i + step) _ "]", "zzzvar", ##class(isc.py.Callout).#SerializationStr, .zzzvar)

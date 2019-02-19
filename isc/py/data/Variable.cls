@@ -35,12 +35,12 @@ ClassMethod SaveVariable(variable As %String = "", maxLength As %Integer = {$$$M
 	quit:'defined $$$ERROR($$$GeneralError, "Variable '" _ variable _ "' is not defined")	
 	
 	#dim repr, pickle, json As %Stream.GlobalCharacter
-		
+	
 	set sc = ##class(isc.py.Main).GetVariable(variable, ##class(isc.py.Callout).#SerializationRepr, .repr)
 	quit:$$$ISERR(sc) sc
 	
 	//  Ignore errors, as some types can't be serialized.
-	set sc = ##class(isc.py.Main).GetVariableJson(variable, .json)	
+	set sc = ##class(isc.py.Main).GetVariableJson(variable, .json)
 	set sc = ##class(isc.py.Main).GetVariablePickle(variable, .pickle)
 
 	set obj = ..%New()
