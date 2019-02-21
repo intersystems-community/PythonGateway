@@ -3,13 +3,13 @@ Python adapter via callout for InterSystems Data Platforms.
 
 # Installation
 
-0. Install Python 3.6.7 with the same bitness (probably 64) as your Cache/Ensemble/IRIS installation.
+0. [Install Python 3.6.7 64 bit](https://www.python.org/downloads/release/python-367/).
 1. Load ObjectScript code (i.e. `do $system.OBJ.LoadDir("C:\InterSystems\Repos\Python\isc\py\","*.cls",,1)`).
 2. Place [callout DLL/SO/DYLIB](https://github.com/intersystems-ru/PythonAdapter/releases) in the `bin` folder of your InterSystems IRIS installation. Library file should be placed into a path returned by `write ##class(isc.py.Callout).GetLib()`. 
 
 ## Windows 
 
-3. Check that your `PYTHONHOME` environment variable points to Python 3.6. 
+3. Check that your `PYTHONHOME` environment variable points to Python 3.6.7.
 4. Check that your SYSTEM `PATH` environment variable has `PYTHONHOME` variable (or directory it points to).
 
 ## Linux && Mac
@@ -162,3 +162,57 @@ gcc -dynamiclib -L/Library/Frameworks/Python.framework/Versions/${PYTHONVER}/lib
 ```
 
 If you have a Mac please update makefile so we can build Mac version via Make. 
+
+
+# Troubleshooting
+
+## <DYNAMIC LIBRARY LOAD>
+
+1. Check that OS has correct python installed. Open python, execute this script: 
+
+```
+import sys
+sys.version
+``` 
+
+The result should contain: `Python 3.6.7` and `64 bit`. If it's not, [install Python 3.6.7 64 bit](https://www.python.org/downloads/release/python-367/).
+
+2. Check OS-specific instsallation steps. Make sure that path relevant for InterSystems IRIS (usually system) contains Python installation.
+
+3. Make sure that InterSystems IRIS can access Python installation. 
+
+## Module not found error
+
+Sometimes you can get module not found error. Here's how to fix it. Each step constitutes a complete solution so restart IRIS and check that the problem is fixed.
+
+1. Check that OS bash and IRIS use the same python. Open python, execute this script from both, they should be the same. 
+
+```
+import sys
+ver=sys.version
+ver
+``` 
+
+If they are not the same search for a Python executable that is actually used by InterSystems IRIS.
+
+2. Check that module is, in fact, installed. Open OS bash, execute `python` (maybe `python3` or `python36` on linux) and inside opened python bash execute `import <module>`. If it fails with some error run in OS bash `pip install <module>`. Note that module name for import and module name for pip could be different.
+3. If you're sure that module is installed, compare paths used by python (it's not system path). Get path with: 
+```
+import sys
+path=sys.path
+path
+```
+They should be the same. If they are not the same read how `PYTHONPATH` (python) is formed [here](https://stackoverflow.com/questions/897792/where-is-pythons-sys-path-initialized-from) and adjust your OS environment to form pythonpath (python) correctly, i.e. set `PYTHONPATH` (system) env var to `C:\Users\<USER>\AppData\Roaming\Python\Python36\site-packages` or other directories where your modules reside (and other missing directories).
+4. Compare python paths again and they are not the same or the problem persists add missing paths explicitly to the isc.py.ens.OutboundAdaptor init code (for interoperability) and on process start (for Callout wrapper):
+
+```
+do ##class(isc.py.Main).SimpleString("import sys")
+do ##class(isc.py.Main).SimpleString("sys.path.append('C:\\Users\\<USER>\\AppData\\Roaming\\Python\\Python36\\site-packages')")
+```
+
+## `undefined symbol: _Py_TrueStruct` or similar errors
+
+1. Check `ldconfig` and adgust it to point to the directory with Python shared library.
+2. If it fails:
+   - For interoperability in `isc.py.ens.Operation` operation set setting `PythonLib` to `libpython3.6m.so` or even to a full path of the shared library. 
+   - For Callout wrapper on process start call `do ##class(isc.py.Callout).Initialize("libpython3.6m.so")` alternatively pass a full path of the shared library. 
