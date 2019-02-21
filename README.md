@@ -166,7 +166,7 @@ If you have a Mac please update makefile so we can build Mac version via Make.
 
 # Troubleshooting
 
-## <DYNAMIC LIBRARY LOAD>
+## `<DYNAMIC LIBRARY LOAD>` exception
 
 1. Check that OS has correct python installed. Open python, execute this script: 
 
