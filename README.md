@@ -216,3 +216,11 @@ do ##class(isc.py.Main).SimpleString("sys.path.append('C:\\Users\\<USER>\\AppDat
 2. If it fails:
    - For interoperability in `isc.py.ens.Operation` operation set setting `PythonLib` to `libpython3.6m.so` or even to a full path of the shared library. 
    - For Callout wrapper on process start call `do ##class(isc.py.Callout).Initialize("libpython3.6m.so")` alternatively pass a full path of the shared library. 
+
+## PyODBC on Linux and Mac
+
+1. Install unixodbc: `apt-get install unixodbc-dev`
+2. Install PyODBC: `pip install pyodbc`
+3. Set connection string: `cnxn=pyodbc.connect(('Driver=/<IRIS directory>/bin/libirisodbcu35.so;Server=localhost;Port=51773;database=USER;UID=_SYSTEM;PWD=SYS'),autocommit=True)`
+
+Some [notes](https://github.com/intersystems-ru/PythonAdapter/issues/50).
