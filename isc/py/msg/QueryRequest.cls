@@ -12,6 +12,9 @@ Property Variable As %String;
 /// Pandas automatically imported if required.
 Property Type As %String(VALUELIST = ",dataframe,list") [ InitialExpression = "list" ];
 
+/// Namespace in which to execute the query
+Property Namespace As %String [ InitialExpression = {$namespace} ];
+
 Storage Default
 {
 <Data name="QueryRequestDefaultData">
@@ -24,6 +27,9 @@ Storage Default
 </Value>
 <Value name="3">
 <Value>Type</Value>
+</Value>
+<Value name="4">
+<Value>Namespace</Value>
 </Value>
 </Data>
 <DefaultData>QueryRequestDefaultData</DefaultData>

@@ -85,7 +85,7 @@ Method ExecuteQuery(request As isc.py.msg.QueryRequest, Output response As Ens.R
 {
 	#dim sc As %Status = $$$OK
 	set response = ##class(Ens.Response).%New()	
-	set sc = ##class(isc.py.Main).ExecuteQuery(request.Query, request.Variable, request.Type)
+	set sc = ##class(isc.py.Main).ExecuteQuery(request.Query, request.Variable, request.Type, request.Namespace)
 	quit sc
 }
 

@@ -88,7 +88,7 @@ ClassMethod ExecuteCode(code As %Stream.Object, variable As %String = "") As %St
 /// query - text of the SQL query
 /// Pandas automatically imported if required.
 /// set sc = ##class(isc.py.Main).ExecuteQuery("SELECT * FROM isc_py_test.CannibalizationData", "df")
-ClassMethod ExecuteQuery(query As %String, variable, type As %String(VALUELIST=",dataframe,list") = "list") As %Status
+ClassMethod ExecuteQuery(query As %String, variable, type As %String(VALUELIST=",dataframe,list") = "list", namespace As %String = {$namespace}) As %Status
 {
 	#include %occODBC
 	#dim sc As %Status = $$$OK	
@@ -99,11 +99,15 @@ ClassMethod ExecuteQuery(query As %String, variable, type As %String(VALUELIST="
 		quit:$$$ISERR(sc) sc
 	}
 	
+	new $namespace
+	set oldNamespace = $namespace
+	set $namespace = namespace
+		
 	/// Really %sqlcq.<NAMESPACE>.cls<NUMBER>
 	#dim result As %SQL.ISelectResult
 	set result = ##class(%SQL.Statement).%ExecDirect(,query)
+	quit:result.%SQLCODE'=0 $$$ERROR($$$SQLError, result.%SQLCODE, result.%Message)
 
-	set start = $zh
 	#dim metadata As SQL.StatementMetadata
 	set metadata = result.%GetMetadata()
 	set columnCount = metadata.columns.Count()
@@ -127,15 +131,6 @@ ClassMethod ExecuteQuery(query As %String, variable, type As %String(VALUELIST="
 		set columnList = columnList _ $lb("'" _ column.colName _ "'")
 	}
 	
-	// zzzcolumns = ['col1', 'col2', 'col3']
-	if type="dataframe" { 
-		set code = "zzzcolumns=[" _ $lts(columnList, ",") _ "]"
-	} elseif type="list" {
-		set code = "zzzcolumns=[(" _ $lts(columnList, ",") _ ")]"
-	}
-	set sc = ..SimpleString(code)
-	quit:$$$ISERR(sc) sc
-	
 	set data = ##class(%Stream.GlobalCharacter).%New()
 	do data.Write("[")
 	
@@ -158,8 +153,20 @@ ClassMethod ExecuteQuery(query As %String, variable, type As %String(VALUELIST="
 	}
 	do data.Write("]")
 	
+	set $namespace = oldNamespace
+	
 	set sc = ..ExecuteCode(data, "zzzdata")
 	quit:$$$ISERR(sc) sc
+	
+	// zzzcolumns = ['col1', 'col2', 'col3']
+	if type="dataframe" { 
+		set code = "zzzcolumns=[" _ $lts(columnList, ",") _ "]"
+	} elseif type="list" {
+		set code = "zzzcolumns=[(" _ $lts(columnList, ",") _ ")]"
+	}
+	set sc = ..SimpleString(code)
+	quit:$$$ISERR(sc) sc
+	
 	
 	if type="dataframe" {	
 		set sc = ..SimpleString(variable _ "=" _ pandas _ ".DataFrame(zzzdata, columns=zzzcolumns)")
