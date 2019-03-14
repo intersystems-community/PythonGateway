@@ -232,7 +232,7 @@ ClassMethod GetVariableInfo(variable As %String = "", serialization As %Integer 
 	set defined = $case(defined, "True":$$$YES, "False":$$$NO, :"")
 	
 	if defined {	
-		set sc = ..SimpleString("zzztype=type(" _ variable _ ").__name__", "zzztype", , .type)
+		set sc = ..SimpleString("zzztype=('' if " _ variable _ ".__class__.__module__ is None or " _ variable _ ".__class__.__module__ == str.__class__.__module__ else " _ variable _ ".__class__.__module__ + '.') + " _ variable _ ".__class__.__name__", "zzztype", , .type)
 		quit:$$$ISERR(sc) sc
 		
 		if serialization = ##class(isc.py.Callout).#SerializationRepr {
