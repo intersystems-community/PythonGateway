@@ -94,6 +94,7 @@ result=corrmat.to_string()]]></annotation>
 <sync name='Wait Correlation Matrix: Tabular' calls='Correlation Matrix: Tabular' type='all' xpos='200' ypos='1000' />
 <call name='Correlation Matrix: Graph' target='isc.py.ens.Operation' async='1' xpos='200' ypos='1100' >
 <annotation><![CDATA[import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 f=plt.figure()
@@ -126,7 +127,5 @@ Storage Default
 </Data>
 <DefaultData>ProcessDefaultData</DefaultData>
 <Type>%Library.CacheStorage</Type>
-}
-
 }
 
