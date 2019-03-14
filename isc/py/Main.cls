@@ -98,14 +98,20 @@ ClassMethod ExecuteQuery(query As %String, variable, type As %String(VALUELIST="
 		set sc = ..ImportModule("pandas", , .pandas)
 		quit:$$$ISERR(sc) sc
 	}
-	
+	set sc = ..ImportModule("datetime", , .datetime)
+	quit:$$$ISERR(sc) sc
+
 	new $namespace
 	set oldNamespace = $namespace
 	set $namespace = namespace
 		
-	/// Really %sqlcq.<NAMESPACE>.cls<NUMBER>
-	#dim result As %SQL.ISelectResult
-	set result = ##class(%SQL.Statement).%ExecDirect(,query)
+	set st =  ##class(%SQL.Statement).%New()
+	set st.%SelectMode = 1 // ODBC
+	set sc = st.%Prepare(query)
+	quit:$$$ISERR(sc) sc
+	
+	#dim result As %SQL.StatementResult
+	set result = st.%Execute()
 	quit:result.%SQLCODE'=0 $$$ERROR($$$SQLError, result.%SQLCODE, result.%Message)
 
 	#dim metadata As SQL.StatementMetadata
@@ -113,19 +119,23 @@ ClassMethod ExecuteQuery(query As %String, variable, type As %String(VALUELIST="
 	set columnCount = metadata.columns.Count()
 	
 	set columnList = ""
+	set typeList = ""
 	for i=1:1:columnCount {
 		#dim column As %SQL.StatementColumn
 		set column = metadata.columns.GetAt(i)
 		
-		set class(i) = $lb(column.colName)
-		if column.IsNumeric() {
-			set class(i) = class(i) _ $lb("numeric")
-		} elseif ((column.ODBCType=$$$ODBCTYPEtimestamp) || (column.ODBCType=$$$ODBCTYPEdate)) {
-			set class(i) = class(i) _ $lb("date")
+		if (column.IsNumeric() || (column.ODBCType = $$$ODBCTYPEnumeric)) {
+			set typeList = typeList _ $lb("numeric")
+		} elseif (column.ODBCType=$$$ODBCTYPEtimestamp) {
+			set typeList = typeList _ $lb("timestamp")
+		} elseif (column.ODBCType=$$$ODBCTYPEdate) {
+			set typeList = typeList _ $lb("date")
 		} elseif column.ODBCType = $$$ODBCTYPEtime  {
-			set class(i) = class(i) _ $lb("time")
+			set typeList = typeList _ $lb("time")
+		} elseif column.clientType = 16 {
+			set typeList = typeList _ $lb("bool")
 		} else {
-			set class(i) = class(i) _ $lb("string")
+			set typeList = typeList _ $lb("string")
 		}
 		
 		set columnList = columnList _ $lb("'" _ column.colName _ "'")
@@ -146,7 +156,24 @@ ClassMethod ExecuteQuery(query As %String, variable, type As %String(VALUELIST="
 		for i=1:1:columnCount {
 			set value = result.%GetData(i)
 			set:$lv(value) value = $lts(value)
-			set rowList = rowList _ $lb("'" _ value _ "'")
+			
+			set colType = $lg(typeList, i)
+			if colType = "bool" {
+				set rowList = rowList _ $lb($case(value, $$$YES:"True", $$$NO:"False", :"'" _ value _ "'"))
+			} elseif colType = "numeric" {
+				set rowList = rowList _ $lb(value)
+			} elseif colType = "timestamp" {
+				// from unixtime
+				set rowList = rowList _ $lb(datetime _ ".datetime.fromtimestamp(" _ $zdt($zdth(value,3,1),-2) _ ")")
+			} elseif colType = "date" {
+				set rowList = rowList _ $lb(datetime _ ".date(" _ $e(value,1,4) _ "," _ +$e(value,6,7) _ "," _ + $e(value,9,10) _ ")")
+				// TODO Python 3.7 added date.fromisoformat("YYYY-MM-DD")
+			} elseif colType = "time" {
+				set rowList = rowList _ $lb(datetime _ ".time(" _ +$e(value,1,2) _ "," _ +$e(value,4,5) _ "," _ + $e(value,7,8) _ ")")
+			} else {
+				// TODO Python String escaper		
+				set rowList = rowList _ $lb("'" _ $replace($replace(value, "\", "\\"), "'", "\'")  _ "'")
+			}
 		}
 		do data.Write("(" _	$lts(rowList, ",") _ ")")
 		
@@ -157,7 +184,7 @@ ClassMethod ExecuteQuery(query As %String, variable, type As %String(VALUELIST="
 	
 	set sc = ..ExecuteCode(data, "zzzdata")
 	quit:$$$ISERR(sc) sc
-	
+
 	// zzzcolumns = ['col1', 'col2', 'col3']
 	if type="dataframe" { 
 		set code = "zzzcolumns=[" _ $lts(columnList, ",") _ "]"
@@ -167,7 +194,6 @@ ClassMethod ExecuteQuery(query As %String, variable, type As %String(VALUELIST="
 	set sc = ..SimpleString(code)
 	quit:$$$ISERR(sc) sc
 	
-	
 	if type="dataframe" {	
 		set sc = ..SimpleString(variable _ "=" _ pandas _ ".DataFrame(zzzdata, columns=zzzcolumns)")
 	} elseif type="list" {
@@ -175,8 +201,6 @@ ClassMethod ExecuteQuery(query As %String, variable, type As %String(VALUELIST="
 	}
 	do ..SimpleString("del zzzdata, zzzcolumns")	
 	
-	set end = $zh
-	write "Time: ", end-start,!
 	quit sc
 }
 
