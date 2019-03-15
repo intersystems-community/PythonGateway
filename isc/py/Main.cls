@@ -88,7 +88,7 @@ ClassMethod ExecuteCode(code As %Stream.Object, variable As %String = "") As %St
 /// query - text of the SQL query
 /// Pandas automatically imported if required.
 /// set sc = ##class(isc.py.Main).ExecuteQuery("SELECT * FROM isc_py_test.CannibalizationData", "df")
-ClassMethod ExecuteQuery(query As %String, variable, type As %String(VALUELIST=",dataframe,list") = "list", namespace As %String = {$namespace}) As %Status
+ClassMethod ExecuteQuery(query As %String, variable As %String, type As %String(VALUELIST=",dataframe,list") = "list", namespace As %String = {$namespace}) As %Status
 {
 	#include %occODBC
 	#dim sc As %Status = $$$OK	
@@ -161,6 +161,7 @@ ClassMethod ExecuteQuery(query As %String, variable, type As %String(VALUELIST="
 			if colType = "bool" {
 				set rowList = rowList _ $lb($case(value, $$$YES:"True", $$$NO:"False", :"'" _ value _ "'"))
 			} elseif colType = "numeric" {
+				set:value="" value = "''"
 				set rowList = rowList _ $lb(value)
 			} elseif colType = "timestamp" {
 				// from unixtime
@@ -191,14 +192,16 @@ ClassMethod ExecuteQuery(query As %String, variable, type As %String(VALUELIST="
 	} elseif type="list" {
 		set code = "zzzcolumns=[(" _ $lts(columnList, ",") _ ")]"
 	}
+	
 	set sc = ..SimpleString(code)
 	quit:$$$ISERR(sc) sc
 	
-	if type="dataframe" {	
+	if type="dataframe" {
 		set sc = ..SimpleString(variable _ "=" _ pandas _ ".DataFrame(zzzdata, columns=zzzcolumns)")
 	} elseif type="list" {
 		set sc = ..SimpleString(variable _ "= zzzcolumns + zzzdata")
 	}
+	
 	do ..SimpleString("del zzzdata, zzzcolumns")	
 	
 	quit sc
