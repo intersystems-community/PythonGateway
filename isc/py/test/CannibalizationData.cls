@@ -5,51 +5,51 @@ Class isc.py.test.CannibalizationData Extends (%Persistent, %XML.Adaptor)
 /// Name of XData block that stores our data for population 
 Parameter XDATA = "Data";
 
-Property YEAR As %String;
+Property YEAR As %Integer;
 
-Property WEEK As %String;
+Property WEEK As %Integer;
 
-Property BRATWURST As %String;
+Property BRATWURST As %Integer;
 
-Property CERVELAS As %String;
+Property CERVELAS As %Integer;
 
-Property CHARCUTERIE As %String;
+Property CHARCUTERIE As %Integer;
 
-Property DAUERFLEISCHWAREN As %String;
+Property DAUERFLEISCHWAREN As %Integer;
 
-Property GEFLUEGEL As %String;
+Property GEFLUEGEL As %Integer;
 
-Property GERAEUCHERTESZUMKOCHEN As %String [ SqlFieldName = GERAEUCHERTES_ZUM_KOCHEN ];
+Property GERAEUCHERTESZUMKOCHEN As %Integer [ SqlFieldName = GERAEUCHERTES_ZUM_KOCHEN ];
 
-Property HACKFLEISCH As %String;
+Property HACKFLEISCH As %Integer;
 
-Property INNEREIENDIVERSES As %String [ SqlFieldName = INNEREIEN_DIVERSES ];
+Property INNEREIENDIVERSES As %Integer [ SqlFieldName = INNEREIEN_DIVERSES ];
 
-Property KALB As %String;
+Property KALB As %Integer;
 
-Property KANINCHEN As %String;
+Property KANINCHEN As %Integer;
 
-Property LAMM As %String;
+Property LAMM As %Integer;
 
-Property MARINADEN As %String;
+Property MARINADEN As %Integer;
 
-Property PASTETENTERRINENSTREICHWURST As %String [ SqlFieldName = PASTETEN_TERRINEN_STREICHWURST ];
+Property PASTETENTERRINENSTREICHWURST As %Integer [ SqlFieldName = PASTETEN_TERRINEN_STREICHWURST ];
 
-Property PFANNENFERTIGES As %String;
+Property PFANNENFERTIGES As %Integer;
 
-Property PFERD As %String;
+Property PFERD As %Integer;
 
-Property RIND As %String;
+Property RIND As %Integer;
 
-Property SALAMIROHWURSTAMSTUECK As %String [ SqlFieldName = SALAMI_ROHWURST_AM_STUECK ];
+Property SALAMIROHWURSTAMSTUECK As %Integer [ SqlFieldName = SALAMI_ROHWURST_AM_STUECK ];
 
-Property SCHINKEN As %String;
+Property SCHINKEN As %Integer;
 
-Property SCHWEIN As %String;
+Property SCHWEIN As %Integer;
 
-Property UEBRIGEBRUEHWURSTSTUECK As %String [ SqlFieldName = UEBRIGE_BRUEHWURST_STUECK ];
+Property UEBRIGEBRUEHWURSTSTUECK As %Integer [ SqlFieldName = UEBRIGE_BRUEHWURST_STUECK ];
 
-Property WIENERLIKNACKERLIFRANKFURTERLI As %String [ SqlFieldName = WIENERLI_KNACKERLI_FRANKFURTERLI ];
+Property WIENERLIKNACKERLIFRANKFURTERLI As %Integer [ SqlFieldName = WIENERLI_KNACKERLI_FRANKFURTERLI ];
 
 /// zw ##class(isc.py.test.CannibalizationData).Export()
 ClassMethod Export() As %Status

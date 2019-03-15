@@ -61,27 +61,6 @@ cnxn.close()]]></annotation>
 <sync name='Wait for data' calls='RAW,ODBC,JDBC' type='any' xpos='200' ypos='800' />
 <call name='Correlation Matrix: Tabular' target='isc.py.ens.Operation' async='1' xpos='200' ypos='900' >
 <annotation><![CDATA[Data0=Data.drop(['WEEK'],axis=1)
-Data0['BRATWURST']=pd.to_numeric(Data0['BRATWURST'])
-Data0['CERVELAS']=pd.to_numeric(Data0['CERVELAS'])
-Data0['CHARCUTERIE']=pd.to_numeric(Data0['CHARCUTERIE'])
-Data0['DAUERFLEISCHWAREN']=pd.to_numeric(Data0['DAUERFLEISCHWAREN'])
-Data0['GEFLUEGEL']=pd.to_numeric(Data0['GEFLUEGEL'])
-Data0['GERAEUCHERTES_ZUM_KOCHEN']=pd.to_numeric(Data0['GERAEUCHERTES_ZUM_KOCHEN'])
-Data0['HACKFLEISCH']=pd.to_numeric(Data0['HACKFLEISCH'])
-Data0['INNEREIEN_DIVERSES']=pd.to_numeric(Data0['INNEREIEN_DIVERSES'])
-Data0['KALB']=pd.to_numeric(Data0['KALB'])
-Data0['KANINCHEN']=pd.to_numeric(Data0['KANINCHEN'])
-Data0['LAMM']=pd.to_numeric(Data0['LAMM'])
-Data0['MARINADEN']=pd.to_numeric(Data0['MARINADEN'])
-Data0['PASTETEN_TERRINEN_STREICHWURST']=pd.to_numeric(Data0['PASTETEN_TERRINEN_STREICHWURST'])
-Data0['PFANNENFERTIGES']=pd.to_numeric(Data0['PFANNENFERTIGES'])
-Data0['PFERD']=pd.to_numeric(Data0['PFERD'])
-Data0['RIND']=pd.to_numeric(Data0['RIND'])
-Data0['SALAMI_ROHWURST_AM_STUECK']=pd.to_numeric(Data0['SALAMI_ROHWURST_AM_STUECK'])
-Data0['SCHINKEN']=pd.to_numeric(Data0['SCHINKEN'])
-Data0['SCHWEIN']=pd.to_numeric(Data0['SCHWEIN'])
-Data0['UEBRIGE_BRUEHWURST_STUECK']=pd.to_numeric(Data0['UEBRIGE_BRUEHWURST_STUECK'])
-Data0['WIENERLI_KNACKERLI_FRANKFURTERLI']=pd.to_numeric(Data0['WIENERLI_KNACKERLI_FRANKFURTERLI'])
 corrmat=Data0.corr()
 corrmat.columns.name='CATEGORY'
 result=corrmat.to_string()]]></annotation>
