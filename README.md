@@ -18,6 +18,25 @@ Python adapter via callout for InterSystems Data Platforms.
 
 If you modified environment variables restart your InterSystems product.
 
+## Docker
+
+1. To build docker image:
+  - Copy `iscpython.so` into repository root (if it's not there)
+  - Execute in repository root `docker build --force-rm --tag irispy/iris:2019.1 .`
+2. To run docker image execute: 
+
+```
+docker run -d \
+  -p 52773:52773 \
+  -v /<HOST-DIR-WITH-iris.key>/:/mount \
+  --name irispy \
+  irispy/iris:2019.1 \
+  --key /mount/iris.key \
+```
+3. Test process `isc.py.test.Process` saves image aftifact into temp directory. You might want to change that path to a monted directory. To do that edit annotation for `Correlation Matrix: Graph` call, specifying valid filepath for `f.savefig` function.
+4. For terminal access execute: `docker exec -it irispy sh`.
+5. To stop container execute: `docker stop irispy && docker rm --force irispy`.
+
 # Use
 
 1. Call: `set sc = ##class(isc.py.Callout).Setup()` once per systems start (add to ZSTART: [docs](https://docs.intersystems.com/latest/csp/docbook/DocBook.UI.Page.cls?KEY=GSTU_customize#GSTU_customize_startstop), [sample](https://gist.githubusercontent.com/eduard93/412ed81e2bf619269ab4a49d939d2304/raw/c9d5f922827db5052b6e1195616d333ffe7dc1ec/%2525ZSTART)).
