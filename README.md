@@ -35,7 +35,8 @@ docker run -d \
 ```
 3. Test process `isc.py.test.Process` saves image aftifact into temp directory. You might want to change that path to a monted directory. To do that edit annotation for `Correlation Matrix: Graph` call, specifying valid filepath for `f.savefig` function.
 4. For terminal access execute: `docker exec -it irispy sh`.
-5. To stop container execute: `docker stop irispy && docker rm --force irispy`.
+5. Access SMP with SuperUser/SYS or Admin/SYS users.
+6. To stop container execute: `docker stop irispy && docker rm --force irispy`.
 
 # Use
 
