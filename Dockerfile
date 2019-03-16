@@ -96,6 +96,8 @@ COPY iscpython.so $ISC_PACKAGE_INSTALLDIR/bin/
 
 ADD https://gist.githubusercontent.com/eduard93/412ed81e2bf619269ab4a49d939d2304/raw/c9d5f922827db5052b6e1195616d333ffe7dc1ec/%2525ZSTART $SRC_DIR/zstart.xml
 
+ADD https://gist.githubusercontent.com/eduard93/2c3159c7dc71f03c4081a99093d8ff37/raw/3bc83f2dc7348ea11ab982b0e3d54cfcef198d17/%2525ZLANGC00.xml $SRC_DIR/zlangc00.xml
+
 RUN iris start $ISC_PACKAGE_INSTANCENAME EmergencyId=sys,sys && \
     /bin/echo -e "sys\nsys\n" \
             " do ##class(Security.Users).UnExpireUserPasswords(\"*\")\n" \

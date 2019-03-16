@@ -22,9 +22,9 @@ XData Install [ XMLNamespace = INSTALLER ]
     <Log Level="1" Text="Enabling OS level Authentication"/>
     <Invoke Class="isc.py.util.Installer" Method="OSAuth" CheckStatus="true"/>
     
-    <Log Level="1" Text="Loading ZStart routine"/>
-    <Invoke Class="isc.py.util.Installer" Method="LoadZStart" CheckStatus="true">
-    <Arg Value="${SOURCESPATH}zstart.xml"/>
+    <Log Level="1" Text="Loading %ZSTART, %ZLANGC00 routines"/>
+    <Invoke Class="isc.py.util.Installer" Method="LoadZRoutines" CheckStatus="true">
+    <Arg Value="${SOURCESPATH}"/>
     </Invoke>
   </Namespace>
 </Manifest>
@@ -94,11 +94,17 @@ ClassMethod OSAuth() As %Status
 	quit sc
 }
 
-ClassMethod LoadZStart(file As %String) As %Status
+ClassMethod LoadZRoutines(dir As %String) As %Status
 {
 	new $namespace
 	set $namespace = "%SYS"
-	quit $system.OBJ.Load(file, "c")
+	
+	set dir = ##class(%File).NormalizeDirectory(dir)
+	set sc = $system.OBJ.Load(dir _ "zstart.xml", "c")
+	quit:$$$ISERR(sc) sc
+	
+	set sc = $system.OBJ.Load(dir _ "zlangc00.xml", "c")
+	quit sc
 }
 
 }

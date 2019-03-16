@@ -79,7 +79,7 @@ ClassMethod Export() As %Status
 }
 
 /// do ##class(isc.py.test.CannibalizationData).Import()
-ClassMethod Import()
+ClassMethod Import() As %Status
 {
 	#dim sc As %Status = $$$OK
 	set xdata = ##class(%Dictionary.XDataDefinition).IDKEYOpen($classname(), "Data")
