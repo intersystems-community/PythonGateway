@@ -24,7 +24,7 @@ XData Install [ XMLNamespace = INSTALLER ]
     
     <Log Level="1" Text="Loading %ZSTART, %ZLANGC00 routines"/>
     <Invoke Class="isc.py.util.Installer" Method="LoadZRoutines" CheckStatus="true">
-    <Arg Value="${SOURCESPATH}"/>
+    <Arg Value="${SOURCESPATH}rtn"/>
     </Invoke>
   </Namespace>
 </Manifest>
@@ -100,10 +100,7 @@ ClassMethod LoadZRoutines(dir As %String) As %Status
 	set $namespace = "%SYS"
 	
 	set dir = ##class(%File).NormalizeDirectory(dir)
-	set sc = $system.OBJ.Load(dir _ "zstart.xml", "c")
-	quit:$$$ISERR(sc) sc
-	
-	set sc = $system.OBJ.Load(dir _ "zlangc00.xml", "c")
+	set sc = $system.OBJ.ImportDir(dir, "*.xml", "c")
 	quit sc
 }
 
