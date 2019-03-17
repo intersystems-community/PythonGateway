@@ -445,17 +445,23 @@ ClassMethod GetVariableJson(variable As %String, ByRef stream As %Stream.Object,
 }
 
 /// Get Variable Pickle form
-/// zwrite ##class(isc.py.Main).GetVariableJson()
-ClassMethod GetVariablePickle(variable As %String, ByRef stream As %Stream.Object, useString As %Boolean = {$$$NO}) As %Status
+/// zwrite ##class(isc.py.Main).GetVariablePickle()
+ClassMethod GetVariablePickle(variable As %String, ByRef stream As %Stream.Object, useString As %Boolean = {$$$NO}, useDill As %Boolean = {$$$NO}) As %Status
 {
 	set sc = ..GetVariableInfo(variable, ##class(isc.py.Callout).#SerializationStr, .defined, .type, .length)
 	quit:$$$ISERR(sc) sc
 	quit:'defined $$$ERROR($$$GeneralError, "Variable '" _ variable _ "' is not defined")
+	
+	if useDill {
+		set pickle = "dill"
+	} else {
+		set pickle = "pickle"
+	}
 
-	set sc = ..SimpleString("import pickle;")
+	set sc = ..ImportModule(pickle, ,.pickleAlias)
 	quit:$$$ISERR(sc) sc
 	
-	set sc = ..SimpleString("zzzpickle=pickle.dumps(" _ variable _ ")")
+	set sc = ..SimpleString("zzzpickle=" _ pickleAlias _ ".dumps(" _ variable _ ")")
 	if $$$ISOK(sc) {
 		set sc = ..GetVariable("zzzpickle", ##class(isc.py.Callout).#SerializationStr, .stream, useString)
 		quit:$$$ISERR(sc) sc

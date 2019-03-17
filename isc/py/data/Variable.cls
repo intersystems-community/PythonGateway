@@ -19,6 +19,11 @@ Property Pickle As %Stream.GlobalCharacter;
 /// Variable JSON serialization
 Property JSON As %Stream.GlobalCharacter;
 
+/// Module used to serialize the string to Pickle
+/// empty == pickle
+/// dill == dill
+Property PickleModule As %String;
+
 /// Save variable on disk.
 /// Do not save if length > maxLength
 /// zw ##class(isc.py.data.Variable).SaveVariable()
@@ -42,6 +47,12 @@ ClassMethod SaveVariable(variable As %String = "", maxLength As %Integer = {$$$M
 	//  Ignore errors, as some types can't be serialized.
 	set sc = ##class(isc.py.Main).GetVariableJson(variable, .json)
 	set sc = ##class(isc.py.Main).GetVariablePickle(variable, .pickle)
+	
+	if $$$ISERR(sc) {
+		kill pickle
+		set sc =  ##class(isc.py.Main).GetVariablePickle(variable, .pickle, , $$$YES)
+		set:$$$ISOK(sc) pickleModule = "dill"
+	}
 
 	set obj = ..%New()
 	set obj.Name = variable
@@ -49,6 +60,7 @@ ClassMethod SaveVariable(variable As %String = "", maxLength As %Integer = {$$$M
 	set obj.Type = type
 	set obj.Pickle = pickle
 	set obj.JSON = json
+	set obj.PickleModule = $g(pickleModule)
 	set sc = obj.%Save()
 
 	quit sc
@@ -85,7 +97,13 @@ Method Restore(context As isc.py.data.Context) As %Status
 	#dim sc As %Status = $$$OK
 	if ..Pickle.Size > 0 {
 		set stream = ##class(%Stream.TmpCharacter).%New()
-		do stream.Write(context.%PickleAlias _ ".loads(")
+		if ..PickleModule = "dill" {
+			set module = context.%DillAlias
+		} else {
+			set module = context.%PickleAlias
+		}
+		
+		do stream.Write(module _ ".loads(")
 		do stream.CopyFrom(..Pickle)
 		do stream.Write(")")
 		set sc = ##class(isc.py.Main).ExecuteCode(stream, ..Name)
@@ -114,6 +132,9 @@ Storage Default
 </Value>
 <Value name="6">
 <Value>JSON</Value>
+</Value>
+<Value name="7">
+<Value>PickleModule</Value>
 </Value>
 </Data>
 <DataLocation>^isc.py.data.VariableD</DataLocation>
