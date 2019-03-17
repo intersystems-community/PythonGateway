@@ -1,3 +1,4 @@
+/// Installer for the container release of PythonGateway
 Class isc.py.util.Installer
 {
 

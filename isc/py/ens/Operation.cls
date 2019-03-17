@@ -1,10 +1,33 @@
-/// Sample operation. Executes Python code and returns requsted variables
+/// Sample operation. 
+/// Process requests to:
+///  - Execute Python code and return requsted variables (string/stream)
+///  - Save/Restore context
+///  - Load data into Python
 Class isc.py.ens.Operation Extends Ens.BusinessOperation
 {
 
-Parameter ADAPTER = "isc.py.ens.OutboundAdapter";
+/// Linux only. Path (or just the filename) to python shared lib 
+/// Due to the problems with lib-dynload, sometimes library file should be loaded explicitly on Linux
+/// For more info see: https://bugs.python.org/issue4434
+/// Do not use it, unless you get errors like: undefined symbol: _Py_TrueStruct and similar
+/// In cause of problems set to: "libpython3.6m.so"
+Property PythonLib As %String(MAXLEN = 1000);
 
-Property Adapter As isc.py.ens.OutboundAdapter;
+Parameter SETTINGS = "PythonLib:Basic";
+
+Method OnInit() As %Status
+{
+	do:..PythonLib'="" ##class(isc.py.Callout).Initialize(..PythonLib)
+	quit $$$OK
+}
+
+/// Free Python library
+Method OnTearDown() As %Status
+{
+	do ##class(isc.py.Callout).Finalize()
+	do ##class(isc.py.Callout).Unload()
+	quit $$$OK
+}
 
 XData MessageMap
 {
@@ -32,25 +55,29 @@ Method Execute(request As isc.py.msg.ExecutionRequest, Output response As isc.py
 {
 	#dim sc As %Status = $$$OK
 	set response = ##class(isc.py.msg.ExecutionResponse).%New()
-	set variables = $lfs(request.Variables)
-	
-	set variable = $lg(variables, 1)
 	
 	if request.SeparateLines = $$$YES {
-		set lineSeparator = $c(10)
+		set codeList=$lfs(request.Code, $c(10))
 	} else {
-		set lineSeparator = ""
+		set codeList=$lb(request.Code)
 	}
 	
-	set value = ..Adapter.Execute(request.Code, variable, lineSeparator, .sc)
+	for i=1:1:$ll(codeList) {
+		set line = $lg(codeList, i)
+		$$$TRACE(line)	
+		set sc = ##class(isc.py.Main).SimpleString(line)
+		quit:$$$ISERR(sc)
+	}
 	quit:$$$ISERR(sc) sc
 	
-	do:variable'="" response.Variables.SetAt(value, variable)
-	
-	for i=2:1:$ll(variables) {
+	set variables = $lfs(request.Variables)	
+	for i=1:1:$ll(variables) {
 		set variable = $lg(variables, i)
 		continue:variable=""
-		set value = ..Adapter.Execute("", variable, , .sc)
+		$$$TRACE("Getting variable: " _ variable)
+		
+		kill value
+		set sc = ##class(isc.py.Main).SimpleString(, variable, , .value)
 		do response.Variables.SetAt(value, variable)
 		quit:$$$ISERR(sc)
 	}
@@ -65,12 +92,27 @@ Method StreamExecute(request As isc.py.msg.StreamExecutionRequest, Output respon
 	set response = ##class(isc.py.msg.StreamExecutionResponse).%New()
 	set variables = $lfs(request.Variables)
 	
-	set sc = ..Adapter.StreamExecute(request.Code, request.SeparateLines)
+	set code = request.Code
+	
+	if request.SeparateLines = $$$YES {
+		set code.LineTerminator = $c(10)
+		
+		while 'code.AtEnd {
+			set line = code.ReadLine($$$MaxLocalLength)
+			$$$TRACE(line)
+			set sc = ##class(isc.py.Main).SimpleString(line)
+			quit:$$$ISERR(sc)
+		}	
+	} else {
+		set sc = ##class(isc.py.Main).ExecuteCode(code)
+	}
+	
 	quit:$$$ISERR(sc) sc
 	
 	for i=1:1:$ll(variables) {
 		set variable = $lg(variables, i)
 		continue:variable=""
+		$$$TRACE("Getting variable: " _ variable)
 		kill stream
 		set sc = ##class(isc.py.Main).GetVariable(variable, ##class(isc.py.Callout).#SerializationStr, .stream)
 		do response.Variables.SetAt(stream, variable)
