@@ -10,6 +10,8 @@ Class isc.py.Main
 ClassMethod SimpleString(code As %String = "", variable As %String = "", serialization As %Integer = {##class(isc.py.Callout).#SerializationStr}, Output result) As %Status
 {
 	#dim sc As %Status = $$$OK
+	#dim sc1 As %Status = $$$OK
+	#dim sc2 As %Status = $$$OK
 	
 	try {
 		set result = ##class(isc.py.Callout).SimpleString(code, variable, serialization)
@@ -23,7 +25,11 @@ ClassMethod SimpleString(code As %String = "", variable As %String = "", seriali
 		}
 	}
 	
-	set sc = $$$ADDSC(sc, ..GetStatus())
+	set sc1 = ..GetStatus()
+	
+	set:$$$ISERR(sc1) sc2 = $$$ERROR($$$GeneralError, $$$FormatText("code: %1, variable: %2, serialization: %3, result: %4", $replace(code, $c(10), $c(10,13)), variable, serialization, $g(result)))
+	
+	set sc = $$$ADDSC(sc2, $$$ADDSC(sc, sc1))
 	
 	quit sc
 }
@@ -68,6 +74,7 @@ ClassMethod ExecuteCode(code As %Stream.Object, variable As %String = "") As %St
 		}
 		quit:$$$ISERR(sc) sc
 		set sc = ##class(isc.py.Callout).StreamExecute()
+		set sc = $$$ADDSC(sc, ..GetStatus())
 	} else {
 		set tempCode = $select(hasVar : variable _ "=", 1:"")
 		if $isObject(code) {
@@ -78,6 +85,17 @@ ClassMethod ExecuteCode(code As %Stream.Object, variable As %String = "") As %St
 		
 		set sc = ..SimpleString(tempCode)
 	}
+	
+	if $$$ISERR(sc) {
+		if $isObject(code) {
+			do code.Rewind()
+			set errorCode = code.Read(1000)
+		} else {
+			set errorCode = $e(code, 1, 1000)
+		}
+		set sc = $$$ADDSC(sc, $$$ERROR($$$GeneralError, $$$FormatText("code: %1, variable: %2", $replace(errorCode, $c(10), $c(10,13)), variable)))
+	}
+	
 	
 	quit sc
 }
@@ -352,7 +370,7 @@ ClassMethod GetStatus() As %Status
 		quit:haxExc="False"
 		
 		set excText = ##class(isc.py.Callout).SimpleString("zzzerr = traceback.format_exception(sys.last_type, sys.last_value, sys.last_traceback)", "zzzerr")
-		set excText = $zcvt(excText, "I", "JSON")
+		set excText = $replace($zcvt(excText, "I", "JSON"), $c(10), $c(10,13))
 		do ##class(isc.py.Callout).SimpleString("del zzzerr, sys.last_type, sys.last_value, sys.last_traceback")
 		set sc = $$$ERROR($$$GeneralError, excText)
 	} catch ex {
