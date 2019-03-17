@@ -1,0 +1,15 @@
+ ; %ZLANGC00
+ ; custom commands for ObjectScript
+ ; https://docs.intersystems.com/latest/csp/docbook/DocBook.UI.Page.cls?KEY=GSTU_customize#GSTU_customize_zlang
+  Quit    
+
+ZPY(command) Public
+	set:$namespace'="PYTHON" $namespace = "PYTHON" 
+	if ((command [ "=") || (command [ " ")) {
+		set sc = ##class(isc.py.Main).SimpleString(command)
+	} else {
+		set sc = ##class(isc.py.Main).SimpleString(,command,,.result)
+		write:sc result
+	}
+	write:'sc $System.Status.GetErrorText(sc)
+	quit
