@@ -70,16 +70,24 @@ Method Execute(request As isc.py.msg.ExecutionRequest, Output response As isc.py
 	}
 	quit:$$$ISERR(sc) sc
 	
-	set variables = $lfs(request.Variables)	
+	set serialization = request.Serialization
+	set variables = $lfs(request.Variables)
 	for i=1:1:$ll(variables) {
 		set variable = $lg(variables, i)
 		continue:variable=""
 		$$$TRACE("Getting variable: " _ variable)
 		
 		kill value
-		set sc = ##class(isc.py.Main).SimpleString(, variable, , .value)
-		do response.Variables.SetAt(value, variable)
+		
+		if ((serialization = "Str") || (serialization = "Repr")) {
+			set sc = ##class(isc.py.Main).SimpleString(, variable, $parameter("isc.py.Callout", "Serialization" _ serialization), .value)
+		} elseif (serialization = "JSON") {
+			set sc = ##class(isc.py.Main).GetVariableJson(variable, .value, $$$YES)
+		} elseif (serialization = "Pickle") {
+			set sc = ##class(isc.py.Main).GetVariablePickle(variable, .value, $$$YES)
+		}
 		quit:$$$ISERR(sc)
+		do response.Variables.SetAt(value, variable)
 	}
 	
 	quit sc
@@ -90,7 +98,7 @@ Method StreamExecute(request As isc.py.msg.StreamExecutionRequest, Output respon
 {
 	#dim sc As %Status = $$$OK
 	set response = ##class(isc.py.msg.StreamExecutionResponse).%New()
-	set variables = $lfs(request.Variables)
+	
 	
 	set code = request.Code
 	
@@ -109,14 +117,24 @@ Method StreamExecute(request As isc.py.msg.StreamExecutionRequest, Output respon
 	
 	quit:$$$ISERR(sc) sc
 	
+	set serialization = request.Serialization
+	set variables = $lfs(request.Variables)
 	for i=1:1:$ll(variables) {
 		set variable = $lg(variables, i)
 		continue:variable=""
 		$$$TRACE("Getting variable: " _ variable)
+		
 		kill stream
-		set sc = ##class(isc.py.Main).GetVariable(variable, ##class(isc.py.Callout).#SerializationStr, .stream)
-		do response.Variables.SetAt(stream, variable)
+		
+		if ((serialization = "Str") || (serialization = "Repr")) {
+			set sc = ##class(isc.py.Main).GetVariable(variable, $parameter("isc.py.Callout", "Serialization" _ serialization), .stream)
+		} elseif (serialization = "JSON") {
+			set sc = ##class(isc.py.Main).GetVariableJson(variable, .stream)
+		} elseif (serialization = "Pickle") {
+			set sc = ##class(isc.py.Main).GetVariablePickle(variable, .stream)
+		}		
 		quit:$$$ISERR(sc)
+		do response.Variables.SetAt(stream, variable)
 	}
 	
 	quit sc

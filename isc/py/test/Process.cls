@@ -7,6 +7,18 @@ Property ConnectionType As %String(MAXLEN = 4, VALUELIST = ",RAW,JDBC,ODBC") [ I
 
 Parameter SETTINGS = "ConnectionType:Basic";
 
+Storage Default
+{
+<Data name="ProcessDefaultData">
+<Subscript>"Process"</Subscript>
+<Value name="1">
+<Value>ConnectionType</Value>
+</Value>
+</Data>
+<DefaultData>ProcessDefaultData</DefaultData>
+<Type>%Library.CacheStorage</Type>
+}
+
 /// BPL Definition
 XData BPL [ XMLNamespace = "http://www.intersystems.com/bpl" ]
 {
@@ -62,11 +74,11 @@ cnxn.close()]]></annotation>
 <call name='Correlation Matrix: Tabular' target='isc.py.ens.Operation' async='1' xpos='200' ypos='900' >
 <annotation><![CDATA[Data0=Data.drop(['WEEK'],axis=1)
 corrmat=Data0.corr()
-corrmat.columns.name='CATEGORY'
-result=corrmat.to_string()]]></annotation>
+corrmat.columns.name='CATEGORY']]></annotation>
 <request type='isc.py.msg.ExecutionRequest' >
-<assign property="callrequest.Variables" value="&quot;result&quot;" action="set" />
+<assign property="callrequest.Variables" value="&quot;corrmat&quot;" action="set" />
 <assign property="callrequest.Code" value="process.GetAnnotation(&quot;Correlation Matrix: Tabular&quot;)" action="set" />
+<assign property="callrequest.Serialization" value="&quot;JSON&quot;" action="set" />
 </request>
 <response type='isc.py.msg.ExecutionResponse' />
 </call>
@@ -94,18 +106,6 @@ plt.close(f)]]></annotation>
 <sync name='Wait: Save Context' calls='Save Context' type='all' xpos='200' ypos='1400' />
 </sequence>
 </process>
-}
-
-Storage Default
-{
-<Data name="ProcessDefaultData">
-<Subscript>"Process"</Subscript>
-<Value name="1">
-<Value>ConnectionType</Value>
-</Value>
-</Data>
-<DefaultData>ProcessDefaultData</DefaultData>
-<Type>%Library.CacheStorage</Type>
 }
 
 }

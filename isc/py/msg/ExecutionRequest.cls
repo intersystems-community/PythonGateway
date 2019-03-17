@@ -14,6 +14,9 @@ Property Variables As %String;
 /// this feature is only for `def` and similar multi-line expressions processing.
 Property SeparateLines As %Boolean [ InitialExpression = {$$$YES} ];
 
+/// How to serialize variables we want to return
+Property Serialization As %String(VALUELIST = ",Str,Repr,JSON,Pickle") [ InitialExpression = "Str" ];
+
 Storage Default
 {
 <Data name="ExecutionRequestDefaultData">
@@ -26,6 +29,9 @@ Storage Default
 </Value>
 <Value name="3">
 <Value>SeparateLines</Value>
+</Value>
+<Value name="4">
+<Value>Serialization</Value>
 </Value>
 </Data>
 <DefaultData>ExecutionRequestDefaultData</DefaultData>
