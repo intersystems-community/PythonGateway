@@ -15,7 +15,7 @@ Property Variables As %String;
 Property SeparateLines As %Boolean [ InitialExpression = {$$$YES} ];
 
 /// How to serialize variables we want to return
-Property Serialization As %String(VALUELIST = ",Str,Repr,JSON,Pickle") [ InitialExpression = "Str" ];
+Property Serialization As %String(VALUELIST = ",Str,Repr,JSON,Pickle,Dill") [ InitialExpression = "Str" ];
 
 Storage Default
 {

@@ -83,8 +83,8 @@ Method Execute(request As isc.py.msg.ExecutionRequest, Output response As isc.py
 			set sc = ##class(isc.py.Main).SimpleString(, variable, $parameter("isc.py.Callout", "Serialization" _ serialization), .value)
 		} elseif (serialization = "JSON") {
 			set sc = ##class(isc.py.Main).GetVariableJson(variable, .value, $$$YES)
-		} elseif (serialization = "Pickle") {
-			set sc = ##class(isc.py.Main).GetVariablePickle(variable, .value, $$$YES)
+		} elseif ((serialization = "Pickle") || (serialization = "Dill")) {
+			set sc = ##class(isc.py.Main).GetVariablePickle(variable, .value, $$$YES, (serialization="Dill"))
 		}
 		quit:$$$ISERR(sc)
 		do response.Variables.SetAt(value, variable)
@@ -130,8 +130,8 @@ Method StreamExecute(request As isc.py.msg.StreamExecutionRequest, Output respon
 			set sc = ##class(isc.py.Main).GetVariable(variable, $parameter("isc.py.Callout", "Serialization" _ serialization), .stream)
 		} elseif (serialization = "JSON") {
 			set sc = ##class(isc.py.Main).GetVariableJson(variable, .stream)
-		} elseif (serialization = "Pickle") {
-			set sc = ##class(isc.py.Main).GetVariablePickle(variable, .stream)
+		} elseif ((serialization = "Pickle") || (serialization="Dill")) {
+			set sc = ##class(isc.py.Main).GetVariablePickle(variable, .stream, , (serialization="Dill"))
 		}		
 		quit:$$$ISERR(sc)
 		do response.Variables.SetAt(stream, variable)
