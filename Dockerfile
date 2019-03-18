@@ -85,7 +85,7 @@ RUN set -ex; \
 		\) -exec rm -rf '{}' +; \
 	rm -f get-pip.py
 
-RUN pip install pandas matplotlib seaborn numpy
+RUN pip install pandas matplotlib seaborn numpy dill
 
 # now for InterSystems IRIS
 
