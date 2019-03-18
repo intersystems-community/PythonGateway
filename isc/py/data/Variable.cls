@@ -5,10 +5,10 @@ Class isc.py.data.Variable Extends %Persistent
 Parameter DisplayLimit = 100;
 
 /// Variable Name	
-Property Name As %String;
+Property Name As %String(MAXLEN = 100);
 
 /// Variable Class
-Property Type As %String;
+Property Type As %String(MAXLEN = 100);
 
 /// Variable repr serialization
 Property Value As %Stream.GlobalCharacter;
