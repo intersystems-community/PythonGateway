@@ -383,6 +383,7 @@ ClassMethod GetStatus() As %Status
 /// zwrite ##class(isc.py.Main).GetVariableJson()
 ClassMethod GetVariableJson(variable As %String, ByRef stream As %Stream.Object, useString As %Boolean = {$$$NO}) As %Status
 {
+	set stream = ""
 	set sc = ..GetVariableInfo(variable, ##class(isc.py.Callout).#SerializationStr, .defined, .type, .length)
 	quit:$$$ISERR(sc) sc
 	quit:'defined $$$ERROR($$$GeneralError, "Variable '" _ variable _ "' is not defined")
@@ -448,6 +449,7 @@ ClassMethod GetVariableJson(variable As %String, ByRef stream As %Stream.Object,
 /// zwrite ##class(isc.py.Main).GetVariablePickle()
 ClassMethod GetVariablePickle(variable As %String, ByRef stream As %Stream.Object, useString As %Boolean = {$$$NO}, useDill As %Boolean = {$$$NO}) As %Status
 {
+	set stream = ""
 	set sc = ..GetVariableInfo(variable, ##class(isc.py.Callout).#SerializationStr, .defined, .type, .length)
 	quit:$$$ISERR(sc) sc
 	quit:'defined $$$ERROR($$$GeneralError, "Variable '" _ variable _ "' is not defined")
