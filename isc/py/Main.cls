@@ -279,7 +279,12 @@ ClassMethod GetVariableInfo(variable As %String = "", serialization As %Integer 
 	kill defined, type, length
 	
 	quit:variable="" $$$ERROR($$$GeneralError, "Variable argument should be set")
-	set sc = ..SimpleString("zzzdef='" _ variable _ "' in vars() or '" _ variable _ "' in globals()", "zzzdef", , .defined)
+	
+	if $l(variable, ".") = 1 {
+		set sc = ..SimpleString("zzzdef='" _ variable _ "' in (vars() or globals()", "zzzdef", , .defined)
+	} else {
+		set sc = ..SimpleString("zzzdef=hasattr(" _ $p(variable, ".", 1, *-1) _ ", '" _ $p(variable, ".", *) _ "')", "zzzdef", , .defined)
+	}
 	quit:$$$ISERR(sc) sc
 	set defined = $case(defined, "True":$$$YES, "False":$$$NO, :"")
 	
