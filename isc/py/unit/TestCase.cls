@@ -361,5 +361,55 @@ ClassMethod PassProductionStream(count As %Integer = 1000000, separateLines As %
 	write "SessionId: ", $g(sessionId), !
 }
 
+/// Test ExecuteFunction method
+/// do ##class(isc.py.unit.TestCase).TestExecuteFunction()
+Method TestExecuteFunction()
+{
+	set sc = ##class(isc.py.Main).ImportModule("random", ,.random)
+	
+	set posList = $lb(1, 100)
+	set posCollection = ##class(%ListOfDataTypes).%New()
+	do posCollection.Insert(1)
+	do posCollection.Insert(100)
+	
+	set posDynamic = [1, 100]
+	
+	for positionalArguments = posList,posCollection,posDynamic {
+		kill result
+		set sc = ##class(isc.py.Main).ExecuteFunction(random _ ".randint", positionalArguments,,,.result)
+		do $$$AssertStatusOK(sc, "randint positionalArguments execution OK")
+		do $$$AssertTrue(((result>=1)&&(result<=100)), "Randint returned integer between 1 and 100")
+	}
+	
+	set kwList = $lb($lb("a", 1), $lb("b", 100))
+	set kwCollection = ##class(%ArrayOfDataTypes).%New()
+	do kwCollection.SetAt(1, "a")
+	do kwCollection.SetAt(100, "b")
+	
+	set kwDynamic = { "a": 1, "b": 100}
+	
+	for kwArguments = kwList,kwCollection,kwDynamic {
+		kill result
+		set sc = ##class(isc.py.Main).ExecuteFunction(random _ ".randint", ,kwArguments,,.result)
+		do $$$AssertStatusOK(sc, "randint keyword execution OK")
+		do $$$AssertTrue(((result>=1)&&(result<=100)), "Randint returned integer between 1 and 100")
+	}
+	
+	kill result
+	set posList = $lb(1)
+	set kwDynamic = {"b": 100}
+	set sc = ##class(isc.py.Main).ExecuteFunction(random _ ".randint", posList, kwDynamic,,.result)
+	do $$$AssertStatusOK(sc, "randint mixed execution OK")
+	do $$$AssertTrue(((result>=1)&&(result<=100)), "Randint returned integer between 1 and 100")
+	
+	kill result
+	set posList = ##class(isc.py.util.Converter).EscapeStringList($lb("Positional: {0} {1}! Keyword: {name}, {name2}", "Hello", "World"))
+	set kwDynamic = {	"name":(##class(isc.py.util.Converter).EscapeString("Alice")), 
+						"name2":(##class(isc.py.util.Converter).EscapeString("Bob"))}
+	set sc = ##class(isc.py.Main).ExecuteFunction("str.format", posList, kwDynamic,,.result)
+	do $$$AssertStatusOK(sc, "str.format execution OK")
+	do $$$AssertEquals(result, "Positional: Hello World! Keyword: Alice, Bob", "str.format returned expected string")
+}
+
 }
 

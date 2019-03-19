@@ -280,10 +280,14 @@ ClassMethod GetVariableInfo(variable As %String = "", serialization As %Integer 
 	quit:variable="" $$$ERROR($$$GeneralError, "Variable argument should be set")
 	
 	if $l(variable, ".") = 1 {
-		set sc = ..SimpleString("zzzdef='" _ variable _ "' in (vars() or globals())", "zzzdef", , .defined)
+		set module = "__builtins__"
+		set varLocal = variable
 	} else {
-		set sc = ..SimpleString("zzzdef=hasattr(" _ $p(variable, ".", 1, *-1) _ ", '" _ $p(variable, ".", *) _ "')", "zzzdef", , .defined)
+		set module = $p(variable, ".", 1, *-1)
+		set varLocal = $p(variable, ".", *)	
 	}
+	set sc = ..SimpleString("zzzdef='" _ variable _ "' in (vars() or globals()) or hasattr(" _ module _ ", '" _ varLocal _ "')", "zzzdef", , .defined)
+	
 	quit:$$$ISERR(sc) sc
 	set defined = ##class(isc.py.util.Converter).PythonToBoolean(defined)
 	
@@ -315,6 +319,7 @@ ClassMethod GetVariableInfo(variable As %String = "", serialization As %Integer 
 /// signature - function signature as it apperas in Python source code
 /// arguments - signature parsed into JSON array: [args, varargs, varkw, kwonlyargs, kwonlydefaults, annotations]
 /// see https://docs.python.org/3/library/inspect.html#inspect.getfullargspec for details 
+/// also https://docs.python.org/3/glossary.html#term-parameter
 /// set sc = ##class(isc.py.Main).GetFunctionInfo()
 ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean, Output type, Output docs As %VarString, Output signature As %VarString, Output arguments As %VarString) As %Status
 {
@@ -324,7 +329,7 @@ ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean
 	quit:function="" $$$ERROR($$$GeneralError, "Variable argument should be set")
 	set sc = ..GetVariableInfo(function, , .defined, .type, .length)
 	quit:$$$ISERR(sc) sc
-	quit:((type'="function") && (type'="method")) $$$ERROR($$$FormatText("%1 is not a function/method, but a %2", function, type))
+	quit:((type'="function") && (type'="method") && (type'="builtin_function_or_method") && (type'="method_descriptor")) $$$ERROR($$$FormatText("%1 is not a function/method, but a %2", function, type))
 	
 	if defined {
 		set sc = ..ImportModule("inspect", , .inspect)
@@ -334,15 +339,25 @@ ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean
 					
 		set sc = ..SimpleString("zzzdocs=" _ inspect _ ".getdoc(" _ function _ ")", "zzzdocs", , .docs)
 		quit:$$$ISERR(sc) sc
+		set sc = ..SimpleString("del zzzdocs")
 		set:docs="None" docs = ""
 		
 		set sc = ..SimpleString("zzzsignature=" _ inspect _ ".signature(" _ function _ ")", "zzzsignature", , .signature)
-		quit:$$$ISERR(sc) sc
+		if $$$OK {
+			set sc = ..SimpleString("del zzzsignature")
+		} else {
+			set signature = ""
+		}
 		
 		set sc = ..SimpleString("zzzargs="_json_".dumps(" _ inspect _ ".getfullargspec(" _ function _ "))", "zzzargs", , .arguments)
-		quit:$$$ISERR(sc) sc
+		if $$$OK {
+			set sc = ..SimpleString("del zzzargs")
+		} else {
+			set arguments = ""
+		}
 		
-		set sc = ..SimpleString("del zzzargs, zzzsignature, zzzdocs")
+		/// Some C defined functions do not have introspectable arguments and signature 
+		set sc = $$$OK
 	}
 	
 	quit sc
@@ -352,8 +367,8 @@ ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean
 /// positionalArguments - $lb(val1, val2, ..., valN) or any %Collection.AbstractIterator class or JSON array
 /// keywordArguments - $lb($lb(name1, val1), $lb(name2, val2), ..., $lb(nameN, valN)) or any %Collection.AbstractArray class or flat JSON object 
 /// Each
-/// set sc = ##class(isc.py.Main).CallFunction()
-ClassMethod CallFunction(function As %String, positionalArguments As %List, keywordArguments As %List, serialization As %Integer = {##class(isc.py.Callout).#SerializationStr}, Output result As %String) As %Status
+/// set sc = ##class(isc.py.Main).ExecuteFunction()
+ClassMethod ExecuteFunction(function As %String, positionalArguments As %List, keywordArguments As %List, serialization As %Integer = {##class(isc.py.Callout).#SerializationStr}, Output result As %String) As %Status
 {
 	#dim sc As %Status = $$$OK
 	kill defined, type
@@ -391,7 +406,7 @@ ClassMethod CallFunction(function As %String, positionalArguments As %List, keyw
 			if keywordArguments.%Extends("%Collection.AbstractIterator") {
 				set keywordArgumentsComputed = ##class(isc.py.util.Converter).CollectionToList(keywordArguments, $$$YES)
 			} elseif keywordArguments.%Extends("%Library.DynamicAbstractObject") {
-				set keywordArgumentsComputed = ##class(isc.py.util.Converter).DynamicToList(positionalArguments, $$$YES)
+				set keywordArgumentsComputed = ##class(isc.py.util.Converter).DynamicToList(keywordArguments, $$$YES)
 			} else {
 				set sc = $$$ERROR($$$GeneralError, "keywordArguments is not a $list and not an object")
 			}
@@ -405,7 +420,7 @@ ClassMethod CallFunction(function As %String, positionalArguments As %List, keyw
 	
 	set code = code _ ")"
 	
-	//zw code
+	zw code
 	set sc = ..SimpleString(code, "zzzresult", serialization, .result)
 	quit:$$$ISERR(sc) sc
 	

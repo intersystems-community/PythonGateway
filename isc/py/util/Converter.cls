@@ -2,6 +2,22 @@
 Class isc.py.util.Converter
 {
 
+/// Escapes list of strings to be used as an argument in Python functions, etc.
+/// Should always eval as a string
+/// If usePython = 1 then Python is used to escape the string.
+/// If usePython = 0 then $zcvt is used.
+/// Please report if you found a faulty string, which $zcvt does not escape correctly.
+/// Python escape uses PyUnicode_FromString -> PyUnicode_DecodeUTF8Stateful
+/// Source: https://github.com/python/cpython/blob/master/Objects/unicodeobject.c#L4813
+ClassMethod EscapeStringList(list As %List, usePython As %Boolean = {$$$NO}) As %String
+{
+	for i=1:1:$ll(list) {
+		set $list(list, i) = ..EscapeString($lg(list, i), usePython)
+	}
+	
+	quit list
+}
+
 /// Escapes string to be used as an argument in Python functions, etc.
 /// Should always eval as a string
 /// If usePython = 1 then Python is used to escape the string.
