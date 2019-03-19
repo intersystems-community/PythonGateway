@@ -74,7 +74,7 @@ ClassMethod Setup() As %Status
 /// Do not use it, unless you get errors like: undefined symbol: _Py_TrueStruct and so on
 /// do ##class(isc.py.Callout).Initialize()
 /// In cause of problems: do ##class(isc.py.Callout).Initialize("libpython3.6m.so") 
-ClassMethod Initialize(file As %String = "") As %Integer
+ClassMethod Initialize(file As %String = "") As %Status
 {
 	#dim sc As %Status = $$$OK
 	try {

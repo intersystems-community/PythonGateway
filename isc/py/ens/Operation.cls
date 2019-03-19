@@ -13,12 +13,24 @@ Class isc.py.ens.Operation Extends Ens.BusinessOperation
 /// In cause of problems set to: "libpython3.6m.so"
 Property PythonLib As %String(MAXLEN = 1000);
 
-Parameter SETTINGS = "PythonLib:Basic";
+Property Initializer As %String;
+
+Parameter SETTINGS = "PythonLib:Basic,Initializer:Basic:selector?context={isc.py.ens.ContextSearch/SubclassOf?class=isc.py.init.Abstract}";
 
 Method OnInit() As %Status
 {
-	do:..PythonLib'="" ##class(isc.py.Callout).Initialize(..PythonLib)
-	quit $$$OK
+	#dim sc As %Status = $$$OK
+	set:..PythonLib'="" sc = ##class(isc.py.Callout).Initialize(..PythonLib)
+	quit:$$$ISERR(sc) sc
+	
+	if (..Initializer'="") {
+		if ##class(%Dictionary.CompiledClass).%ExistsId(..Initializer) {
+			set sc = $classmethod(..Initializer, "Initialize") 
+		} else {
+			set sc = $$$ERROR($$$GeneralError, "Initializer class does not exist or is uncompiled: ", ..Initializer) 
+		}
+	}
+	quit sc
 }
 
 /// Free Python library
