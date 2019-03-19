@@ -86,65 +86,6 @@ int Finalize() {
 	return ZF_SUCCESS;
 }
 
-
-// Test method, returns random double
-int GetRandom(double* random) {
-
-	Py_Initialize();
-	// https://stackoverflow.com/questions/3286448/calling-a-python-method-from-c-c-and-extracting-its-return-value
-	// First, import your module :
-	PyObject* myModuleString = PyUnicode_FromString((char*) "random");
-	PyObject* myModule = PyImport_Import(myModuleString);
-
-	// Then getting a reference to your function :
-	PyObject* myFunction = PyObject_GetAttrString(myModule, (char*) "random");
-	//PyObject* args = PyTuple_Pack(1,PyFloat_FromDouble(2.0));
-	PyObject* args = PyTuple_Pack(0);
-
-	//Then getting your result :
-	PyObject* myResult = PyObject_CallObject(myFunction, args);
-
-	//And getting back to a double :
-	double result = PyFloat_AsDouble(myResult);
-
-	//Py_Main(argc, argv);
-	Py_Finalize();
-	*random = result;
-	// set value to be returned by the $ZF function call
-	return ZF_SUCCESS;   // set the exit status code
-}
-
-// Test method, returns random double
-int GetRandomSimple(double* random) {
-
-	Py_Initialize();
-	PyRun_SimpleString("import random;");
-	PyRun_SimpleString("x=random.random();");
-
-	PyObject *mainModule = PyImport_AddModule("__main__");
-	PyObject *var = PyObject_GetAttrString(mainModule, "x");
-
-	*random = PyFloat_AsDouble(var);
-	Py_Finalize();
-
-	return ZF_SUCCESS;
-}
-
-// Does complete initialization, executes code and finalizes environment
-int SimpleStringFull(char *command, double* result) {
-
-	Py_Initialize();
-	PyRun_SimpleString(command);
-
-	PyObject *mainModule = PyImport_AddModule("__main__");
-	PyObject *var = PyObject_GetAttrString(mainModule, "x");
-
-	*result = PyFloat_AsDouble(var);
-	Py_Finalize();
-
-	return ZF_SUCCESS;
-}
-
 // Execute simple command.
 // Initializes environment if required
 // Does not finalize the environment.
@@ -263,6 +204,32 @@ int StreamExecute()
 	return ZF_SUCCESS;
 }
 
+/// Escape string
+int EscapeString(CACHE_EXSTRP string,  CACHE_EXSTRP result)
+{
+	if (isInitialized == false) {
+		Initialize(NULL);
+	}
+
+	PyObject *var = PyUnicode_FromStringAndSize(string->str.ch, string->len);
+	PyObject *varStr = PyObject_Repr(var);
+	char* str = PyUnicode_AsUTF8(varStr);
+
+	int len = strlen(str);
+	CACHEEXSTRKILL(result);
+	if (!CACHEEXSTRNEW(result,len)) {
+		return ZF_FAILURE;
+	}
+	memcpy(result->str.ch, str, len);   // copy to retval->str.ch
+
+	Py_DECREF(var);
+	Py_DECREF(varStr);
+	CACHEEXSTRKILL(string);
+
+	return ZF_SUCCESS;
+
+}
+
 // Code for testing and debugging as an executable
 int main(int argc, char **argv) {
 	printf("X: ");
@@ -285,11 +252,9 @@ int main(int argc, char **argv) {
 ZFBEGIN
 	ZFENTRY("Initialize","c",Initialize)
 	ZFENTRY("Finalize","",Finalize)
-	ZFENTRY("GetRandom","D",GetRandom)
-	ZFENTRY("GetRandomSimple","D",GetRandomSimple)
-	ZFENTRY("SimpleStringFull","cD",SimpleStringFull)
 	ZFENTRY("SimpleString","jciJ",SimpleString)
 	ZFENTRY("StreamInit","i",StreamInit)
 	ZFENTRY("StreamWrite","j",StreamWrite)
 	ZFENTRY("StreamExecute","",StreamExecute)
+	ZFENTRY("EscapeString","jJ",EscapeString)
 ZFEND

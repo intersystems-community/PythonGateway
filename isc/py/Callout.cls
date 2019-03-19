@@ -19,19 +19,15 @@ Parameter Initialize As Integer = 1;
 
 Parameter Finalize As Integer = 2;
 
-Parameter GetRandom As Integer = 3;
+Parameter SimpleString As Integer = 3;
 
-Parameter GetRandomSimple As Integer = 4;
+Parameter StreamInit As Integer = 4;
 
-Parameter SimpleStringFull As Integer = 5;
+Parameter StreamWrite As Integer = 5;
 
-Parameter SimpleString As Integer = 6;
+Parameter StreamExecute As Integer = 6;
 
-Parameter StreamInit As Integer = 7;
-
-Parameter StreamWrite As Integer = 8;
-
-Parameter StreamExecute As Integer = 9;
+Parameter EscapeString As Integer = 7;
 
 /// Get path to the shared library file. 
 /// Library file is assumed to be in a bin folder, unless specified otherwise in ^isc.py.Callout global.
@@ -87,33 +83,6 @@ ClassMethod Initialize(file As %String = "") As %Integer
 		set sc = ex.AsStatus()
 	}
 	quit sc
-}
-
-/// Test method. Get random number
-/// w ##class(isc.py.Callout).GetRandom()
-ClassMethod GetRandom() As %Double
-{
-	set random = $ZF(-6, ..#PyLibId, ..#GetRandom)
-	quit random
-}
-
-/// Test method. Get random number
-/// w ##class(isc.py.Callout).GetRandomSimple()
-ClassMethod GetRandomSimple() As %Double
-{
-	set random = $ZF(-6, ..#PyLibId, ..#GetRandomSimple)
-	quit random
-}
-
-/// Init, eval code and return variable x.
-/// w ##class(isc.py.Callout).SimpleStringFull()
-ClassMethod SimpleStringFull(code = {"import random;" _ $$$NL _ "x=random.random();"}) As %Double
-{
-	set:$ZISWIDE(code) code = $zcvt(code, "O", "UTF8")
-
-	set result = $ZF(-6, ..#PyLibId, ..#SimpleStringFull, code)
-	set result = $zcvt(result, "I", "UTF8")
-	quit result
 }
 
 /// Eval code vaiable in initialized context and 
@@ -187,6 +156,19 @@ ClassMethod StreamExecute() As %Status
 	}
 	
 	quit sc
+}
+
+/// Write piece into incoming Stream.
+/// If initial length is not enough, additional allocation is performed.
+/// write ##class(isc.py.Callout).EscapeString()
+ClassMethod EscapeString(string As %String = "") As %String
+{
+	set:$ZISWIDE(string) string = $zcvt(string, "O", "UTF8")
+	set result = $ZF(-6, ..#PyLibId, ..#EscapeString, string)
+	
+	// Slows getting result by ~50%
+	set result = $zcvt(result, "I", "UTF8")
+	quit result
 }
 
 /// Finalize Python. Idempotent.
