@@ -23,7 +23,7 @@ ClassMethod SaveFunction(function As %String = "", Output obj As isc.py.data.Fun
 	kill obj
 	quit:function="" $$$ERROR($$$GeneralError, "Variable name can't be empty")
 	
-	set sc = ##class(isc.py.Main).GetFunctionInfo(function, .defined, .docs, .signature, .arguments)
+	set sc = ##class(isc.py.Main).GetFunctionInfo(function, .defined, .type, .docs, .signature, .arguments)
 	quit:$$$ISERR(sc) sc
 	
 	set sc = ##class(isc.py.Main).GetVariablePickle(function ,.dill,, $$$YES)

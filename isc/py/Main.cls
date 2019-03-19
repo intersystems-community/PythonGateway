@@ -177,21 +177,20 @@ ClassMethod ExecuteQuery(query As %String, variable As %String, type As %String(
 			
 			set colType = $lg(typeList, i)
 			if colType = "bool" {
-				set rowList = rowList _ $lb($case(value, $$$YES:"True", $$$NO:"False", :"'" _ value _ "'"))
+				set rowList = rowList _ $lb(##class(isc.py.util.Converter).BooleanToPython(value))
 			} elseif colType = "numeric" {
 				set:value="" value = "''"
 				set rowList = rowList _ $lb(value)
 			} elseif colType = "timestamp" {
-				// from unixtime
-				set rowList = rowList _ $lb(datetime _ ".datetime.fromtimestamp(" _ $zdt($zdth(value,3,1),-2) _ ")")
+				set rowList = rowList _ $lb(##class(isc.py.util.Converter).ODBCTimeStampToPython(datetime, value))
 			} elseif colType = "date" {
-				set rowList = rowList _ $lb(datetime _ ".date(" _ $e(value,1,4) _ "," _ +$e(value,6,7) _ "," _ + $e(value,9,10) _ ")")
+				set rowList = rowList _ $lb(##class(isc.py.util.Converter).ODBCDateToPython(datetime, value))
 				// TODO Python 3.7 added date.fromisoformat("YYYY-MM-DD")
 			} elseif colType = "time" {
-				set rowList = rowList _ $lb(datetime _ ".time(" _ +$e(value,1,2) _ "," _ +$e(value,4,5) _ "," _ + $e(value,7,8) _ ")")
+				set rowList = rowList _ $lb(##class(isc.py.util.Converter).ODBCTimeToPython(datetime, value))
 			} else {
 				// TODO Python String escaper		
-				set rowList = rowList _ $lb("'" _ $replace($replace(value, "\", "\\"), "'", "\'")  _ "'")
+				set rowList = rowList _ $lb(##class(isc.py.util.Converter).EscapeString(value))
 			}
 		}
 		do data.Write("(" _	$lts(rowList, ",") _ ")")
@@ -281,12 +280,12 @@ ClassMethod GetVariableInfo(variable As %String = "", serialization As %Integer 
 	quit:variable="" $$$ERROR($$$GeneralError, "Variable argument should be set")
 	
 	if $l(variable, ".") = 1 {
-		set sc = ..SimpleString("zzzdef='" _ variable _ "' in (vars() or globals()", "zzzdef", , .defined)
+		set sc = ..SimpleString("zzzdef='" _ variable _ "' in (vars() or globals())", "zzzdef", , .defined)
 	} else {
 		set sc = ..SimpleString("zzzdef=hasattr(" _ $p(variable, ".", 1, *-1) _ ", '" _ $p(variable, ".", *) _ "')", "zzzdef", , .defined)
 	}
 	quit:$$$ISERR(sc) sc
-	set defined = $case(defined, "True":$$$YES, "False":$$$NO, :"")
+	set defined = ##class(isc.py.util.Converter).PythonToBoolean(defined)
 	
 	if defined {	
 		set sc = ..SimpleString("zzztype=('' if " _ variable _ ".__class__.__module__ is None or " _ variable _ ".__class__.__module__ == str.__class__.__module__ else " _ variable _ ".__class__.__module__ + '.') + " _ variable _ ".__class__.__name__", "zzztype", , .type)
@@ -311,20 +310,21 @@ ClassMethod GetVariableInfo(variable As %String = "", serialization As %Integer 
 /// Get function metainformation.
 /// function - variable name
 /// defined - is function defined
+/// type - function or method
 /// docs - function description if any
 /// signature - function signature as it apperas in Python source code
 /// arguments - signature parsed into JSON array: [args, varargs, varkw, kwonlyargs, kwonlydefaults, annotations]
 /// see https://docs.python.org/3/library/inspect.html#inspect.getfullargspec for details 
 /// set sc = ##class(isc.py.Main).GetFunctionInfo()
-ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean, Output docs As %VarString, Output signature As %VarString, Output arguments As %VarString) As %Status
+ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean, Output type, Output docs As %VarString, Output signature As %VarString, Output arguments As %VarString) As %Status
 {
 	#dim sc As %Status = $$$OK
-	kill defined, type, length
+	kill defined, type
 	
 	quit:function="" $$$ERROR($$$GeneralError, "Variable argument should be set")
 	set sc = ..GetVariableInfo(function, , .defined, .type, .length)
 	quit:$$$ISERR(sc) sc
-	quit:type'="function" $$$ERROR($$$FormatText("%1 is not a function, but a %2", function, type))
+	quit:((type'="function") && (type'="method")) $$$ERROR($$$FormatText("%1 is not a function/method, but a %2", function, type))
 	
 	if defined {
 		set sc = ..ImportModule("inspect", , .inspect)
@@ -344,6 +344,72 @@ ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean
 		
 		set sc = ..SimpleString("del zzzargs, zzzsignature, zzzdocs")
 	}
+	
+	quit sc
+}
+
+/// Call arbitrary method or function.
+/// positionalArguments - $lb(val1, val2, ..., valN) or any %Collection.AbstractIterator class or JSON array
+/// keywordArguments - $lb($lb(name1, val1), $lb(name2, val2), ..., $lb(nameN, valN)) or any %Collection.AbstractArray class or flat JSON object 
+/// Each
+/// set sc = ##class(isc.py.Main).CallFunction()
+ClassMethod CallFunction(function As %String, positionalArguments As %List, keywordArguments As %List, serialization As %Integer = {##class(isc.py.Callout).#SerializationStr}, Output result As %String) As %Status
+{
+	#dim sc As %Status = $$$OK
+	kill defined, type
+	
+	set sc = ..GetFunctionInfo(function, .defined, .type, , .signature, .arguments)
+	
+	set code = "zzzresult=" _ function _ "("
+	if $d(positionalArguments) {
+		if (($listvalid(positionalArguments)) && ($ll(positionalArguments)>0)) {
+			set code = code _ $lts(positionalArguments)
+		} elseif $isObject(positionalArguments) {
+			if positionalArguments.%Extends("%Collection.AbstractIterator") {
+				set code = code _ $lts(##class(isc.py.util.Converter).CollectionToList(positionalArguments))
+			} elseif positionalArguments.%Extends("%Library.DynamicAbstractObject") {
+				set code = code _ $lts(##class(isc.py.util.Converter).DynamicToList(positionalArguments))
+			} else {
+				set sc = $$$ERROR($$$GeneralError, "positionalArguments is not a $list and not an object")
+			}
+		} else {
+			set sc = $$$ERROR($$$GeneralError, "positionalArguments is not a $list and not an object, with value: " _ positionalArguments)
+		}
+	}
+
+	if $d(keywordArguments) {
+		set:$e(code,*)'="(" code = code _ ","
+		
+		/// $lb("key1=value1","key2=value2", ..., "keyN=valueN")
+		#dim keywordArgumentsComputed As %List = ""
+		
+		if (($listvalid(keywordArguments)) && ($ll(keywordArguments)>0)) {
+			for i=1:1:$ll(keywordArguments) {
+				set keywordArgumentsComputed = keywordArgumentsComputed _ $lb($lts($lg(keywordArguments, i), "="))
+			}
+		} elseif $isObject(keywordArguments) {
+			if keywordArguments.%Extends("%Collection.AbstractIterator") {
+				set keywordArgumentsComputed = ##class(isc.py.util.Converter).CollectionToList(keywordArguments, $$$YES)
+			} elseif keywordArguments.%Extends("%Library.DynamicAbstractObject") {
+				set keywordArgumentsComputed = ##class(isc.py.util.Converter).DynamicToList(positionalArguments, $$$YES)
+			} else {
+				set sc = $$$ERROR($$$GeneralError, "keywordArguments is not a $list and not an object")
+			}
+		} else {
+			set sc = $$$ERROR($$$GeneralError, "keywordArguments is not a $list and not an object, with value: " _ positionalArguments)
+		}
+		
+		set code = code _ $lts(keywordArgumentsComputed)
+	}
+	quit:$$$ISERR(sc) sc
+	
+	set code = code _ ")"
+	
+	//zw code
+	set sc = ..SimpleString(code, "zzzresult", serialization, .result)
+	quit:$$$ISERR(sc) sc
+	
+	set sc = ..SimpleString("del zzzresult")
 	
 	quit sc
 }
