@@ -11,6 +11,9 @@ Property Description As %VarString;
 /// List of variables.
 Property Variables As list Of isc.py.data.Variable;
 
+/// List of functions.
+Property Functions As list Of isc.py.data.Function;
+
 /// Array or loaded modules, key - module name, value - alias.
 Property Modules As array Of %String(SQLPROJECTION = "table/column", STORAGEDEFAULT = "array");
 
@@ -48,7 +51,7 @@ Method PopulateHistory() As %Status
 Method PopulateModules() As %Status
 {
 	#dim sc As %Status = $$$OK
-    set modules = ##class(isc.py.Callout).SimpleString("zzzmodules=json.dumps(list(zzzmodulesfunc()))", "zzzmodules")
+    set modules = ##class(isc.py.Callout).SimpleString("zzzmodules=json.dumps(list(zzzelementfunc(types.ModuleType)))", "zzzmodules")
 	do ##class(isc.py.Callout).SimpleString("del zzzmodules")
 	set modules = {}.%FromJSON(modules)
 	
@@ -75,14 +78,36 @@ Method PopulateVariables(maxLength As %Integer = {$$$MaxStringLength}, mask As %
 	
 	set iterator = variables.%GetIterator()
 	while iterator.%GetNext(.key, .variable) {
-		#dim varObj As isc.py.data.Varable
 		kill varObj
+		#dim varObj As isc.py.data.Varable
 		if ##class(isc.py.util.Matcher).MatchOr(variable, mask) {
 			set sc = ##class(isc.py.data.Variable).SaveVariable(variable, maxLength, .varObj)
 			quit:$$$ISERR(sc)
 			do:$isObject($g(varObj)) ..Variables.Insert(varObj)
 		}
+	}
+	
+	quit sc
+}
 
+/// Save global functions
+Method PopulateFunctions() As %Status
+{
+	#dim sc As %Status = $$$OK
+    set functions = ##class(isc.py.Callout).SimpleString("zzzfunctions=json.dumps(list(zzzelementfunc(types.FunctionType)))", "zzzfunctions")
+	do ##class(isc.py.Callout).SimpleString("del zzzfunctions")
+	set functions = {}.%FromJSON(functions)
+	
+	set iterator = functions.%GetIterator()
+	while iterator.%GetNext(.key, .value) {
+		set function = value.%Get(1)
+		continue:$e(function,1,3)="zzz"
+		kill funcObj
+		#dim funcObj As isc.py.data.Function
+		
+		set sc = ##class(isc.py.data.Function).SaveFunction(function, .funcObj)
+		quit:$$$ISERR(sc)
+		do:$isObject($g(funcObj)) ..Functions.Insert(funcObj)
 	}
 	
 	quit sc
@@ -93,9 +118,9 @@ Method PopulateVariables(maxLength As %Integer = {$$$MaxStringLength}, mask As %
 Method Init()
 {
 	do ##class(isc.py.Callout).SimpleString("import types, json") // readline
-	do ##class(isc.py.Callout).SimpleString("def zzzmodulesfunc():"_ $c(10) _ 
+	do ##class(isc.py.Callout).SimpleString("def zzzelementfunc(type):"_ $c(10) _ 
 											"    for name, val in globals().items():"_ $c(10) _
-											"        if isinstance(val, types.ModuleType):"_ $c(10) _
+											"        if isinstance(val, type):"_ $c(10) _
 											"            yield val.__name__, name")
 	do ##class(isc.py.Callout).SimpleString("def zzzvarsfunc():"_ $c(10) _ 
 											"    for name, val in globals().items():"_ $c(10) _
@@ -117,6 +142,8 @@ ClassMethod SaveContext(Output context As isc.py.data.Context, maxLength As %Int
 	set sc = context.PopulateModules()
 	quit:$$$ISERR(sc) sc
 	set sc = context.PopulateVariables(maxLength, mask)
+	quit:$$$ISERR(sc) sc
+	set sc = context.PopulateFunctions()
 	quit:$$$ISERR(sc) sc
 	do:verbose context.Display()
 	
@@ -154,6 +181,14 @@ Method Restore(verbose As %Boolean = {$$$NO}, clear As %Boolean = {$$$NO}) As %S
 		set variable = ..Variables.GetAt(i)
 		continue:variable.Pickle=""
 		do variable.Restore($this)
+	}
+	
+	// Restoring functions
+	for i=1:1:..Functions.Count() {
+		#dim function As isc.py.data.Function
+		set function = ..Functions.GetAt(i)
+		continue:function.Dill=""
+		do function.Restore($this)
 	}
 	
 	do:verbose ..Display()
@@ -228,6 +263,12 @@ Method Display()
 		set variable = ..Variables.GetAt(i)
 		do variable.Display(indent)
 	}
+	
+	write "Functions:", !
+	for i=1:1:..Functions.Count() {
+		set function = ..Functions.GetAt(i)
+		do function.Display(indent)
+	}
 }
 
 Storage Default
@@ -250,6 +291,9 @@ Storage Default
 </Value>
 <Value name="6">
 <Value>CreatedOn</Value>
+</Value>
+<Value name="7">
+<Value>Functions</Value>
 </Value>
 </Data>
 <Data name="Modules">

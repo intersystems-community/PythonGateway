@@ -303,6 +303,46 @@ ClassMethod GetVariableInfo(variable As %String = "", serialization As %Integer 
 	quit sc
 }
 
+/// Get function metainformation.
+/// function - variable name
+/// defined - is function defined
+/// docs - function description if any
+/// signature - function signature as it apperas in Python source code
+/// arguments - signature parsed into JSON array: [args, varargs, varkw, kwonlyargs, kwonlydefaults, annotations]
+/// see https://docs.python.org/3/library/inspect.html#inspect.getfullargspec for details 
+/// set sc = ##class(isc.py.Main).GetFunctionInfo()
+ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean, Output docs As %VarString, Output signature As %VarString, Output arguments As %VarString) As %Status
+{
+	#dim sc As %Status = $$$OK
+	kill defined, type, length
+	
+	quit:function="" $$$ERROR($$$GeneralError, "Variable argument should be set")
+	set sc = ..GetVariableInfo(function, , .defined, .type, .length)
+	quit:$$$ISERR(sc) sc
+	quit:type'="function" $$$ERROR($$$FormatText("%1 is not a function, but a %2", function, type))
+	
+	if defined {
+		set sc = ..ImportModule("inspect", , .inspect)
+		quit:$$$ISERR(sc) sc
+		set sc = ..ImportModule("json", , .json)
+		quit:$$$ISERR(sc) sc
+					
+		set sc = ..SimpleString("zzzdocs=" _ inspect _ ".getdoc(" _ function _ ")", "zzzdocs", , .docs)
+		quit:$$$ISERR(sc) sc
+		set:docs="None" docs = ""
+		
+		set sc = ..SimpleString("zzzsignature=" _ inspect _ ".signature(" _ function _ ")", "zzzsignature", , .signature)
+		quit:$$$ISERR(sc) sc
+		
+		set sc = ..SimpleString("zzzargs="_json_".dumps(" _ inspect _ ".getfullargspec(" _ function _ "))", "zzzargs", , .arguments)
+		quit:$$$ISERR(sc) sc
+		
+		set sc = ..SimpleString("del zzzargs, zzzsignature, zzzdocs")
+	}
+	
+	quit sc
+}
+
 /// Import module with alias.
 /// If module is already imported, imported value would be set to 1 and alias to existing alias.
 /// If module is already imported, actual import would be skipped
