@@ -23,7 +23,7 @@ Storage Default
 XData BPL [ XMLNamespace = "http://www.intersystems.com/bpl" ]
 {
 <process language='objectscript' request='Ens.Request' response='Ens.Response' height='2000' width='2000' >
-<sequence xend='200' yend='1500' >
+<sequence xend='200' yend='1700' >
 <call name='Import pandas' target='isc.py.ens.Operation' async='1' xpos='200' ypos='250' >
 <annotation><![CDATA[import pandas as pd]]></annotation>
 <request type='isc.py.msg.ExecutionRequest' >
@@ -99,11 +99,21 @@ plt.close(f)]]></annotation>
 <response type='isc.py.msg.ExecutionResponse' />
 </call>
 <sync name='Wait Correlation Matrix: Graph' calls='Correlation Matrix: Graph' type='all' xpos='200' ypos='1200' />
-<call name='Save Context' target='isc.py.ens.Operation' async='1' xpos='200' ypos='1300' >
+<call name='Define user function' target='isc.py.ens.Operation' async='1' xpos='200' ypos='1300' >
+<annotation><![CDATA[def cube(x):
+    return x*x*x]]></annotation>
+<request type='isc.py.msg.ExecutionRequest' >
+<assign property="callrequest.Code" value="process.GetAnnotation(&quot;Define user function&quot;) " action="set" />
+<assign property="callrequest.SeparateLines" value="0" action="set" />
+</request>
+<response type='Ens.Response' />
+</call>
+<sync name='Wait for user function' calls='Define user function' type='all' xpos='200' ypos='1400' />
+<call name='Save Context' target='isc.py.ens.Operation' async='1' xpos='200' ypos='1500' >
 <request type='isc.py.msg.SaveRequest' />
 <response type='Ens.StringResponse' />
 </call>
-<sync name='Wait: Save Context' calls='Save Context' type='all' xpos='200' ypos='1400' />
+<sync name='Wait: Save Context' calls='Save Context' type='all' xpos='200' ypos='1600' />
 </sequence>
 </process>
 }
