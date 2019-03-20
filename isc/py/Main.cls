@@ -331,6 +331,8 @@ ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean
 	quit:function="" $$$ERROR($$$GeneralError, "Variable argument should be set")
 	set sc = ..GetVariableInfo(function, , .defined, .type, .length)
 	quit:$$$ISERR(sc) sc
+	quit:'defined $$$ERROR($$$GeneralError, "Function is not defined: " _ function)
+	quit:type="type" ..GetFunctionInfo(function _ ".__init__", .defined, .type, .docs, .signature, .arguments) // for classes get constructor
 	quit:((type'="function") && (type'="method") && (type'="builtin_function_or_method") && (type'="method_descriptor")) $$$ERROR($$$FormatText("%1 is not a function/method, but a %2", function, type))
 	
 	if defined {
@@ -369,21 +371,22 @@ ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean
 /// Call arbitrary method or function.
 /// **kwargs can't be passed using this method. Use ExecuteFunction instead if you need to pass **kwargs.
 /// function - name of function to invoke. Can be nested, i.e. `random.randint`
+/// variable - if provided, result of function execution would be set into this python variable
 /// serialization - how to serialize result
 /// result - write result into this variable
 /// arguments - arguments as expected with triple dot syntax
 /// set sc = ##class(isc.py.Main).ExecuteFunctionArgs()
-ClassMethod ExecuteFunctionArgs(function As %String, serialization As %Integer = {##class(isc.py.Callout).#SerializationStr}, Output result As %String, arguments... As %String) As %Status
+ClassMethod ExecuteFunctionArgs(function As %String, variable As %String = "zzzresult", serialization As %Integer = {##class(isc.py.Callout).#SerializationStr}, Output result As %String, arguments... As %String) As %Status
 {
 	// We have no arguments
-	quit:'$d(arguments) ..ExecuteFunction(function, , , serialization, .result)
+	quit:'$d(arguments) ..ExecuteFunction(function, , ,variable, serialization, .result)
 	
 	#dim sc As %Status = $$$OK
 	kill defined, type
 	
 	set sc = ..GetFunctionInfo(function, .defined, .type, , .signature, .funcArguments)
 	quit:$$$ISERR(sc) sc
-	
+		
 	set positionalArguments = ""
 	set keywordArguments = ""
 	
@@ -399,8 +402,8 @@ ClassMethod ExecuteFunctionArgs(function As %String, serialization As %Integer =
 		#dim kwonlyargs As %DynamicArray = funcArgObj.%Get(4)
 		#dim kwonlydefaults As %DynamicArray = funcArgObj.%Get(5)
 		
-		// Remove self argument if it's a method.
-		do:type["method" args.%Remove(0)
+		// Remove self argument if it's a method or a constructor function
+		do:((type["method") || ($isObject(args) && (args.%Get(0)="self"))) args.%Remove(0)
 
 		#dim posCount As %Integer = $case($isObject(args), $$$YES: args.%Size(), :0)
 		#dim kwCount As %Integer = $case($isObject(kwonlyargs), $$$YES: kwonlyargs.%Size(), :0)
@@ -427,7 +430,7 @@ ClassMethod ExecuteFunctionArgs(function As %String, serialization As %Integer =
 	}
 		
 	//zw kwCount,positionalCount,keywordCount,arguments,size,signature,funcArguments,positionalArguments, keywordArguments	
-	set sc = ..ExecuteFunction(function, positionalArguments, keywordArguments, serialization, .result)
+	set sc = ..ExecuteFunction(function, positionalArguments, keywordArguments, variable, serialization, .result)
 	
 	quit sc
 }
@@ -436,18 +439,19 @@ ClassMethod ExecuteFunctionArgs(function As %String, serialization As %Integer =
 /// function - name of function to invoke. Can be nested, i.e. `random.randint`  
 /// positionalArguments - $lb(val1, val2, ..., valN) or any %Collection.AbstractIterator class or Dynamic array
 /// keywordArguments - $lb($lb(name1, val1), $lb(name2, val2), ..., $lb(nameN, valN)) or any %Collection.AbstractArray class or flat Dynamic object 
-/// serialization -how to serialize result
+/// variable - if provided, result of function execution would be set into this python variable
+/// serialization - how to serialize result
 /// result - write result into this variable
 /// set sc = ##class(isc.py.Main).ExecuteFunction()
-ClassMethod ExecuteFunction(function As %String, positionalArguments As %List = "", keywordArguments As %List = "", serialization As %Integer = {##class(isc.py.Callout).#SerializationStr}, Output result As %String) As %Status
+ClassMethod ExecuteFunction(function As %String, positionalArguments As %List = "", keywordArguments As %List = "", variable As %String = "zzzresult", serialization As %Integer = {##class(isc.py.Callout).#SerializationStr}, Output result As %String) As %Status
 {
 	#dim sc As %Status = $$$OK
 	kill defined, type
 	
 	set sc = ..GetFunctionInfo(function, .defined, .type, , .signature, .arguments)
 	quit:$$$ISERR(sc) sc
-	
-	set code = "zzzresult=" _ function _ "("
+		
+	set code = variable _ "=" _ function _ "("
 	if (positionalArguments'="") {
 		if (($listvalid(positionalArguments)) && ($ll(positionalArguments)>0)) {
 			set code = code _ $lts(positionalArguments)
@@ -492,11 +496,11 @@ ClassMethod ExecuteFunction(function As %String, positionalArguments As %List = 
 	
 	set code = code _ ")"
 	
-	zw code
-	set sc = ..SimpleString(code, "zzzresult", serialization, .result)
+	//zw code 
+	set sc = ..SimpleString(code, variable, serialization, .result)
 	quit:$$$ISERR(sc) sc
 	
-	set sc = ..SimpleString("del zzzresult")
+	set:variable="zzzresult" sc = ..SimpleString("del zzzresult")
 	
 	quit sc
 }

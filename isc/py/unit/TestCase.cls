@@ -375,7 +375,7 @@ Method TestExecuteFunction()
 	
 	for positionalArguments = posList,posCollection,posDynamic {
 		kill result
-		set sc = ##class(isc.py.Main).ExecuteFunction(random _ ".randint", positionalArguments,,,.result)
+		set sc = ##class(isc.py.Main).ExecuteFunction(random _ ".randint", positionalArguments,,,,.result)
 		do $$$AssertStatusOK(sc, "randint positionalArguments execution OK")
 		do $$$AssertTrue(((result>=1)&&(result<=100)), "Randint returned integer between 1 and 100")
 	}
@@ -389,7 +389,7 @@ Method TestExecuteFunction()
 	
 	for kwArguments = kwList,kwCollection,kwDynamic {
 		kill result
-		set sc = ##class(isc.py.Main).ExecuteFunction(random _ ".randint", ,kwArguments,,.result)
+		set sc = ##class(isc.py.Main).ExecuteFunction(random _ ".randint", ,kwArguments,,,.result)
 		do $$$AssertStatusOK(sc, "randint keyword execution OK")
 		do $$$AssertTrue(((result>=1)&&(result<=100)), "Randint returned integer between 1 and 100")
 	}
@@ -397,7 +397,7 @@ Method TestExecuteFunction()
 	kill result
 	set posList = $lb(1)
 	set kwDynamic = {"b": 100}
-	set sc = ##class(isc.py.Main).ExecuteFunction(random _ ".randint", posList, kwDynamic,,.result)
+	set sc = ##class(isc.py.Main).ExecuteFunction(random _ ".randint", posList, kwDynamic,,,.result)
 	do $$$AssertStatusOK(sc, "randint mixed execution OK")
 	do $$$AssertTrue(((result>=1)&&(result<=100)), "Randint returned integer between 1 and 100")
 	
@@ -405,7 +405,7 @@ Method TestExecuteFunction()
 	set posList = ##class(isc.py.util.Converter).EscapeStringList($lb("Positional: {0} {1}! Keyword: {name}, {name2}", "Hello", "World"))
 	set kwDynamic = {	"name":(##class(isc.py.util.Converter).EscapeString("Alice")), 
 						"name2":(##class(isc.py.util.Converter).EscapeString("Bob"))}
-	set sc = ##class(isc.py.Main).ExecuteFunction("str.format", posList, kwDynamic,,.result)
+	set sc = ##class(isc.py.Main).ExecuteFunction("str.format", posList, kwDynamic,,,.result)
 	do $$$AssertStatusOK(sc, "str.format execution OK")
 	do $$$AssertEquals(result, "Positional: Hello World! Keyword: Alice, Bob", "str.format returned expected string")
 }
@@ -415,7 +415,7 @@ Method TestExecuteFunctionArgs()
 {
 	set sc = ##class(isc.py.Main).ImportModule("random", ,.random)
 	
-	set sc = ##class(isc.py.Main).ExecuteFunctionArgs(random _ ".randint", ,.result, 1, 100)
+	set sc = ##class(isc.py.Main).ExecuteFunctionArgs(random _ ".randint", , ,.result, 1, 100)
 	do $$$AssertStatusOK(sc, "randint execution OK")
 	do $$$AssertTrue(((result>=1)&&(result<=100)), "Randint returned integer between 1 and 100")
 
@@ -428,7 +428,7 @@ Method TestExecuteFunctionArgs()
 	set arg3 = ##class(isc.py.util.Converter).EscapeString("Alice")
 	set arg4 = ##class(isc.py.util.Converter).EscapeString("Bob")
 
-	set sc = ##class(isc.py.Main).ExecuteFunctionArgs("str.format",,.result, string, arg1, arg2, arg3, arg4)
+	set sc = ##class(isc.py.Main).ExecuteFunctionArgs("str.format",,,.result, string, arg1, arg2, arg3, arg4)
 	do $$$AssertStatusOK(sc, "str.format execution OK")
 	do $$$AssertEquals(result, "Positional: Hello, World, Alice, Bob", "str.format returned expected string")
 }
