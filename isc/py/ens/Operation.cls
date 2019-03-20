@@ -13,6 +13,8 @@ Class isc.py.ens.Operation Extends Ens.BusinessOperation
 /// In cause of problems set to: "libpython3.6m.so"
 Property PythonLib As %String(MAXLEN = 1000);
 
+/// Class implementing isc.py.init.Abstract interface.
+/// Can be used to load modules and functions on process startup.
 Property Initializer As %String;
 
 Parameter SETTINGS = "PythonLib:Basic,Initializer:Basic:selector?context={isc.py.ens.ContextSearch/SubclassOf?class=isc.py.init.Abstract}";

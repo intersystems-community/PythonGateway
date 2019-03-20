@@ -1,8 +1,9 @@
 /// Test initializer
+/// do ##class(isc.py.init.Test).Initialize(,1)
 Class isc.py.init.Test Extends isc.py.init.Abstract
 {
 
-Parameter Modules = {$lb("types", "json", $lb("pandas", "pd"), "inspect")};
+Parameter Modules = {$lb("types", "json", $lb("pandas", "pd"), "inspect", "random")};
 
 ClassMethod InitCube() As %Status [ CodeMode = expression ]
 {
