@@ -44,5 +44,18 @@ ClassMethod InitAllargs() As %Status [ CodeMode = expression ]
 									"         print(""kwarg: {0} = {1}"".format(key, value))")
 }
 
+ClassMethod InitPerson() As %Status [ CodeMode = expression ]
+{
+##class(isc.py.Main).SimpleString(  "class Person(object):" _ $c(10) _
+									"    def __init__(self, name, age, city):" _ $c(10) _
+									"        self.name = name" _ $c(10) _
+									"        self.age = age" _ $c(10) _
+									"        self.city = city" _ $c(10) _
+									"    def getAge(self):" _ $c(10) _
+									"        return self.age" _ $c(10) _
+									"    def getAgePlus(self, add):" _ $c(10) _
+									"        return self.age + add")
+}
+
 }
 
