@@ -16,7 +16,11 @@ ClassMethod Shell()
 			if (command [ "=") {
 				set sc = ##class(isc.py.Main).SimpleString(command) //, $p(command, "="), , .result)
 			} else {
-				set sc = ##class(isc.py.Main).SimpleString("zzzresult=" _ command,"zzzresult", , .result)
+				if ($zcvt(command, "l")["import") {
+					set sc = ##class(isc.py.Main).SimpleString(command)
+				} else {
+					set sc = ##class(isc.py.Main).SimpleString("zzzresult=" _ command,"zzzresult", , .result)
+				}
 			}
 			if sc {
 				write $g(result)
