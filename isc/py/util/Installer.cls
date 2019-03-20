@@ -19,7 +19,10 @@ XData Install [ XMLNamespace = INSTALLER ]
     
     <Log Level="1" Text="Configuring Production"/>
     <Invoke Class="isc.py.util.Installer" Method="ConfigureProduction" CheckStatus="true"/>
-    
+ 
+    <Log Level="1" Text="Configuring Test Process"/>
+    <Invoke Class="isc.py.util.Installer" Method="ConfigureTestProcess" CheckStatus="true"/>
+        
     <Log Level="1" Text="Enabling OS level Authentication"/>
     <Invoke Class="isc.py.util.Installer" Method="OSAuth" CheckStatus="true"/>
     
@@ -56,26 +59,48 @@ ClassMethod ConfigureProduction() As %Status
 	set sc = item.%Save()
 	quit:$$$ISERR(sc) sc
 	
+		
+	quit sc
+}
+
+/// Try to configure test Process.
+/// set sc = ##class(isc.py.util.Installer).ConfigureTestProcess()
+ClassMethod ConfigureTestProcess(user As %String = "Admin", password As %String = "SYS", host As %String = "localhost", port As %Integer = 51773, namespace As %String = {$namespace}) As %Status
+{
+	#include %occJava
 	// Try to adjust default process
 	set process = "isc.py.test.Process"
 	set sc = ##class(%Compiler.UDL.TextServices).GetTextAsString(,process, .code)
 	quit:$$$ISERR(sc) sc
+
+	// JDBC	
 	
-	set user = "Admin"
-	set password = "SYS"
-	set installDir = $system.Util.GetEnviron("ISC_PACKAGE_INSTALLDIR")
+	set sc = ##class(%Net.Remote.Service).GetJARDirectory("1.8", .jarDir)
+	quit:$$$ISERR(sc) sc
+	set jdbcJar = ##class(%File).NormalizeFilename($$$javaJDBCJAR, jarDir)
+	set jdbcJar = ##class(%File).NormalizeFilenameWithSpaces(jdbcJar)
 	
+	set code = $replace(code, "[""dev"", ""123""]", $$$FormatText("[""%1"", ""%2""]", user, password)) // JDBC access
+	set code = $replace(code, "/InterSystems/IRIS/dev/java/lib/JDK18/intersystems-jdbc-3.0.0.jar", jdbcJar) // JDBC Jar path
+	set code = $replace(code, "jdbc:IRIS://localhost:51773/Python", $$$FormatText("jdbc:IRIS://%1:%2/%3", host, port, namespace)) // JDBC connection string
 	
-	set code = $replace(code, "[""dev"", ""123""]", "["""_user_""", """_password_"""]") // JDBC password
-	set code = $replace(code, "/InterSystems/IRIS", installDir) // JDBC Jar path
-	set code = $replace(code, "DSN=ENSEMBLE(PYTHON);UID=dev;PWD=123", $$$FormatText("Driver=%1/bin/libirisodbcu35.so;Server=localhost;Port=51773;database=%2;UID=%3;PWD=%4;Authentication Method=0",installDir, $namespace, user, password))
+	/// ODBC
+	if $$$isWINDOWS {
+		set driver = "InterSystems ODBC35"
+	} else {
+		set driver = ##class(%File).NormalizeDirectory($System.Util.BinaryDirectory()) _ "libirisodbcu35.so"
+	}
+	set code = $replace(code, "DSN=ENSEMBLE(PYTHON);UID=dev;PWD=123", $$$FormatText("Driver=%1;Server=%2;Port=%3;database=%4;UID=%5;PWD=%6;" ,driver, host, port, namespace, user, password))
+	
+	// Save correlation matrix plot to a temp directory
 	set code = $replace(code, "C:\InterSystems\Ensemble\mgr\Temp\", ##class(%File).NormalizeDirectory(##class(%SYS.System).TempDirectory()))
+	
 	
 	set sc = ##class(%Compiler.UDL.TextServices).SetTextFromString(,process, .code)
 	quit:$$$ISERR(sc) sc
 	
 	set sc = $system.OBJ.Compile(process, "ck")
-		
+	
 	quit sc
 }
 
