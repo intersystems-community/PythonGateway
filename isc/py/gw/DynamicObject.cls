@@ -2,10 +2,13 @@
 Class isc.py.gw.DynamicObject Extends %RegisteredObject
 {
 
-Property %Name As %String(MAXLEN = 1000);
+/// Name of python variable holding the object
+Property %Variable As %String(MAXLEN = 1000);
 
+/// Python type
 Property %Type As %String(MAXLEN = 1000);
 
+/// Default serialization for methods
 Property %Serialization As %Integer;
 
 /// do ##class(isc.py.init.Test).Initialize(,1)
@@ -16,21 +19,32 @@ Property %Serialization As %Integer;
 /// w obj.age
 /// w obj.getAge()
 /// w obj.getAgePlus(10)
-Method %OnNew(type, variable, serialization As %Integer = {##class(isc.py.Callout).#SerializationStr}, args...) As %Status [ Private, ServerOnly = 1 ]
+Method %OnNew(type As %String = "", variable As %String, serialization As %Integer = {##class(isc.py.Callout).#SerializationStr}, args...) As %Status [ Private, ServerOnly = 1 ]
 {
-	set ..%Name = variable
-	set ..%Type = type 
+	set ..%Variable = variable
 	set ..%Serialization = serialization
-	quit ##class(isc.py.Main).ExecuteFunctionArgs(type, variable,,, args...)
+	
+	if type'="" {
+		// Create variable of type
+		set ..%Type = type
+		set sc = ##class(isc.py.Main).ExecuteFunctionArgs(type, variable,,, args...)
+	} else {
+		// Populate variable info
+		set sc = ##class(isc.py.Main).GetVariableInfo(variable, ,.defined, .type)
+		throw:'defined ##class(%Exception.General).%New("<VARIABLE>", variable)
+		set ..%Type = $g(type)
+	}
+	
+	quit sc
 }
 
 /// Get serialized property value
 Method %DispatchGetProperty(property As %String) [ ServerOnly = 1 ]
 {
-	$$$TOE(sc, ##class(isc.py.Main).GetVariableInfo(..%Name _ "." _ property, ..%Serialization, .defined, .type, .length))
+	$$$TOE(sc, ##class(isc.py.Main).GetVariableInfo(..%Variable _ "." _ property, ..%Serialization, .defined, .type, .length))
 	throw:'defined ##class(%Exception.General).%New("<PROPERTY>", property)
 	
-	$$$TOE(sc, ##class(isc.py.Main).SimpleString("zzzproperty=" _ ..%Name _ "." _ property, "zzzproperty", ..%Serialization, .zzzproperty))
+	$$$TOE(sc, ##class(isc.py.Main).SimpleString("zzzproperty=" _ ..%Variable _ "." _ property, "zzzproperty", ..%Serialization, .zzzproperty))
 	$$$TOE(sc, ##class(isc.py.Main).SimpleString("del zzzproperty"))
 	
 	quit zzzproperty
@@ -39,10 +53,10 @@ Method %DispatchGetProperty(property As %String) [ ServerOnly = 1 ]
 /// Set python object property
 Method %DispatchSetProperty(property As %String, val) [ ServerOnly = 1 ]
 {
-	$$$TOE(sc, ##class(isc.py.Main).GetVariableInfo(..%Name _ "." _ property, ..%Serialization, .defined, .type, .length))
+	$$$TOE(sc, ##class(isc.py.Main).GetVariableInfo(..%Variable _ "." _ property, ..%Serialization, .defined, .type, .length))
 	throw:'defined ##class(%Exception.General).%New("<PROPERTY>", property)
 	
-	set arguments = $lb(..%Name, ##class(isc.py.util.Converter).EscapeString(property), ##class(isc.py.util.Converter).EscapeString(val))
+	set arguments = $lb(..%Variable, ##class(isc.py.util.Converter).EscapeString(property), ##class(isc.py.util.Converter).EscapeString(val))
 	
 	$$$TOE(sc, ##class(isc.py.Main).ExecuteFunction("setattr", arguments))
 }
@@ -50,8 +64,40 @@ Method %DispatchSetProperty(property As %String, val) [ ServerOnly = 1 ]
 /// Call python function
 Method %DispatchMethod(method As %String, args...) [ ServerOnly = 1 ]
 {
-	$$$TOE(sc, ##class(isc.py.Main).ExecuteFunctionArgs(..%Name _ "." _ method, ,..%Serialization, .result, args...))
+	$$$TOE(sc, ##class(isc.py.Main).ExecuteFunctionArgs(..%Variable _ "." _ method, ,..%Serialization, .result, args...))
 	quit result
+}
+
+/// Convert Python object to JSON
+Method %ToJSON(ByRef stream As %Stream.Object, useString As %Boolean = {$$$NO}) As %Status [ CodeMode = expression ]
+{
+##class(isc.py.Main).GetVariableJson(..%Variable, .stream, useString)
+}
+
+/// Convert Python object to InterSystems IRIS Dynamic object
+Method %ToDynObj(Output obj As %DynamicObject) As %Status
+{
+	set sc = ..%ToJSON(.stream)
+	quit:$$$ISERR(sc) sc
+	try {
+		set obj = {}.%FromJSON(stream)
+	} catch ex {
+		set sc = ex.AsStatus()
+	}
+	
+	quit sc
+}
+
+/// Convert Python object to Pickle or Dill
+Method %ToPickle(ByRef stream As %Stream.Object, useString As %Boolean = {$$$NO}, useDill As %Boolean = {$$$NO}) As %Status [ CodeMode = expression ]
+{
+##class(isc.py.Main).GetVariablePickle(..%Variable, .stream, useString, useDill)
+}
+
+/// Convert Python object to string
+Method %ToStream(serialization As %Integer = {..%Serialization}, ByRef stream As %Stream.Object, useString As %Boolean = {$$$NO}) As %Status [ CodeMode = expression ]
+{
+##class(isc.py.Main).GetVariable(..%Variable, serialization, .stream, useString)
 }
 
 }
