@@ -149,5 +149,18 @@ ClassMethod DynamicToList(obj As %DynamicObject, saveKeys As %Boolean = {$$$NO})
 	quit list
 }
 
+ClassMethod LocalToList(ByRef local) As %List
+{
+	set list = ""
+	set key = ""
+	for {
+		set key=$order(local(key),1,data) 
+		quit:key=""
+		set list = list _ $lb(data)
+	}
+	
+	quit list
+}
+
 }
 

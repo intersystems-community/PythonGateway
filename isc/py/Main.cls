@@ -317,9 +317,11 @@ ClassMethod GetVariableInfo(variable As %String = "", serialization As %Integer 
 /// type - function or method
 /// docs - function description if any
 /// signature - function signature as it apperas in Python source code
-/// arguments - signature parsed into JSON array: [args, varargs, varkw, kwonlyargs, kwonlydefaults, annotations]
+/// arguments - signature parsed into JSON array: [args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, annotations]
 /// see https://docs.python.org/3/library/inspect.html#inspect.getfullargspec for details 
 /// also https://docs.python.org/3/glossary.html#term-parameter
+/// signature and arguments can be empty - means it's a C function without Argument Clinic declaration. 
+/// For details on Argument Clinic see https://stackoverflow.com/a/42225667/2425753 for details
 /// set sc = ##class(isc.py.Main).GetFunctionInfo()
 ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean, Output type, Output docs As %VarString, Output signature As %VarString, Output arguments As %VarString) As %Status
 {
@@ -356,7 +358,8 @@ ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean
 			set arguments = ""
 		}
 		
-		/// Some C defined functions do not have introspectable arguments and signature 
+		// Some C defined functions do not have introspectable arguments and signature 
+		// https://stackoverflow.com/a/42225667/2425753
 		set sc = $$$OK
 	}
 	
@@ -364,19 +367,88 @@ ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean
 }
 
 /// Call arbitrary method or function.
-/// positionalArguments - $lb(val1, val2, ..., valN) or any %Collection.AbstractIterator class or JSON array
-/// keywordArguments - $lb($lb(name1, val1), $lb(name2, val2), ..., $lb(nameN, valN)) or any %Collection.AbstractArray class or flat JSON object 
-/// Each
+/// **kwargs can't be passed using this method. Use ExecuteFunction instead if you need to pass **kwargs.
+/// function - name of function to invoke. Can be nested, i.e. `random.randint`
+/// serialization - how to serialize result
+/// result - write result into this variable
+/// arguments - arguments as expected with triple dot syntax
+/// set sc = ##class(isc.py.Main).ExecuteFunctionArgs()
+ClassMethod ExecuteFunctionArgs(function As %String, serialization As %Integer = {##class(isc.py.Callout).#SerializationStr}, Output result As %String, arguments... As %String) As %Status
+{
+	// We have no arguments
+	quit:'$d(arguments) ..ExecuteFunction(function, , , serialization, .result)
+	
+	#dim sc As %Status = $$$OK
+	kill defined, type
+	
+	set sc = ..GetFunctionInfo(function, .defined, .type, , .signature, .funcArguments)
+	quit:$$$ISERR(sc) sc
+	
+	set positionalArguments = ""
+	set keywordArguments = ""
+	
+	if funcArguments="" {
+		set positionalArguments = ##class(isc.py.util.Converter).LocalToList(.arguments)
+	} else {
+		set funcArgObj = [].%FromJSON(funcArguments)
+		
+		#dim args As %DynamicArray = funcArgObj.%Get(0)
+		#dim varargs As %String = funcArgObj.%Get(1)
+		#dim varkw As %String = funcArgObj.%Get(2)
+		#dim defaults As %DynamicArray = funcArgObj.%Get(3)
+		#dim kwonlyargs As %DynamicArray = funcArgObj.%Get(4)
+		#dim kwonlydefaults As %DynamicArray = funcArgObj.%Get(5)
+		
+		// Remove self argument if it's a method.
+		do:type["method" args.%Remove(0)
+
+		#dim posCount As %Integer = $case($isObject(args), $$$YES: args.%Size(), :0)
+		#dim kwCount As %Integer = $case($isObject(kwonlyargs), $$$YES: kwonlyargs.%Size(), :0)
+		#dim hasArgs As %Boolean = (varargs'="")
+		#dim hasKWArgs As %Boolean = (varkw'="")
+		
+		// As we ignore **kwargs if any we have two options
+		// if there's no *argv we get positional arguments first, keyword arguments second
+		// if hasArgs is true (so *argv exist) we count keyword parameters from the end and the rest are positional
+		if 'hasArgs {
+			set positionalCount = posCount
+		} else {
+			set positionalCount = arguments - kwCount
+		}
+		
+		for i=1:1:positionalCount {
+			set positionalArguments = positionalArguments _ $lb(arguments(i))
+		}
+		
+		set kwStartPosition = positionalCount + 1
+		for i=kwStartPosition:1:positionalCount+kwCount {
+			set keywordArguments = keywordArguments _ $lb($lb(kwonlyargs.%Get(i - kwStartPosition), arguments(i)))
+		}
+	}
+		
+	//zw kwCount,positionalCount,keywordCount,arguments,size,signature,funcArguments,positionalArguments, keywordArguments	
+	set sc = ..ExecuteFunction(function, positionalArguments, keywordArguments, serialization, .result)
+	
+	quit sc
+}
+
+/// Call arbitrary method or function.
+/// function - name of function to invoke. Can be nested, i.e. `random.randint`  
+/// positionalArguments - $lb(val1, val2, ..., valN) or any %Collection.AbstractIterator class or Dynamic array
+/// keywordArguments - $lb($lb(name1, val1), $lb(name2, val2), ..., $lb(nameN, valN)) or any %Collection.AbstractArray class or flat Dynamic object 
+/// serialization -how to serialize result
+/// result - write result into this variable
 /// set sc = ##class(isc.py.Main).ExecuteFunction()
-ClassMethod ExecuteFunction(function As %String, positionalArguments As %List, keywordArguments As %List, serialization As %Integer = {##class(isc.py.Callout).#SerializationStr}, Output result As %String) As %Status
+ClassMethod ExecuteFunction(function As %String, positionalArguments As %List = "", keywordArguments As %List = "", serialization As %Integer = {##class(isc.py.Callout).#SerializationStr}, Output result As %String) As %Status
 {
 	#dim sc As %Status = $$$OK
 	kill defined, type
 	
 	set sc = ..GetFunctionInfo(function, .defined, .type, , .signature, .arguments)
+	quit:$$$ISERR(sc) sc
 	
 	set code = "zzzresult=" _ function _ "("
-	if $d(positionalArguments) {
+	if (positionalArguments'="") {
 		if (($listvalid(positionalArguments)) && ($ll(positionalArguments)>0)) {
 			set code = code _ $lts(positionalArguments)
 		} elseif $isObject(positionalArguments) {
@@ -392,7 +464,7 @@ ClassMethod ExecuteFunction(function As %String, positionalArguments As %List, k
 		}
 	}
 
-	if $d(keywordArguments) {
+	if (keywordArguments'="") {
 		set:$e(code,*)'="(" code = code _ ","
 		
 		/// $lb("key1=value1","key2=value2", ..., "keyN=valueN")
@@ -432,6 +504,7 @@ ClassMethod ExecuteFunction(function As %String, positionalArguments As %List, k
 /// Import module with alias.
 /// If module is already imported, imported value would be set to 1 and alias to existing alias.
 /// If module is already imported, actual import would be skipped
+/// set sc = ##class(isc.py.Main).ImportModule()
 ClassMethod ImportModule(module As %String, Output imported As %Boolean, Output alias As %String) As %Status
 {
 	kill imported

@@ -362,7 +362,6 @@ ClassMethod PassProductionStream(count As %Integer = 1000000, separateLines As %
 }
 
 /// Test ExecuteFunction method
-/// do ##class(isc.py.unit.TestCase).TestExecuteFunction()
 Method TestExecuteFunction()
 {
 	set sc = ##class(isc.py.Main).ImportModule("random", ,.random)
@@ -409,6 +408,29 @@ Method TestExecuteFunction()
 	set sc = ##class(isc.py.Main).ExecuteFunction("str.format", posList, kwDynamic,,.result)
 	do $$$AssertStatusOK(sc, "str.format execution OK")
 	do $$$AssertEquals(result, "Positional: Hello World! Keyword: Alice, Bob", "str.format returned expected string")
+}
+
+/// Test ExecuteFunctionArgs method
+Method TestExecuteFunctionArgs()
+{
+	set sc = ##class(isc.py.Main).ImportModule("random", ,.random)
+	
+	set sc = ##class(isc.py.Main).ExecuteFunctionArgs(random _ ".randint", ,.result, 1, 100)
+	do $$$AssertStatusOK(sc, "randint execution OK")
+	do $$$AssertTrue(((result>=1)&&(result<=100)), "Randint returned integer between 1 and 100")
+
+	
+	kill result
+	
+	set string = ##class(isc.py.util.Converter).EscapeString("Positional: {0}, {1}, {2}, {3}")
+	set arg1 = ##class(isc.py.util.Converter).EscapeString("Hello")
+	set arg2 = ##class(isc.py.util.Converter).EscapeString("World")
+	set arg3 = ##class(isc.py.util.Converter).EscapeString("Alice")
+	set arg4 = ##class(isc.py.util.Converter).EscapeString("Bob")
+
+	set sc = ##class(isc.py.Main).ExecuteFunctionArgs("str.format",,.result, string, arg1, arg2, arg3, arg4)
+	do $$$AssertStatusOK(sc, "str.format execution OK")
+	do $$$AssertEquals(result, "Positional: Hello, World, Alice, Bob", "str.format returned expected string")
 }
 
 }
