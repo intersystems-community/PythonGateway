@@ -109,5 +109,10 @@ Method %ToStream(serialization As %Integer = {..%Serialization}, ByRef stream As
 ##class(isc.py.Main).GetVariable(..%Variable, serialization, .stream, useString)
 }
 
+Method %Destroy() [ CodeMode = expression ]
+{
+##class(isc.py.Main).SimpleString("del " _ ..%Variable)
+}
+
 }
 
