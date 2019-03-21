@@ -27,8 +27,8 @@ If you modified environment variables restart your InterSystems product.
 ## Docker
 
 1. To build docker image:
-  - Copy `iscpython.so` into repository root (if it's not there)
-  - Execute in repository root `docker build --force-rm --tag intersystems-community/irispy:latest .`
+  - Copy `iscpython.so` into repository root (if it's not there already)
+  - Execute in repository root `docker build --force-rm --tag intersystemscommunity/irispy:latest .`
 2. To run docker image execute: 
 
 ```
@@ -36,7 +36,7 @@ docker run -d \
   -p 52773:52773 \
   -v /<HOST-DIR-WITH-iris.key>/:/mount \
   --name irispy \
-  intersystems-community/irispy:latest \
+  intersystemscommunity/irispy:latest \
   --key /mount/iris.key \
 ```
 3. Test process `isc.py.test.Process` saves image aftifact into temp directory. You might want to change that path to a monted directory. To do that edit annotation for `Correlation Matrix: Graph` call, specifying valid filepath for `f.savefig` function.
@@ -67,7 +67,7 @@ Generally the main interface to Python is `isc.py.Main`. It offers these methods
 - `GetVariableInfo(variable, serialization, .defined, .type, .length)` - get info about variable: is it defined, type,and serialization length.
 - `GetStatus()` - returns last occured exception in Python and clears it.
 - `GetVariableJson(variable, .stream, useString)` - get JSON serialization of variable.
-- `GetVariablePickle(variable, .stream, useString)` - get Pickle serialization of variable.
+- `GetVariablePickle(variable, .stream, useString, useDill)` - get Pickle (or Dill) serialization of variable.
 - `ExecuteQuery(query, variable, type)` - create resultset (pandas `dataframe` or `list`) from sql query and set it into `variable`.
 - `ImportModule(module, .imported, .alias)` -  import module with alias.
 - `GetModuleInfo(module, .imported, .alias)` - get module alias and is it currently imported.
@@ -87,7 +87,7 @@ Python context can be persisted into InterSystems IRIS and restored later on. Th
 - Display context: `do ##class(isc.py.data.Context).DisplayContext(id)` where `id` is an id of a stored context. Leave empty to display current context.
 - Restore context: `do ##class(isc.py.data.Context).RestoreContext(id, verbose, clear)` where `clear` kills currently loaded context if set to 1.
 
-Context is saved into `isc.py.data` package and can be viewed/edited by SQL and object methods.
+Context is saved into `isc.py.data` package and can be viewed/edited by SQL and object methods. Currently modules, functions and variables are saved.
 
 # Interoperability adapter
 
@@ -105,12 +105,14 @@ Check request/response classes documentation for details.
 
 Along with callout code and Interoperability adapter there's also a test Interoperability Production and test Business Process. To use them:
 
-1. In OS bash execute `pip install  pandas matplotlib seaborn`. 
+1. In OS bash execute `pip install pandas matplotlib seaborn`. 
 2. Execute: `do ##class(isc.py.test.CannibalizationData).Import()` to populate test data.
 3. In test Business Process `isc.py.test.Process` edit annotation for `Correlation Matrix: Graph` call, specifying valid filepath for `f.savefig` function.
 4. Save and compile business process.
 5. Start `isc.py.test.Production` production.
 6. Send empty `Ens.Request` mesage to the `isc.py.test.Process`.
+
+Note: instead of step 3 run: `set sc = ##class(isc.py.util.Installer).ConfigureTestProcess(user, password, host, port, namespace)` to try adgust process automatically. 
 
 ### Notes
 
@@ -146,9 +148,9 @@ zpy "x"
 There are several limitaions associated with the use of PythonAdapter.
 
 1. Modules reinitialization. Some modules may only be loaded once diring process lifetime (i.e. numpy). While Finalization clears the context of the process, repeated load of such libraries terminates the process. Discussions: [1](https://stackoverflow.com/questions/14843408/python-c-embedded-segmentation-fault), [2](https://stackoverflow.com/questions/7676314/py-initialize-py-finalize-not-working-twice-with-numpy).
-2. Variables. Do not use these variables: `zzzcolumns`, `zzzdata`, `zzzdef`, `zzzalias`, `zzzerr`, `zzzvar`, `zzztype`, `zzzlen`, `zzzjson`, `zzzpickle`, `zzzcount`, `zzzitem`, `zzzmodules`, `zzzvars`. Please report any leakage of these variables. System code should always clear them.
-3. Functions  Do not redefine these functions `zzzmodulesfunc()`, `zzzvarsfunc()`, `zzzgetalias()`, `zzztoserializable()`.
-4. Context persistence. Only pickled variables could be restored correctly. User functions are currently not supported. Module imports are supported.
+2. Variables. Do not use these variables: `zzz*` variables. Please report any leakage of these variables. System code should always clear them.
+3. Functions  Do not redefine `zzz*()` functions.
+4. Context persistence. Only pickled/dill variables could be restored correctly. Module imports are supported.
 
 # Development
 
