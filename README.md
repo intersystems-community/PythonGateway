@@ -1,4 +1,4 @@
-# PythonAdapter
+# PythonGateway
 Python adapter via callout for InterSystems Data Platforms.
 
 # Installation
@@ -6,7 +6,7 @@ Python adapter via callout for InterSystems Data Platforms.
 1. [Install Python 3.6.7 64 bit](https://www.python.org/downloads/release/python-367/).
 2. Install `dill` module: `pip install dill` (required for context harvesting)
 3. Load ObjectScript code (i.e. `do $system.OBJ.LoadDir("C:\InterSystems\Repos\Python\isc\py\","*.cls",,1)`).
-4. Place [callout DLL/SO/DYLIB](https://github.com/intersystems-ru/PythonAdapter/releases) in the `bin` folder of your InterSystems IRIS installation. Library file should be placed into a path returned by `write ##class(isc.py.Callout).GetLib()`. 
+4. Place [callout DLL/SO/DYLIB](https://github.com/intersystems-community/PythonAdapter/releases) in the `bin` folder of your InterSystems IRIS installation. Library file should be placed into a path returned by `write ##class(isc.py.Callout).GetLib()`. 
 
 ## Windows 
 
