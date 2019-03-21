@@ -431,6 +431,17 @@ Method TestExecuteFunctionArgs()
 	set sc = ##class(isc.py.Main).ExecuteFunctionArgs("str.format",,,.result, string, arg1, arg2, arg3, arg4)
 	do $$$AssertStatusOK(sc, "str.format execution OK")
 	do $$$AssertEquals(result, "Positional: Hello, World, Alice, Bob", "str.format returned expected string")
+	
+	
+	kill result
+	
+	set string = ##class(isc.py.util.Converter).EscapeString("Positional: {0} {1}! Keyword: {name}, {name2}")
+	set arg1 = ##class(isc.py.util.Converter).EscapeString("Hello")
+	set arg2 = ##class(isc.py.util.Converter).EscapeString("World")
+	set kwargs = "**" _ {"name":"Alice","name2":"Bob"}.%ToJSON()
+	set sc = ##class(isc.py.Main).ExecuteFunctionArgs("str.format",,,.result, string, arg1, arg2, kwargs)	
+	do $$$AssertStatusOK(sc, "str.format execution OK")
+	do $$$AssertEquals(result, "Positional: Hello World! Keyword: Alice, Bob", "str.format returned expected string")
 }
 
 }
