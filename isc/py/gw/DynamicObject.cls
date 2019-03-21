@@ -11,6 +11,8 @@ Property %Type As %String(MAXLEN = 1000);
 /// Default serialization for methods
 Property %Serialization As %Integer;
 
+Property %EscapeOnSet As %Boolean [ InitialExpression = {$$$YES} ];
+
 /// do ##class(isc.py.init.Test).Initialize(,1)
 /// set obj = ##class(isc.py.gw.DynamicObject).%New("Person", "p1", , "'Ed'", "25", "'Test'")
 /// w obj.name
@@ -53,10 +55,17 @@ Method %DispatchGetProperty(property As %String) [ ServerOnly = 1 ]
 /// Set python object property
 Method %DispatchSetProperty(property As %String, val) [ ServerOnly = 1 ]
 {
-	$$$TOE(sc, ##class(isc.py.Main).GetVariableInfo(..%Variable _ "." _ property, ..%Serialization, .defined, .type, .length))
-	throw:'defined ##class(%Exception.General).%New("<PROPERTY>", property)
+	//$$$TOE(sc, ##class(isc.py.Main).GetVariableInfo(..%Variable _ "." _ property, ..%Serialization, .defined, .type, .length))
+	//throw:'defined ##class(%Exception.General).%New("<PROPERTY>", property)
 	
-	set arguments = $lb(..%Variable, ##class(isc.py.util.Converter).EscapeString(property), ##class(isc.py.util.Converter).EscapeString(val))
+	if ($isObject(val) && val.%Extends("isc.py.gw.DynamicObject")) {
+		set value = val.%Variable
+	} elseif (..%EscapeOnSet) {
+		set value = ##class(isc.py.util.Converter).EscapeString(val)
+	} else {
+		set value = val
+	}
+	set arguments = $lb(..%Variable,##class(isc.py.util.Converter).EscapeString(property), value)
 	
 	$$$TOE(sc, ##class(isc.py.Main).ExecuteFunction("setattr", arguments))
 }
