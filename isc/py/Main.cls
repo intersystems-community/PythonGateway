@@ -369,12 +369,11 @@ ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean
 }
 
 /// Call arbitrary method or function.
-/// **kwargs can't be passed using this method. Use ExecuteFunction instead if you need to pass **kwargs.
 /// function - name of function to invoke. Can be nested, i.e. `random.randint`
 /// variable - if provided, result of function execution would be set into this python variable
 /// serialization - how to serialize result
 /// result - write result into this variable
-/// arguments - arguments as expected with triple dot syntax
+/// arguments - arguments as expected with triple dot syntax. To pass kwargs pass serialized JSON preceded with "**".
 /// set sc = ##class(isc.py.Main).ExecuteFunctionArgs()
 ClassMethod ExecuteFunctionArgs(function As %String, variable As %String = "zzzresult", serialization As %Integer = {##class(isc.py.Callout).#SerializationStr}, Output result As %String, arguments... As %String) As %Status
 {
@@ -495,8 +494,7 @@ ClassMethod ExecuteFunction(function As %String, positionalArguments As %List = 
 	quit:$$$ISERR(sc) sc
 	
 	set code = code _ ")"
-	
-	//zw code 
+	 
 	set sc = ..SimpleString(code, variable, serialization, .result)
 	quit:$$$ISERR(sc) sc
 	
