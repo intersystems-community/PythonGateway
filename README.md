@@ -1,5 +1,10 @@
 # PythonGateway
-Python adapter via callout for InterSystems Data Platforms.
+Python Gateway for InterSystems Data Platforms. Execute Python code and more from InterSystems IRIS.
+This projects brings you the power of Python right into your InterSystems IRIS environment:
+- Execute arbitrary Python code
+- Seamlessly transfer data from InterSystems IRIS into Python
+- Build intelligent Interoperability business processes with Python Interoperability Adapter
+- Save, examine, modify and restore Python context from InterSystems IRIS
 
 # Installation
 
