@@ -20,7 +20,7 @@ This projects brings you the power of Python right into your InterSystems IRIS e
 
 ## Linux 
 
-5. Check that your SYSTEM `PATH` environment variable has `/usr/lib` and `/usr/lib/x86_64-linux-gnu`, preferably at the begining. Use `/etc/environment` file to set environment variables.
+5. Check that your SYSTEM `PATH` environment variable has `/usr/lib` and `/usr/lib/x86_64-linux-gnu`, preferably at the beginning. Use `/etc/environment` file to set environment variables.
 6. In cause of errors check Troubleshooting section `undefined symbol: _Py_TrueStruct` and specify PythonLib property.
 
 ## Mac
@@ -44,9 +44,9 @@ docker run -d \
   intersystemscommunity/irispy:latest \
   --key /mount/iris.key \
 ```
-3. Test process `isc.py.test.Process` saves image aftifact into temp directory. You might want to change that path to a monted directory. To do that edit annotation for `Correlation Matrix: Graph` call, specifying valid filepath for `f.savefig` function.
+3. Test process `isc.py.test.Process` saves image artifact into temp directory. You might want to change that path to a mounted directory. To do that edit annotation for `Correlation Matrix: Graph` call, specifying valid filepath for `f.savefig` function.
 4. For terminal access execute: `docker exec -it irispy sh`.
-5. Access SMP with SuperUser/SYS or Admin/SYS user/passowrd.
+5. Access SMP with SuperUser/SYS or Admin/SYS user/password.
 6. To stop container execute: `docker stop irispy && docker rm --force irispy`.
 
 # Use
@@ -67,10 +67,10 @@ set sc = ##class(isc.py.Callout).Unload()
 Generally the main interface to Python is `isc.py.Main`. It offers these methods (all return `%Status`):
 
 - `SimpleString(code, returnVariable, serialization, .result)` - for cases where both code and variable are strings.
-- `ExecuteCode(code, variable)` - execute `code` (it may be a stream or string), optionally ser result into `variable`.
+- `ExecuteCode(code, variable)` - execute `code` (it may be a stream or string), optionally set result into `variable`.
 - `GetVariable(variable, serialization, .stream, useString)` - get `serialization` of `variable` in `stream`. If `useString` is 1 and variable serialization can fit into string then string is returned instead of the stream.
 - `GetVariableInfo(variable, serialization, .defined, .type, .length)` - get info about variable: is it defined, type,and serialization length.
-- `GetStatus()` - returns last occured exception in Python and clears it.
+- `GetStatus()` - returns last occurred exception in Python and clears it.
 - `GetVariableJson(variable, .stream, useString)` - get JSON serialization of variable.
 - `GetVariablePickle(variable, .stream, useString, useDill)` - get Pickle (or Dill) serialization of variable.
 - `ExecuteQuery(query, variable, type)` - create resultset (pandas `dataframe` or `list`) from sql query and set it into `variable`.
@@ -92,7 +92,7 @@ To open Python shell: `do ##class(isc.py.util.Shell).Shell()`. To exit press ent
 
 Python context can be persisted into InterSystems IRIS and restored later on. There are currently three public functions:
 
-- Save context: `set sc = ##class(isc.py.data.Context).SaveContext(.context, maxLength, mask, verbose)` where `maxLength` - maximum length of saved variable. If veriable serialization is longer than that, it would be ignored. Set to 0 to get them all, `mask` - comma separated list of variables to save (special symbols * and ? are recognized), `verbose` specifies displaying context after saving, and `context` is a resulting Python context. Get context id with `context.%Id()`
+- Save context: `set sc = ##class(isc.py.data.Context).SaveContext(.context, maxLength, mask, verbose)` where `maxLength` - maximum length of saved variable. If variable serialization is longer than that, it would be ignored. Set to 0 to get them all, `mask` - comma separated list of variables to save (special symbols * and ? are recognized), `verbose` specifies displaying context after saving, and `context` is a resulting Python context. Get context id with `context.%Id()`
 - Display context: `do ##class(isc.py.data.Context).DisplayContext(id)` where `id` is an id of a stored context. Leave empty to display current context.
 - Restore context: `do ##class(isc.py.data.Context).RestoreContext(id, verbose, clear)` where `clear` kills currently loaded context if set to 1.
 
@@ -105,16 +105,16 @@ Interoperability adapter `isc.py.ens.Operation` offers ability to interact with 
 - Execute Python code via `isc.py.msg.ExecutionRequest`. Returns `isc.py.msg.ExecutionResponse` with requested variable values
 - Execute Python code via `isc.py.msg.StreamExecutionRequest`. Returns `isc.py.msg.StreamExecutionResponse` with requested variable values. Same as above, but accepts and returns streams instead of strings.
 - Set dataset from SQL Query with `isc.py.msg.QueryRequest`. Returns `Ens.Response`.
-- Save Python conext via `isc.py.msg.SaveRequest`. Returns `Ens.StringResponse` with context id.
+- Save Python context via `isc.py.msg.SaveRequest`. Returns `Ens.StringResponse` with context id.
 - Restore Python context via `isc.py.msg.RestoreRequest`.
 
 Check request/response classes documentation for details.
 
 Settings:
  - `Initializer` - select a class implementing `isc.py.init.Abstract`. It can be used to load functions, modules, classes and so on. It would be executed at process start.
- - `PythonLib` - (linux only) if you see loading errors set it to `libpython3.6m.so` or even to a full path to the shared library. 
+ - `PythonLib` - (Linux only) if you see loading errors set it to `libpython3.6m.so` or even to a full path to the shared library. 
 
-Note: `isc.py.util.BPEmulator` class is added to allow easy testing of Python Interoperability business processes. It cat execute business process (pyhton parts) in a current job.
+Note: `isc.py.util.BPEmulator` class is added to allow easy testing of Python Interoperability business processes. It can execute business process (python parts) in a current job.
 
 # Test Business Process
 
@@ -125,14 +125,14 @@ Along with callout code and Interoperability adapter there's also a test Interop
 3. In test Business Process `isc.py.test.Process` edit annotation for `Correlation Matrix: Graph` call, specifying valid filepath for `f.savefig` function.
 4. Save and compile business process.
 5. Start `isc.py.test.Production` production.
-6. Send empty `Ens.Request` mesage to the `isc.py.test.Process`.
+6. Send empty `Ens.Request` message to the `isc.py.test.Process`.
 
-Note: instead of step 3 run: `set sc = ##class(isc.py.util.Installer).ConfigureTestProcess(user, password, host, port, namespace)` to try adgust process automatically. 
+Note: instead of step 3 run: `set sc = ##class(isc.py.util.Installer).ConfigureTestProcess(user, password, host, port, namespace)` to try adjust process automatically. 
 
 ### Notes
 
 - If you want to use `ODBC` connection, on Windows install pyodbc: `pip install pyodbc`, on Linux install: `apt-get install unixodbc unixodbc-dev python-pyodbc`. 
-- If you want to use `JDBC` connection, install JayDeBeApi: `pip install JayDeBeApi`. On linux you might need to install: `apt-get install python-apt` beforehand. 
+- If you want to use `JDBC` connection, install JayDeBeApi: `pip install JayDeBeApi`. On Linux you might need to install: `apt-get install python-apt` beforehand. 
 - If you get errors similar to `undefined symbol: _Py_TrueStruct` in `isc.py.ens.Operation`operation set setting `PythonLib` to `libpython3.6m.so` or even to a full path of the shared library.
 - In test Business Process `isc.py.test.Process` edit annotation for `ODBC` or `JDBC` calls, specifying correct connection string.
 - In production, `isc.py.test.Process` host set `ConnectionType` setting to a preferred connection type (defaults to `RAW`, change only if you need to test xDBC connectivity).
@@ -162,9 +162,9 @@ Argumentless `zpy` command opens python shell.
 
 # Limitations
 
-There are several limitaions associated with the use of PythonAdapter.
+There are several limitations associated with the use of PythonAdapter.
 
-1. Modules reinitialization. Some modules may only be loaded once diring process lifetime (i.e. numpy). While Finalization clears the context of the process, repeated load of such libraries terminates the process. Discussions: [1](https://stackoverflow.com/questions/14843408/python-c-embedded-segmentation-fault), [2](https://stackoverflow.com/questions/7676314/py-initialize-py-finalize-not-working-twice-with-numpy).
+1. Modules reinitialization. Some modules may only be loaded once during process lifetime (i.e. numpy). While Finalization clears the context of the process, repeated load of such libraries terminates the process. Discussions: [1](https://stackoverflow.com/questions/14843408/python-c-embedded-segmentation-fault), [2](https://stackoverflow.com/questions/7676314/py-initialize-py-finalize-not-working-twice-with-numpy).
 2. Variables. Do not use these variables: `zzz*` variables. Please report any leakage of these variables. System code should always clear them.
 3. Functions  Do not redefine `zzz*()` functions.
 4. Context persistence. Only pickled/dill variables could be restored correctly. Module imports are supported.
@@ -187,7 +187,7 @@ Development of C code is done in Eclipse.
 
 ## Linux
 
-It's recommended to use Linux os which uses python3 by default, i.e. Ubuntu 18.04.1 LTS. Skip steps 1 and maybe even 2 if your OS has python 3.6 as default python (`python3 --version` or `python --version` or `python3.6 --version`).
+It's recommended to use Linux OS which uses python3 by default, i.e. Ubuntu 18.04.1 LTS. Skip steps 1 and maybe even 2 if your OS has python 3.6 as default python (`python3 --version` or `python --version` or `python3.6 --version`).
 
 1. Add Python 3.6 repo: `add-apt-repository ppa:jonathonf/python-3.6` and `apt-get update`
 2. Install: `apt install python3.6 python3.6-dev libpython3.6-dev build-essential`
@@ -225,7 +225,7 @@ sys.version
 
 The result should contain: `Python 3.6.7` and `64 bit`. If it's not, [install Python 3.6.7 64 bit](https://www.python.org/downloads/release/python-367/).
 
-2. Check OS-specific instsallation steps. Make sure that path relevant for InterSystems IRIS (usually system) contains Python installation.
+2. Check OS-specific installation steps. Make sure that path relevant for InterSystems IRIS (usually system) contains Python installation.
 
 3. Make sure that InterSystems IRIS can access Python installation. 
 
@@ -243,7 +243,7 @@ ver
 
 If they are not the same search for a Python executable that is actually used by InterSystems IRIS.
 
-2. Check that module is, in fact, installed. Open OS bash, execute `python` (maybe `python3` or `python36` on linux) and inside opened python bash execute `import <module>`. If it fails with some error run in OS bash `pip install <module>`. Note that module name for import and module name for pip could be different.
+2. Check that module is, in fact, installed. Open OS bash, execute `python` (maybe `python3` or `python36` on Linux) and inside opened python bash execute `import <module>`. If it fails with some error run in OS bash `pip install <module>`. Note that module name for import and module name for pip could be different.
 3. If you're sure that module is installed, compare paths used by python (it's not system path). Get path with: 
 ```
 import sys
@@ -251,7 +251,7 @@ path=sys.path
 path
 ```
 They should be the same. If they are not the same read how `PYTHONPATH` (python) is formed [here](https://stackoverflow.com/questions/897792/where-is-pythons-sys-path-initialized-from) and adjust your OS environment to form pythonpath (python) correctly, i.e. set `PYTHONPATH` (system) env var to `C:\Users\<USER>\AppData\Roaming\Python\Python36\site-packages` or other directories where your modules reside (and other missing directories).
-4. Compare python paths again and they are not the same or the problem persists add missing paths explicitly to the isc.py.ens.OutboundAdaptor init code (for interoperability) and on process start (for Callout wrapper):
+4. Compare python paths again and they are not the same or the problem persists add missing paths explicitly to the `isc.py.ens.Operation` init code (for interoperability) and on process start (for Callout wrapper):
 
 ```
 do ##class(isc.py.Main).SimpleString("import sys")
@@ -260,7 +260,7 @@ do ##class(isc.py.Main).SimpleString("sys.path.append('C:\\Users\\<USER>\\AppDat
 
 ## `undefined symbol: _Py_TrueStruct` or similar errors
 
-1. Check `ldconfig` and adgust it to point to the directory with Python shared library.
+1. Check `ldconfig` and adjust it to point to the directory with Python shared library.
 2. If it fails:
    - For interoperability in `isc.py.ens.Operation` operation set setting `PythonLib` to `libpython3.6m.so` or even to a full path of the shared library. 
    - For Callout wrapper on process start call `do ##class(isc.py.Callout).Initialize("libpython3.6m.so")` alternatively pass a full path of the shared library. 

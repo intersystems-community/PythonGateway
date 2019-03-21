@@ -1,6 +1,6 @@
 # Gateway functionality
 
-This document describes functionality pertrainig to what is commonly understood as (.Net/Java) Gateway.
+This document describes functionality pertaining to what is commonly understood as (.Net/Java) Gateway.
 There are three main parts:
 - Execute Function
 - Proxyless Gateway
@@ -26,11 +26,11 @@ It is caller responsibility to escape argument values. Use `isc.py.util.Converte
 `ExecuteFunction` method from `isc.py.Main` class. Signature: 
 - `function` - name of function to invoke. Can be nested, i.e. `random.randint`
 - `variable` - name of python variable to write result to. 
-- `positionalArguments` - positional argumets for Python function. Can be one of:
+- `positionalArguments` - positional arguments for Python function. Can be one of:
    + `$lb(val1, val2, ..., valN)`
    + `%Collection.AbstractIterator` object 
    + JSON array
-- `keywordArguments` - keyword argumets for Python function. Can be one of:
+- `keywordArguments` - keyword arguments for Python function. Can be one of:
    + `$lb($lb(name1, val1), $lb(name2, val2), ..., $lb(nameN, valN))`
    + `%Collection.AbstractArray` object
    + flat JSON object 
@@ -145,7 +145,7 @@ set obj.name="Bob"
 write obj.name
 write obj.age
 ```
-4. We can set some new properties too (unlike `ExecuteFunction` values are escaped automatically if `%EscapeOnSet` property is 1, which is default. You can also set properties to other dynamic objects. In that case unsecaped python variable name would be used):
+4. We can set some new properties too (unlike `ExecuteFunction` values are escaped automatically if `%EscapeOnSet` property is 1, which is default. You can also set properties to other dynamic objects. In that case unescaped python variable name would be used):
 ```
 set obj.pet = "Dog"
 write obj.pet

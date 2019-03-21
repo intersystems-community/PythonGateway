@@ -24,8 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Dill is now a required module.
 - `GetVariableInfo` now returns FQCN as type.
-- `GetVariableInfo` support for atributes (methods and the like).
-- Test process noe uses non-interactive GUI for test business process
+- `GetVariableInfo` support for attributes (methods and the like).
+- Test process now uses non-interactive GUI for test business process
 - Test process: new data, simplified code.
 - Log trace events enabled by default.
 
@@ -55,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.2] - 2019-01-17
 ### Changed
-- Pass/retrieve limit raized to 3 641 144 characters.
+- Pass/retrieve limit raised to 3 641 144 characters.
 
 ## [0.4] - 2018-12-28
 ### Added
@@ -66,7 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3] - 2018-12-24
 ### Changed
-- Transfer limit raized to 3 641 144 characters.
+- Transfer limit raised to 3 641 144 characters.
 
 ### Removed
 - Explicit initialization (now it's done implicitly).
