@@ -3,18 +3,24 @@ Python adapter via callout for InterSystems Data Platforms.
 
 # Installation
 
-0. [Install Python 3.6.7 64 bit](https://www.python.org/downloads/release/python-367/).
-1. Load ObjectScript code (i.e. `do $system.OBJ.LoadDir("C:\InterSystems\Repos\Python\isc\py\","*.cls",,1)`).
-2. Place [callout DLL/SO/DYLIB](https://github.com/intersystems-ru/PythonAdapter/releases) in the `bin` folder of your InterSystems IRIS installation. Library file should be placed into a path returned by `write ##class(isc.py.Callout).GetLib()`. 
+1. [Install Python 3.6.7 64 bit](https://www.python.org/downloads/release/python-367/).
+2. Install `dill` module: `pip install dill` (required for context harvesting)
+3. Load ObjectScript code (i.e. `do $system.OBJ.LoadDir("C:\InterSystems\Repos\Python\isc\py\","*.cls",,1)`).
+4. Place [callout DLL/SO/DYLIB](https://github.com/intersystems-ru/PythonAdapter/releases) in the `bin` folder of your InterSystems IRIS installation. Library file should be placed into a path returned by `write ##class(isc.py.Callout).GetLib()`. 
 
 ## Windows 
 
-3. Check that your `PYTHONHOME` environment variable points to Python 3.6.7.
-4. Check that your SYSTEM `PATH` environment variable has `PYTHONHOME` variable (or directory it points to).
+5. Check that your `PYTHONHOME` environment variable points to Python 3.6.7.
+6. Check that your SYSTEM `PATH` environment variable has `PYTHONHOME` variable (or directory it points to).
 
-## Linux && Mac
+## Linux 
 
-3. Check that your SYSTEM `PATH` environment variable has `/usr/lib` and `/usr/lib/x86_64-linux-gnu`, preferably at the begining. Use `/etc/environment` file to set environment variables.
+5. Check that your SYSTEM `PATH` environment variable has `/usr/lib` and `/usr/lib/x86_64-linux-gnu`, preferably at the begining. Use `/etc/environment` file to set environment variables.
+6. In cause of errors check Troubleshooting section `undefined symbol: _Py_TrueStruct` and specify PythonLib property.
+
+## Mac
+
+5. Only python 3.6.7 from [Python.org](https://www.python.org/downloads/release/python-367/). is currently supported. Check `PATH` variable.
 
 If you modified environment variables restart your InterSystems product.
 
@@ -22,7 +28,7 @@ If you modified environment variables restart your InterSystems product.
 
 1. To build docker image:
   - Copy `iscpython.so` into repository root (if it's not there)
-  - Execute in repository root `docker build --force-rm --tag irispy/iris:2019.1 .`
+  - Execute in repository root `docker build --force-rm --tag intersystems-community/irispy:latest .`
 2. To run docker image execute: 
 
 ```
@@ -30,17 +36,17 @@ docker run -d \
   -p 52773:52773 \
   -v /<HOST-DIR-WITH-iris.key>/:/mount \
   --name irispy \
-  irispy/iris:2019.1 \
+  intersystems-community/irispy:latest \
   --key /mount/iris.key \
 ```
 3. Test process `isc.py.test.Process` saves image aftifact into temp directory. You might want to change that path to a monted directory. To do that edit annotation for `Correlation Matrix: Graph` call, specifying valid filepath for `f.savefig` function.
 4. For terminal access execute: `docker exec -it irispy sh`.
-5. Access SMP with SuperUser/SYS or Admin/SYS users.
+5. Access SMP with SuperUser/SYS or Admin/SYS user/passowrd.
 6. To stop container execute: `docker stop irispy && docker rm --force irispy`.
 
 # Use
 
-1. Call: `set sc = ##class(isc.py.Callout).Setup()` once per systems start (add to ZSTART: [docs](https://docs.intersystems.com/latest/csp/docbook/DocBook.UI.Page.cls?KEY=GSTU_customize#GSTU_customize_startstop), [sample](https://gist.githubusercontent.com/eduard93/412ed81e2bf619269ab4a49d939d2304/raw/c9d5f922827db5052b6e1195616d333ffe7dc1ec/%2525ZSTART)).
+1. Call: `set sc = ##class(isc.py.Callout).Setup()` once per systems start (add to ZSTART: [docs](https://docs.intersystems.com/latest/csp/docbook/DocBook.UI.Page.cls?KEY=GSTU_customize#GSTU_customize_startstop), sample routine available in `rtn` folder).
 2. Call main method (can be called many times, context persists): `write ##class(isc.py.Main).SimpleString(code, variable, , .result)`
 3. Call: `set sc = ##class(isc.py.Callout).Finalize()` to free Python context.
 4. Call: `set sc = ##class(isc.py.Callout).Unload()` to free callout library.
@@ -58,13 +64,16 @@ Generally the main interface to Python is `isc.py.Main`. It offers these methods
 - `SimpleString(code, returnVariable, serialization, .result)` - for cases where both code and variable are strings.
 - `ExecuteCode(code, variable)` - execute `code` (it may be a stream or string), optionally ser result into `variable`.
 - `GetVariable(variable, serialization, .stream, useString)` - get `serialization` of `variable` in `stream`. If `useString` is 1 and variable serialization can fit into string then string is returned instead of the stream.
--  `GetVariableInfo(variable, serialization, .defined, .type, .length)` - get info about variable: is it defined, type,and serialization length.
+- `GetVariableInfo(variable, serialization, .defined, .type, .length)` - get info about variable: is it defined, type,and serialization length.
 - `GetStatus()` - returns last occured exception in Python and clears it.
 - `GetVariableJson(variable, .stream, useString)` - get JSON serialization of variable.
 - `GetVariablePickle(variable, .stream, useString)` - get Pickle serialization of variable.
 - `ExecuteQuery(query, variable, type)` - create resultset (pandas `dataframe` or `list`) from sql query and set it into `variable`.
 - `ImportModule(module, .imported, .alias)` -  import module with alias.
 - `GetModuleInfo(module, .imported, .alias)` - get module alias and is it currently imported.
+- `GetFunctionInfo(function, .defined, .type, .docs, .signature, .arguments)` - get function information.
+- `ExecuteFunction(function, positionalArguments, keywordArguments, variable, serialization, .result)` - execute Python function or method, write result into Pyhton `variable`, return chosen serialization in `result`.
+- `ExecuteFunctionArgs(function, variable, serialization, .result, args...)` - execute Python function or method, write result into Pyhton `variable`, return chosen serialization in `result`. Builds `positionalArguments` and `keywordArguments` and passes them to `ExecuteFunction`. It's recommended to use `ExecuteFunction`. More information in [Gateway docs](Gateway.md).
 
 Possible Serializations:
 - `##class(isc.py.Callout).SerializationStr` - Serialization by str() function
@@ -123,7 +132,7 @@ set sc = ##class(%UnitTest.Manager).RunTest(,"/nodelete")
 
 # ZLANGC00
 
-Install [this ZLANG routine](https://gist.githubusercontent.com/eduard93/2c3159c7dc71f03c4081a99093d8ff37/raw/3bc83f2dc7348ea11ab982b0e3d54cfcef198d17/%2525ZLANGC00.xml) to add `zpy` command:
+Install ZLANG routine from `rtn` folder to add `zpy` command:
 
 ```
 zpy "import random"
