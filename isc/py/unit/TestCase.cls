@@ -16,31 +16,25 @@ Method TestSimpleString()
 	do ##class(isc.py.Callout).SimpleString("y=1")
 	set y = ##class(isc.py.Callout).SimpleString(, "y")
 	do $$$AssertEquals(y, 1, "Context is persisted")
-	
-	do ##class(isc.py.Callout).Finalize()
-	
-	set y = ##class(isc.py.Callout).SimpleString(, "y")
-	do $$$AssertEquals(y, "", "Context successfully flushed")
 }
 
 Method TestLimit()
 {
-	do ##class(isc.py.Callout).Finalize()
 	
 	do ##class(isc.py.Callout).SimpleString("str1000=''.join('A' for _ in range(1000))")	
 
 	for limit = 32767,135108,$$$MaxStringLength {
 		set quotient = limit\1000
 		set modulus = limit#1000
-		set str = ##class(isc.py.Callout).SimpleString("str=''.join(str1000 for i in range("_quotient_")) + str1000[:" _ modulus _ "]", "str")	
-		do $$$AssertEquals($l(str), limit, "Returned " _ limit _ " characters") 
+		set str1 = ##class(isc.py.Callout).SimpleString("str1=''.join(str1000 for i in range("_quotient_")) + str1000[:" _ modulus _ "]", "str1")	
+		do $$$AssertEquals($l(str1), limit, "Returned " _ limit _ " characters") 
 	}
 
 	try {
 		set limit = $$$MaxStringLength + 1
 		set quotient = limit\1000
 		set modulus = limit#1000
-		set str = ##class(isc.py.Callout).SimpleString("str=''.join(str1000 for i in range("_quotient_")) + str1000[:" _ modulus _ "]", "str")
+		set str1 = ##class(isc.py.Callout).SimpleString("str1=''.join(str1000 for i in range("_quotient_")) + str1000[:" _ modulus _ "]", "str1")
 	} catch ex {
 		do $$$AssertEquals(ex.Name, "<FUNCTION>" , "Correctly failed to pass " _ limit _ " characters")
 	}
@@ -57,7 +51,7 @@ Method TestPassSpeedIn()
 	set rounds = 295
 	set start = $zh
 	for i = 1:1:rounds {
-		do ##class(isc.py.Callout).SimpleString("str='" _ str _ "'")
+		do ##class(isc.py.Callout).SimpleString("str1='" _ str _ "'")
 	}
 	set end = $zh
 	
@@ -73,12 +67,12 @@ Method TestPassSpeedOut()
 	set limit = $$$MaxStringLength
 	set quotient = limit\1000
 	set modulus = limit#1000
-	do ##class(isc.py.Callout).SimpleString("str=''.join(str1000 for i in range("_quotient_")) + str1000[:" _ modulus _ "]", "str")
+	do ##class(isc.py.Callout).SimpleString("str1=''.join(str1000 for i in range("_quotient_")) + str1000[:" _ modulus _ "]", "str1")
 
 	set rounds = 295
 	set start = $zh
 	for i = 1:1:rounds {
-		set str = ##class(isc.py.Callout).SimpleString(, "str")
+		set str = ##class(isc.py.Callout).SimpleString(, "str1")
 		kill str
 	}
 	set end = $zh
@@ -92,11 +86,11 @@ Method TestPassSpeedOut()
 
 Method TestSetCallSpeed()
 {
-	do ##class(isc.py.Callout).SimpleString("str=''")
+	do ##class(isc.py.Callout).SimpleString("str1=''")
 	set rounds = 100000
 	set start = $zh
 	for i = 1:1:rounds {
-		do ##class(isc.py.Callout).SimpleString("str=" _ i)
+		do ##class(isc.py.Callout).SimpleString("str1=" _ i)
 	}
 	set end = $zh
 	
@@ -442,6 +436,57 @@ Method TestExecuteFunctionArgs()
 	set sc = ##class(isc.py.Main).ExecuteFunctionArgs("str.format",,,.result, string, arg1, arg2, kwargs)	
 	do $$$AssertStatusOK(sc, "str.format execution OK")
 	do $$$AssertEquals(result, "Positional: Hello World! Keyword: Alice, Bob", "str.format returned expected string")
+}
+
+Method TestProxyObject()
+{
+	set sc = ##class(isc.py.init.Test).InitPerson()
+	do $$$AssertStatusOK(sc, "Loaded person class")
+	
+	set variable = "p1"
+	
+	set nameRaw = "Ed" 
+	set name = ##class(isc.py.util.Converter).EscapeString(nameRaw)
+	set age = 25
+	set obj = ##class(isc.py.gw.DynamicObject).%New("Person", variable, ##class(isc.py.Callout).#SerializationStr, name, age, "'Test'")
+
+	set nameReturned = obj.name
+	do $$$AssertEquals(nameRaw, nameReturned)
+
+	set name2 = "Bob"
+	set obj.name = name2
+	set nameReturned = obj.name
+	
+	do $$$AssertEquals(name2, nameReturned)
+	
+	set newProp = "Dog"
+	set obj.pet = newProp
+	set newPropReturned = obj.pet
+	do $$$AssertEquals(newProp, newPropReturned)
+	
+	set ageReturned = obj.getAge()
+	do $$$AssertEquals(age, ageReturned)	
+	
+	set plus = 10
+	set plusReturned = obj.getAgePlus(plus)
+	do $$$AssertEquals(age + plus, plusReturned)
+	
+	kill obj, nameReturned
+	
+	set obj = ##class(isc.py.gw.DynamicObject).%New(, variable)
+	
+	set nameReturned = obj.name
+	do $$$AssertEquals(name2, nameReturned)
+	
+	set sc = obj.%ToDynObj(.dynObj)
+	
+	do $$$AssertEquals(obj.city, dynObj.city)
+	
+	set sc = obj.%Destroy()
+	do $$$AssertStatusOK(sc, "Destroyed person object")
+	
+	set sc = ##class(isc.py.Main).GetVariableInfo(variable,,.defined)
+	do $$$AssertNotTrue(defined, "Person object is undefined")
 }
 
 }
