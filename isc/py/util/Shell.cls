@@ -23,7 +23,7 @@ ClassMethod Shell()
 				}
 			}
 			if sc {
-				write $g(result)
+				write $replace($g(result), $c(10), $$$NL)
 			} else {
 				write $System.Status.GetErrorText(sc)
 			}

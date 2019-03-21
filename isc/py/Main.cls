@@ -27,7 +27,7 @@ ClassMethod SimpleString(code As %String = "", variable As %String = "", seriali
 	
 	set sc1 = ..GetStatus()
 	
-	set:$$$ISERR(sc1) sc2 = $$$ERROR($$$GeneralError, $$$FormatText("code: %1, variable: %2, serialization: %3, result: %4", $replace(code, $c(10), $c(10,13)), variable, serialization, $g(result)))
+	set:$$$ISERR(sc1) sc2 = $$$ERROR($$$GeneralError, $$$FormatText("code: %1, variable: %2, serialization: %3, result: %4", $replace(code, $c(10), $$$NL), variable, serialization, $g(result)))
 	
 	set sc = $$$ADDSC(sc2, $$$ADDSC(sc, sc1))
 	
@@ -93,7 +93,7 @@ ClassMethod ExecuteCode(code As %Stream.Object, variable As %String = "") As %St
 		} else {
 			set errorCode = $e(code, 1, 1000)
 		}
-		set sc = $$$ADDSC(sc, $$$ERROR($$$GeneralError, $$$FormatText("code: %1, variable: %2", $replace(errorCode, $c(10), $c(10,13)), variable)))
+		set sc = $$$ADDSC(sc, $$$ERROR($$$GeneralError, $$$FormatText("code: %1, variable: %2", $replace(errorCode, $c(10), $$$NL), variable)))
 	}
 	
 	
@@ -571,7 +571,7 @@ ClassMethod GetStatus() As %Status
 		quit:haxExc="False"
 		
 		set excText = ##class(isc.py.Callout).SimpleString("zzzerr = traceback.format_exception(sys.last_type, sys.last_value, sys.last_traceback)", "zzzerr")
-		set excText = $replace($zcvt(excText, "I", "JSON"), $c(10), $c(10,13))
+		set excText = $replace($zcvt(excText, "I", "JSON"), $c(10), $$$NL)
 		do ##class(isc.py.Callout).SimpleString("del zzzerr, sys.last_type, sys.last_value, sys.last_traceback")
 		set sc = $$$ERROR($$$GeneralError, excText)
 	} catch ex {

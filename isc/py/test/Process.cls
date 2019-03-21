@@ -103,7 +103,7 @@ plt.close(f)]]></annotation>
 <annotation><![CDATA[def cube(x):
     return x*x*x]]></annotation>
 <request type='isc.py.msg.ExecutionRequest' >
-<assign property="callrequest.Code" value="process.GetAnnotation(&quot;Define user function&quot;) " action="set" />
+<assign property="callrequest.Code" value="process.GetAnnotation(&quot;Define user function&quot;)" action="set" />
 <assign property="callrequest.SeparateLines" value="0" action="set" />
 </request>
 <response type='Ens.Response' />

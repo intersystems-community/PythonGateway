@@ -106,7 +106,7 @@ ClassMethod DescribeDataframe(variable) As %Status
 {
 	set sc = ##class(isc.py.Main).SimpleString("zzzinfo=" _ variable _ ".dtypes", "zzzinfo", , .zzzinfo)
 	quit:$$$ISERR(sc) sc
-	write $replace(zzzinfo,$c(10),$c(10,13))
+	write $replace(zzzinfo, $c(10), $$$NL)
 	set sc = ##class(isc.py.Main).SimpleString("del zzzinfo")
 	quit sc
 }

@@ -3,7 +3,7 @@
 Class isc.py.init.Test Extends isc.py.init.Abstract
 {
 
-Parameter Modules = {$lb("types", "json", $lb("pandas", "pd"), "inspect", "random")};
+Parameter Modules = {$lb("types", "json", "inspect", "random")};
 
 ClassMethod InitCube() As %Status [ CodeMode = expression ]
 {
