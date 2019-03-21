@@ -79,6 +79,10 @@ Possible Serializations:
 - `##class(isc.py.Callout).SerializationStr` - Serialization by str() function
 - `##class(isc.py.Callout).SerializationRepr` - Serialization by repr() function
 
+# Shell
+
+To open Python shell: `do ##class(isc.py.util.Shell).Shell()`. To exit press enter.
+
 # Context persistence
 
 Python context can be persisted into InterSystems IRIS and restored later on. There are currently three public functions:
@@ -100,6 +104,12 @@ Interoperability adapter `isc.py.ens.Operation` offers ability to interact with 
 - Restore Python context via `isc.py.msg.RestoreRequest`.
 
 Check request/response classes documentation for details.
+
+Settings:
+ - `Initializer` - select a class implementing `isc.py.init.Abstract`. It can be used to load functions, modules, classes and so on. It would be executed at process start.
+ - `PythonLib` - (linux only) if you see loading errors set it to `libpython3.6m.so` or even to a full path to the shared library. 
+
+Note: `isc.py.util.BPEmulator` class is added to allow easy testing of Python Interoperability business processes. It cat execute business process (pyhton parts) in a current job.
 
 # Test Business Process
 
@@ -142,6 +152,8 @@ zpy "x=random.random()"
 zpy "x"
 >0.4157151243124494
 ```
+
+Argumentless `zpy` command opens python shell.
 
 # Limitations
 
@@ -254,4 +266,4 @@ do ##class(isc.py.Main).SimpleString("sys.path.append('C:\\Users\\<USER>\\AppDat
 2. Install PyODBC: `pip install pyodbc`
 3. Set connection string: `cnxn=pyodbc.connect(('Driver=/<IRIS directory>/bin/libirisodbcu35.so;Server=localhost;Port=51773;database=USER;UID=_SYSTEM;PWD=SYS'),autocommit=True)`
 
-Some [notes](https://github.com/intersystems-ru/PythonAdapter/issues/50).
+Some [notes](https://github.com/intersystems-ru/PythonAdapter/issues/50). Call `set sc = ##class(isc.py.util.Installer).ConfigureTestProcess(user, pass, host, port, namespace)` to configure test process automatically.
