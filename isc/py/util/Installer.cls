@@ -51,6 +51,7 @@ ClassMethod ConfigureProduction() As %Status
 	
 	set setting = ##class(Ens.Config.Setting).%New()
 	set setting.Name = "PythonLib"
+	set setting.Target = "Host"
 	set setting.Value = "libpython3.6m.so"
 
 	set exists = ##class(Ens.Config.Item).NameExists(production, "isc.py.ens.Operation", .itemId)
