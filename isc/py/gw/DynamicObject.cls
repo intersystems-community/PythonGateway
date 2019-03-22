@@ -11,7 +11,11 @@ Property %Type As %String(MAXLEN = 1000);
 /// Default serialization for methods
 Property %Serialization As %Integer;
 
+/// Automatically escape values on property set
 Property %EscapeOnSet As %Boolean [ InitialExpression = {$$$YES} ];
+
+/// Automatically escape values on method call
+Property %EscapeOnCall As %Boolean [ InitialExpression = {$$$NO} ];
 
 /// do ##class(isc.py.init.Test).Initialize(,1)
 /// set obj = ##class(isc.py.gw.DynamicObject).%New("Person", "p1", , "'Ed'", "25", "'Test'")
@@ -46,8 +50,12 @@ Method %DispatchGetProperty(property As %String) [ ServerOnly = 1 ]
 	$$$TOE(sc, ##class(isc.py.Main).GetVariableInfo(..%Variable _ "." _ property, ..%Serialization, .defined, .type, .length))
 	throw:'defined ##class(%Exception.General).%New("<PROPERTY>", property)
 	
-	$$$TOE(sc, ##class(isc.py.Main).SimpleString("zzzproperty=" _ ..%Variable _ "." _ property, "zzzproperty", ..%Serialization, .zzzproperty))
-	$$$TOE(sc, ##class(isc.py.Main).SimpleString("del zzzproperty"))
+	if ..%IsPrimitive(type) = $$$YES {
+		$$$TOE(sc, ##class(isc.py.Main).SimpleString("zzzproperty=" _ ..%Variable _ "." _ property, "zzzproperty", ..%Serialization, .zzzproperty))
+		$$$TOE(sc, ##class(isc.py.Main).SimpleString("del zzzproperty"))
+	} else {
+		set zzzproperty = ..%New(, ..%Variable _ "." _ property)
+	}
 	
 	quit zzzproperty
 }
@@ -65,19 +73,19 @@ Method %DispatchSetProperty(property As %String, val) [ ServerOnly = 1 ]
 	} else {
 		set value = val
 	}
-	set arguments = $lb(..%Variable,##class(isc.py.util.Converter).EscapeString(property), value)
+	set arguments = $lb(..%Variable, ##class(isc.py.util.Converter).EscapeString(property), value)
 	
 	$$$TOE(sc, ##class(isc.py.Main).ExecuteFunction("setattr", arguments))
 }
 
-/// Call python function
+/// Call python method
 Method %DispatchMethod(method As %String, args...) [ ServerOnly = 1 ]
 {
 	for i=1:1:$g(args) {
 		set val = args(i)
 		if ($isObject(val) && val.%Extends("isc.py.gw.DynamicObject")) {
 			set value = val.%Variable
-		} elseif (..%EscapeOnSet) {
+		} elseif (..%EscapeOnCall) {
 			set value = ##class(isc.py.util.Converter).EscapeString(val)
 		} else {
 			set value = val
@@ -85,7 +93,17 @@ Method %DispatchMethod(method As %String, args...) [ ServerOnly = 1 ]
 		
 		set args(i) = value
 	}
-	$$$TOE(sc, ##class(isc.py.Main).ExecuteFunctionArgs(..%Variable _ "." _ method, ,..%Serialization, .result, args...))
+	
+	set variable = "variable" _ $random(100000000)
+	
+	$$$TOE(sc, ##class(isc.py.Main).ExecuteFunctionArgs(..%Variable _ "." _ method, variable ,..%Serialization, .result, args...))
+	
+	$$$TOE(sc, ##class(isc.py.Main).GetVariableInfo(variable, , .defined, .type))
+	
+	if ..%IsPrimitive(type) = $$$NO {
+		set result = ..%New(,variable)
+	}
+	
 	quit result
 }
 
@@ -124,6 +142,38 @@ Method %ToStream(serialization As %Integer = {..%Serialization}, ByRef stream As
 Method %Destroy() [ CodeMode = expression ]
 {
 ##class(isc.py.Main).SimpleString("del " _ ..%Variable)
+}
+
+/// Get object as serialized string
+Method %GetString(serialization As %Integer = {..%Serialization}) As %String
+{
+	set sc = ..%ToStream(serialization, .stream, $$$YES)
+	quit:$$$ISERR(sc) ""
+	if $isObject(stream) {
+		set stream = stream.Read($$$MaxStringLength)
+	}
+	
+	quit stream
+}
+
+/// Get object as serialized JSON string
+Method %GetJSON() As %String
+{
+	set sc = ..%ToJSON(.stream, $$$YES)
+	quit:$$$ISERR(sc) ""
+	if $isObject(stream) {
+		set stream = stream.Read($$$MaxStringLength)
+	}
+	
+	quit stream
+}
+
+/// Primitive types are returned serialized.
+/// For non-primitive types ProxyObject is returned.
+ClassMethod %IsPrimitive(type As %String) As %Boolean
+{
+	quit:$lf($lb("str", "int", "bool", "float"), type)>0 $$$YES
+	quit $$$NO
 }
 
 }
