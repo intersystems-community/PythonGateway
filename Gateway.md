@@ -135,7 +135,7 @@ class Person(object):
         return self.age + add
 ```
 
-2. Create Proxy variable: `set obj = ##class(isc.py.gw.DynamicObject).%New("Person", "p1", , "'Ed'", "25", "'Test'")`
+2. Create Proxy variable: `set obj = ##class(isc.py.gw.DynamicObject).%New("Person", "p1", "'Ed'", "25", "'Test'")`
 In this call we create Python variable `p1` of `Person` class and pass three methods to constructor `'Ed'`, `25` and `'Test'`.
 
 3. Now we can interact with the object, let's get and set some properties:
@@ -163,7 +163,7 @@ write obj.getAgePlus(10)
 set sc = obj.%ToJSON(.json)
 set sc = obj.%ToDynObj(.dynObj)
 set sc = obj.%ToPickle(.pickle)
-set sc = obj.%ToStream(,.stream)
+set sc = obj.%ToStream(.stream)
 ```
 
 To create proxy object from existing proxy object just skip type argument:
@@ -185,24 +185,23 @@ Now for a more complex example. In case of primitives (int, bool, str, float) pr
 
 ```
 set sc = ##class(isc.py.Main).ImportModule("numpy",,"np")
-set np =##class(isc.py.gw.DynamicObject).%New(,"np")
-set arr =##class(isc.py.gw.DynamicObject).%New("np.array", "arr",,"[[1.5,2],[4,5]]")
+set np = ##class(isc.py.gw.DynamicObject).%New(,"np")
+set arr = ##class(isc.py.gw.DynamicObject).%New("np.array", "arr","[[1.5,2],[4,5]]")
 set exp = np.exp(arr)
-w $replace(exp.%GetString(),$c(10), $c(13,10))
+write $replace(exp.%GetString(),$c(10), $c(13,10))
 ```
 
 And here's an example of setting property to proxy object:
 
 ```
 do ##class(isc.py.init.Test).Initialize(,1)
-set obj = ##class(isc.py.gw.DynamicObject).%New("Person", "p1", , "'Ed'", "25", "'Test'")
-set obj2 = ##class(isc.py.gw.DynamicObject).%New("Person", "p2", , "'Bob'", "22", "'Test2'")
-w obj.%GetJSON()
+set obj = ##class(isc.py.gw.DynamicObject).%New("Person", "p1", "'Ed'", "25", "'Test'")
+set obj2 = ##class(isc.py.gw.DynamicObject).%New("Person", "p2", "'Bob'", "22", "'Test2'")
+write obj.%GetJSON()
 
-s obj.relative = obj2
-s obj3 = obj.relative
-w obj3.%GetJSON()
-
+set obj.relative = obj2
+set obj3 = obj.relative
+write obj3.%GetJSON()
 ```
 
 You can use `%EscapeOnSet` and `%EscapeOnCall` properties and `%IsPrimitive` method to affect default serialization behaviour.
