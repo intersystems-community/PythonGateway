@@ -172,6 +172,41 @@ kill obj
 set p1 = ##class(isc.py.gw.DynamicObject).%New(, "p1")
 ```
 
+Module objects can be proxied this way too:
+
+```
+set module = "random"
+set sc = ##class(isc.py.Main).ImportModule(module)
+set random = ##class(isc.py.gw.DynamicObject).%New(,module)
+write random.randint(1,100)
+```
+
+Now for a more complex example. In case of primitives (int, bool, str, float) proxy object returns a serialized value. Otherwise (if  method call or variable get returns complex type) it returns another proxy object pointing to that result.  
+
+```
+set sc = ##class(isc.py.Main).ImportModule("numpy",,"np")
+set np =##class(isc.py.gw.DynamicObject).%New(,"np")
+set arr =##class(isc.py.gw.DynamicObject).%New("np.array", "arr",,"[[1.5,2],[4,5]]")
+set exp = np.exp(arr)
+w $replace(exp.%GetString(),$c(10), $c(13,10))
+```
+
+And here's an example of setting property to proxy object:
+
+```
+do ##class(isc.py.init.Test).Initialize(,1)
+set obj = ##class(isc.py.gw.DynamicObject).%New("Person", "p1", , "'Ed'", "25", "'Test'")
+set obj2 = ##class(isc.py.gw.DynamicObject).%New("Person", "p2", , "'Bob'", "22", "'Test2'")
+w obj.%GetJSON()
+
+s obj.relative = obj2
+s obj3 = obj.relative
+w obj3.%GetJSON()
+
+```
+
+You can use `%EscapeOnSet` and `%EscapeOnCall` properties and `%IsPrimitive` method to affect default serialization behaviour.
+
 # Proxy Gateway
 
 Under development.
