@@ -9,7 +9,7 @@ Property %Variable As %String(MAXLEN = 1000);
 Property %Type As %String(MAXLEN = 1000);
 
 /// Default serialization for methods
-Property %Serialization As %Integer;
+Property %Serialization As %Integer [ InitialExpression = {##class(isc.py.Callout).#SerializationStr} ];
 
 /// Automatically escape values on property set
 Property %EscapeOnSet As %Boolean [ InitialExpression = {$$$YES} ];
@@ -25,10 +25,9 @@ Property %EscapeOnCall As %Boolean [ InitialExpression = {$$$NO} ];
 /// w obj.age
 /// w obj.getAge()
 /// w obj.getAgePlus(10)
-Method %OnNew(type As %String = "", variable As %String, serialization As %Integer = {##class(isc.py.Callout).#SerializationStr}, args...) As %Status [ Private, ServerOnly = 1 ]
+Method %OnNew(type As %String = "", variable As %String, args...) As %Status [ Private, ServerOnly = 1 ]
 {
 	set ..%Variable = variable
-	set ..%Serialization = serialization
 	
 	if type'="" {
 		// Create variable of type
@@ -134,9 +133,9 @@ Method %ToPickle(ByRef stream As %Stream.Object, useString As %Boolean = {$$$NO}
 }
 
 /// Convert Python object to string
-Method %ToStream(serialization As %Integer = {..%Serialization}, ByRef stream As %Stream.Object, useString As %Boolean = {$$$NO}) As %Status [ CodeMode = expression ]
+Method %ToStream(ByRef stream As %Stream.Object, useString As %Boolean = {$$$NO}) As %Status [ CodeMode = expression ]
 {
-##class(isc.py.Main).GetVariable(..%Variable, serialization, .stream, useString)
+##class(isc.py.Main).GetVariable(..%Variable, ..%Serialization, .stream, useString)
 }
 
 Method %Destroy() [ CodeMode = expression ]
@@ -145,9 +144,9 @@ Method %Destroy() [ CodeMode = expression ]
 }
 
 /// Get object as serialized string
-Method %GetString(serialization As %Integer = {..%Serialization}) As %String
+Method %GetString() As %String
 {
-	set sc = ..%ToStream(serialization, .stream, $$$YES)
+	set sc = ..%ToStream(.stream, $$$YES)
 	quit:$$$ISERR(sc) ""
 	if $isObject(stream) {
 		set stream = stream.Read($$$MaxStringLength)
