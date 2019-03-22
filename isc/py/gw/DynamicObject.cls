@@ -73,6 +73,18 @@ Method %DispatchSetProperty(property As %String, val) [ ServerOnly = 1 ]
 /// Call python function
 Method %DispatchMethod(method As %String, args...) [ ServerOnly = 1 ]
 {
+	for i=1:1:$g(args) {
+		set val = args(i)
+		if ($isObject(val) && val.%Extends("isc.py.gw.DynamicObject")) {
+			set value = val.%Variable
+		} elseif (..%EscapeOnSet) {
+			set value = ##class(isc.py.util.Converter).EscapeString(val)
+		} else {
+			set value = val
+		}
+		
+		set args(i) = value
+	}
 	$$$TOE(sc, ##class(isc.py.Main).ExecuteFunctionArgs(..%Variable _ "." _ method, ,..%Serialization, .result, args...))
 	quit result
 }
