@@ -448,7 +448,7 @@ Method TestProxyObject()
 	set nameRaw = "Ed" 
 	set name = ##class(isc.py.util.Converter).EscapeString(nameRaw)
 	set age = 25
-	set obj = ##class(isc.py.gw.DynamicObject).%New("Person", variable, ##class(isc.py.Callout).#SerializationStr, name, age, "'Test'")
+	set obj = ##class(isc.py.gw.DynamicObject).%New("Person", variable, name, age, "'Test'")
 
 	set nameReturned = obj.name
 	do $$$AssertEquals(nameRaw, nameReturned)
