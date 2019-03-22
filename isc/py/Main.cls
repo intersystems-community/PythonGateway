@@ -333,7 +333,11 @@ ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean
 	quit:$$$ISERR(sc) sc
 	quit:'defined $$$ERROR($$$GeneralError, "Function is not defined: " _ function)
 	quit:type="type" ..GetFunctionInfo(function _ ".__init__", .defined, .type, .docs, .signature, .arguments) // for classes get constructor
-	quit:((type'="function") && (type'="method") && (type'="builtin_function_or_method") && (type'="method_descriptor")) $$$ERROR($$$FormatText("%1 is not a function/method, but a %2", function, type))
+	
+	set sc = ..SimpleString("zzziscallable=callable(" _ function _ ")", "zzziscallable", ,.iscallable)
+	quit:$$$ISERR(sc) sc
+	set iscallable = ##class(isc.py.util.Converter).PythonToBoolean(iscallable)	
+	quit:'iscallable $$$ERROR($$$FormatText("%1 is not callable, with type: %2", function, type))
 	
 	if defined {
 		set sc = ..ImportModule("inspect", , .inspect)
