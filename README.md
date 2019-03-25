@@ -10,7 +10,7 @@ This projects brings you the power of Python right into your InterSystems IRIS e
 
 1. [Install Python 3.6.7 64 bit](https://www.python.org/downloads/release/python-367/).
 2. Install `dill` module: `pip install dill` (required for context harvesting)
-3. Load ObjectScript code (i.e. `do $system.OBJ.LoadDir("C:\InterSystems\Repos\Python\isc\py\","*.cls",,1)`).
+3. Load ObjectScript code (i.e. `do $system.OBJ.ImportDir("C:\InterSystems\Repos\Python\isc\py\","*.cls","c",,1)`).
 4. Place [callout DLL/SO/DYLIB](https://github.com/intersystems-community/PythonAdapter/releases) in the `bin` folder of your InterSystems IRIS installation. Library file should be placed into a path returned by `write ##class(isc.py.Callout).GetLib()`. 
 
 ## Windows 
