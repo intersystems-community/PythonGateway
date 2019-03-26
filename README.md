@@ -10,6 +10,7 @@ This projects brings you the power of Python right into your InterSystems IRIS e
 
 ML Toolkit user group is a private GitHub repository set up as part of InterSystems corporate GitHub organization. It is addressed to the external users that are installing, learning or are already using ML Toolkit components. To join ML Toolkit user group, please send a short e-mail at the following address: [MLToolkit@intersystems.com](mailto:MLToolkit@intersystems.com) and indicate in your e-mail the following details (needed for the group members to get to know and identify you during discussions):
 
+- GitHub username
 -	Full Name (your first name followed by your last name in Latin script)
 -	Organization (you are working for, or you study at, or your home office)
 -	Position (your actual position in your organization, or “Student”, or “Independent”)
