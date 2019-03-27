@@ -244,16 +244,19 @@ ClassMethod GetVariable(variable As %String, serialization As %Integer = {##clas
 			set sc = ..SimpleString(, variable, serialization, .zzzvar)
 			do stream.Write(zzzvar)
 		} else {
-			for i=0:step:length+1 {
-				if serialization = ##class(isc.py.Callout).#SerializationRepr {
-					set sc = ..SimpleString("zzzvar=repr(" _ variable _ ")[" _ i _ ":" _ (i + step) _ "]", "zzzvar", ##class(isc.py.Callout).#SerializationStr, .zzzvar)
-				} else {
-					set sc = ..SimpleString("zzzvar=" _      variable _  "[" _ i _ ":" _ (i + step) _ "]", "zzzvar", ##class(isc.py.Callout).#SerializationStr, .zzzvar)
-				}
-				quit:$$$ISERR(sc)
-				do stream.Write(zzzvar)
+			if serialization = ##class(isc.py.Callout).#SerializationRepr {
+				set sc = ..SimpleString("zzzvar=repr(" _ variable _ ")")
+			} else {
+				set sc = ..SimpleString("zzzvar=" _ variable)
 			}
-			set sc = ..SimpleString("del zzzvar")
+			quit:$$$ISERR(sc) sc
+				
+			for i=0:step:length+1 {
+				set sc = ..SimpleString("zzzvarpiece=zzzvar[" _ i _ ":" _ (i + step) _ "]", "zzzvarpiece", ##class(isc.py.Callout).#SerializationStr, .zzzvarpiece)
+				quit:$$$ISERR(sc)
+				do stream.Write(zzzvarpiece)
+			}
+			set sc = ..SimpleString("del zzzvar, zzzvarpiece")
 		}
 		quit:$$$ISERR(sc) sc
 		set sc = stream.%Save()
