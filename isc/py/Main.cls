@@ -362,9 +362,12 @@ ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean
 	kill defined, type
 	
 	quit:function="" $$$ERROR($$$GeneralError, "Variable argument should be set")
-	set sc = ..GetVariableInfo(function, , .defined, .type, .length)
+	set sc = ..GetVariableDefined(function, .defined)
 	quit:$$$ISERR(sc) sc
 	quit:'defined $$$ERROR($$$GeneralError, "Function is not defined: " _ function)
+	
+	set sc = ..GetVariableType(function, .type)
+	quit:$$$ISERR(sc) sc
 	quit:type="type" ..GetFunctionInfo(function _ ".__init__", .defined, .type, .docs, .signature, .arguments) // for classes get constructor
 	
 	set sc = ..SimpleString("zzziscallable=callable(" _ function _ ")", "zzziscallable", ,.iscallable)
@@ -622,7 +625,7 @@ ClassMethod GetStatus() As %Status
 ClassMethod GetVariableJson(variable As %String, ByRef stream As %Stream.Object, useString As %Boolean = {$$$NO}) As %Status
 {
 	set stream = ""
-	set sc = ..GetVariableInfo(variable, ##class(isc.py.Callout).#SerializationStr, .defined, .type, .length)
+	set sc = ..GetVariableDefined(variable, .defined)
 	quit:$$$ISERR(sc) sc
 	quit:'defined $$$ERROR($$$GeneralError, "Variable '" _ variable _ "' is not defined")
 	
@@ -688,7 +691,7 @@ ClassMethod GetVariableJson(variable As %String, ByRef stream As %Stream.Object,
 ClassMethod GetVariablePickle(variable As %String, ByRef stream As %Stream.Object, useString As %Boolean = {$$$NO}, useDill As %Boolean = {$$$NO}) As %Status
 {
 	set stream = ""
-	set sc = ..GetVariableInfo(variable, ##class(isc.py.Callout).#SerializationStr, .defined, .type, .length)
+	set sc = ..GetVariableDefined(variable, .defined)
 	quit:$$$ISERR(sc) sc
 	quit:'defined $$$ERROR($$$GeneralError, "Variable '" _ variable _ "' is not defined")
 	

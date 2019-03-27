@@ -35,7 +35,7 @@ Method %OnNew(type As %String = "", variable As %String, args...) As %Status [ P
 		set sc = ##class(isc.py.Main).ExecuteFunctionArgs(type, variable,,, args...)
 	} else {
 		// Populate variable info
-		set sc = ##class(isc.py.Main).GetVariableInfo(variable, ,.defined, .type)
+		set sc = ##class(isc.py.Main).GetVariableDefined(variable, .defined)
 		throw:'defined ##class(%Exception.General).%New("<VARIABLE>", variable)
 		set ..%Type = $g(type)
 	}
@@ -46,8 +46,10 @@ Method %OnNew(type As %String = "", variable As %String, args...) As %Status [ P
 /// Get serialized property value
 Method %DispatchGetProperty(property As %String) [ ServerOnly = 1 ]
 {
-	$$$TOE(sc, ##class(isc.py.Main).GetVariableInfo(..%Variable _ "." _ property, ..%Serialization, .defined, .type, .length))
+	$$$TOE(sc, ##class(isc.py.Main).GetVariableDefined(..%Variable _ "." _ property, .defined))
 	throw:'defined ##class(%Exception.General).%New("<PROPERTY>", property)
+	
+	$$$TOE(sc, ##class(isc.py.Main).GetVariableType(..%Variable _ "." _ property, .type))
 	
 	if ..%IsPrimitive(type) = $$$YES {
 		$$$TOE(sc, ##class(isc.py.Main).SimpleString("zzzproperty=" _ ..%Variable _ "." _ property, "zzzproperty", ..%Serialization, .zzzproperty))
@@ -62,9 +64,6 @@ Method %DispatchGetProperty(property As %String) [ ServerOnly = 1 ]
 /// Set python object property
 Method %DispatchSetProperty(property As %String, val) [ ServerOnly = 1 ]
 {
-	//$$$TOE(sc, ##class(isc.py.Main).GetVariableInfo(..%Variable _ "." _ property, ..%Serialization, .defined, .type, .length))
-	//throw:'defined ##class(%Exception.General).%New("<PROPERTY>", property)
-	
 	if ($isObject(val) && val.%Extends("isc.py.gw.DynamicObject")) {
 		set value = val.%Variable
 	} elseif (..%EscapeOnSet) {
@@ -97,7 +96,7 @@ Method %DispatchMethod(method As %String, args...) [ ServerOnly = 1 ]
 	
 	$$$TOE(sc, ##class(isc.py.Main).ExecuteFunctionArgs(..%Variable _ "." _ method, variable ,..%Serialization, .result, args...))
 	
-	$$$TOE(sc, ##class(isc.py.Main).GetVariableInfo(variable, , .defined, .type))
+	$$$TOE(sc, ##class(isc.py.Main).GetVariableType(variable, .type))
 	
 	if ..%IsPrimitive(type) = $$$NO {
 		set result = ..%New(,variable)
