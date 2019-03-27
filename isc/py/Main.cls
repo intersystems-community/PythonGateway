@@ -279,20 +279,12 @@ ClassMethod GetVariableInfo(variable As %String = "", serialization As %Integer 
 	
 	quit:variable="" $$$ERROR($$$GeneralError, "Variable argument should be set")
 	
-	if $l(variable, ".") = 1 {
-		set module = "__builtins__"
-		set varLocal = variable
-	} else {
-		set module = $p(variable, ".", 1, *-1)
-		set varLocal = $p(variable, ".", *)	
-	}
-	set sc = ..SimpleString("zzzdef='" _ variable _ "' in (vars() or globals()) or hasattr(" _ module _ ", '" _ varLocal _ "')", "zzzdef", , .defined)
-	
+
+	set sc = ..GetVariableDefined(variable, .defined)
 	quit:$$$ISERR(sc) sc
-	set defined = ##class(isc.py.util.Converter).PythonToBoolean(defined)
-	
+		
 	if defined {	
-		set sc = ..SimpleString("zzztype=('' if " _ variable _ ".__class__.__module__ is None or " _ variable _ ".__class__.__module__ == str.__class__.__module__ else " _ variable _ ".__class__.__module__ + '.') + " _ variable _ ".__class__.__name__", "zzztype", , .type)
+		set sc = ..GetVariableType(variable, .type)
 		quit:$$$ISERR(sc) sc
 		
 		if serialization = ##class(isc.py.Callout).#SerializationRepr {
@@ -302,12 +294,53 @@ ClassMethod GetVariableInfo(variable As %String = "", serialization As %Integer 
 		}
 		quit:$$$ISERR(sc) sc
 		
-		set sc = ..SimpleString("del zzztype, zzzlen")
+		set sc = ..SimpleString("del zzzlen")
 	}
 	quit:$$$ISERR(sc) sc
 	
-	set sc = ..SimpleString("del zzzdef")
+	quit sc
+}
 
+/// Is variable defined?
+/// variable - variable name
+/// defined - is variable defined
+ClassMethod GetVariableDefined(variable As %String = "", Output defined As %Boolean) As %Status
+{
+	#dim sc As %Status = $$$OK
+	kill defined
+	
+	quit:variable="" $$$ERROR($$$GeneralError, "Variable argument should be set")
+	
+	if $l(variable, ".") = 1 {
+		set module = "__builtins__"
+		set varLocal = variable
+	} else {
+		set module = $p(variable, ".", 1, *-1)
+		set varLocal = $p(variable, ".", *)	
+	}
+	
+	set sc = ..SimpleString("zzzdef='" _ variable _ "' in (vars() or globals()) or hasattr(" _ module _ ", '" _ varLocal _ "')", "zzzdef", , .defined)
+	quit:$$$ISERR(sc) sc
+	
+	set defined = ##class(isc.py.util.Converter).PythonToBoolean(defined)
+	
+	set sc = ..SimpleString("del zzzdef")
+	quit sc
+}
+
+/// Get variable type
+/// variable - variable name
+/// type - variable FQCN
+ClassMethod GetVariableType(variable As %String = "", Output type As %String) As %Status
+{
+	#dim sc As %Status = $$$OK
+	kill type
+	quit:variable="" $$$ERROR($$$GeneralError, "Variable argument should be set")
+
+	set sc = ..SimpleString("zzztype=('' if " _ variable _ ".__class__.__module__ is None or " _ variable _ ".__class__.__module__ == str.__class__.__module__ else " _ variable _ ".__class__.__module__ + '.') + " _ variable _ ".__class__.__name__", "zzztype", , .type)
+	quit:$$$ISERR(sc) sc
+	
+	set sc = ..SimpleString("del zzztype")
 	quit sc
 }
 
