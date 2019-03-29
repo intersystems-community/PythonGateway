@@ -93,10 +93,6 @@ ClassMethod ConfigureTestProcess(user As %String = "Admin", password As %String 
 	}
 	set code = $replace(code, "DSN=ENSEMBLE(PYTHON);UID=dev;PWD=123", $$$FormatText("Driver=%1;Server=%2;Port=%3;database=%4;UID=%5;PWD=%6;" ,driver, host, port, namespace, user, password))
 	
-	// Save correlation matrix plot to a temp directory
-	set code = $replace(code, "C:\InterSystems\Ensemble\mgr\Temp\", ##class(%File).NormalizeDirectory(##class(%SYS.System).TempDirectory()))
-	
-	
 	set sc = ##class(%Compiler.UDL.TextServices).SetTextFromString(,process, .code)
 	quit:$$$ISERR(sc) sc
 	

@@ -61,7 +61,7 @@ ClassMethod ParseActivities(activities As Ens.BPL.ActivityList)
 			do ..ParseActivities(activity.Cases)
 		} else {
 			set annotationText = $$$quote(activity.Annotation)
-			do:activity.Annotation'="" %code.WriteLine(" quit:name=""" _ activity.Name _ """ " _ annotationText)
+			do:activity.Annotation'="" %code.WriteLine(" quit:name=""" _ activity.Name _ """ ##class(isc.py.util.Evaluator).Evaluate(" _ annotationText _ ")")
 		}
 	}
 }

@@ -2,10 +2,14 @@
 Class isc.py.test.Process Extends (Ens.BusinessProcessBPL, isc.py.ens.ProcessUtils) [ DependsOn = isc.py.ens.ProcessUtils ]
 {
 
-/// Бизнес-операция, запускающая ожидание поступления изменений объекта
+/// How to load data into Python: by ODBC, JDBC or RAW (in-memory transfer, default).
 Property ConnectionType As %String(MAXLEN = 4, VALUELIST = ",RAW,JDBC,ODBC") [ InitialExpression = "RAW" ];
 
-Parameter SETTINGS = "ConnectionType:Basic";
+/// Where to save images. 
+/// Refer to this property from process proper with #{process.WorkDirectory}
+Property WorkDirectory As %VarString [ InitialExpression = {##class(%File).NormalizeDirectory(##class(%SYS.System).TempDirectory())} ];
+
+Parameter SETTINGS = "ConnectionType:Basic,WorkDirectory:Basic";
 
 Storage Default
 {
@@ -13,6 +17,9 @@ Storage Default
 <Subscript>"Process"</Subscript>
 <Value name="1">
 <Value>ConnectionType</Value>
+</Value>
+<Value name="2">
+<Value>WorkDirectory</Value>
 </Value>
 </Data>
 <DefaultData>ProcessDefaultData</DefaultData>
@@ -91,8 +98,9 @@ import seaborn as sns
 f=plt.figure()
 sns.heatmap(corrmat,xticklabels=corrmat.columns,yticklabels=corrmat.columns)
 plt.title('Correlation analysis of category sales volumes (by year/month)')
-f.savefig(r'C:\InterSystems\Ensemble\mgr\Temp\SHOWCASE004USE02.png')
-plt.close(f)]]></annotation>
+f.savefig(r'#{process.WorkDirectory}SHOWCASE${%PopulateUtils:Integer:1:100}.png')
+plt.close(f)
+]]></annotation>
 <request type='isc.py.msg.ExecutionRequest' >
 <assign property="callrequest.Code" value="process.GetAnnotation(&quot;Correlation Matrix: Graph&quot;)" action="set" />
 </request>
