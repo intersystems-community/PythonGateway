@@ -5,8 +5,8 @@ Class isc.py.test.Production Extends Ens.Production
 /// Register callout lib system-wide
 ClassMethod OnStart(pTimeStarted As %String) As %Status
 {
-	do ##class(isc.py.Callout).Setup()
-	quit $$$OK
+	set sc = ##class(isc.py.Callout).Setup()
+	quit sc
 }
 
 XData ProductionDefinition
