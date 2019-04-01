@@ -118,31 +118,30 @@ Method GetInitialClass(class As %String, Output classObj As %Dictionary.ClassDef
 	set:docs="None" docs = ""
 	
 	set classObj.Description = "Pyhton class: " _ class _ $$$NL _ $replace(docs, $c(10), $$$NL)
-	set classObj.GeneratedBy = "Python Gateway"
+	//set classObj.GeneratedBy = "Python Gateway"
 	
 	set sc = ##class(isc.py.Main).SimpleString("zzzextends=json.dumps([item.__module__ + '.' + item.__name__ for item in " _ ..Inspect _ ".getmro(" _ class _ ")])", "zzzextends", , .zzzextends)
 	// TODO - modules
-	quit:$$$ISERR(sc) $$$OK
-	
-	set obj = [].%FromJSON(zzzextends)
-	
-	set extends = ""
-	set irisExtends = ""
-	set iterator = obj.%GetIterator()
-	while iterator.%GetNext(.key, .value) {
-		continue:$e(value)="_"
-		continue:$l(value, ".")=1
-		set:$p(value, ".")="builtins" value = $p(value, ".", 2, *)
-		continue:value=class
-		set extends = extends _ $lb(value)
-		set irisExtends = irisExtends _ $lb(..PythonClassToIRIS(value))
+	if $$$ISERR(sc) {
+		set sc = $$$OK
+		set classObj.Super = "isc.py.gw.DynamicObject"
+	} else {
+		set obj = [].%FromJSON(zzzextends)
+		
+		set extends = ""
+		set irisExtends = ""
+		set iterator = obj.%GetIterator()
+		while iterator.%GetNext(.key, .value) {
+			continue:$e(value)="_"
+			continue:$l(value, ".")=1
+			set:$p(value, ".")="builtins" value = $p(value, ".", 2, *)
+			continue:value=class
+			set extends = extends _ $lb(value)
+			set irisExtends = irisExtends _ $lb(..PythonClassToIRIS(value))
+		}
+		set classObj.Super = $lg(irisExtends,1,"isc.py.gw.DynamicObject")
+		do ..AppendToClassList(extends)
 	}
-	
-	// TODO
-	// Only need first superclass
-	set classObj.Super = $lts(irisExtends)
-	
-	do ..AppendToClassList(extends)
 		
 	quit sc
 }
@@ -162,7 +161,7 @@ Method GenerateMethod(class As %String, classObj As %Dictionary.ClassDefinition,
 	set methodObj.Name = method
 	set methodObj.parent = classObj
 	set methodObj.ClassMethod = $$$YES
-	set methodObj.Description = "Signature: " _ signature _ $$$NL _ "Type: " _ type _ $$$NL _ $replace(docs, $c(10), $$$NL)
+	set methodObj.Description = "Signature: " _ signature _ $$$NL _ "Type: " _ type _ $$$NL _ $replace(docs, $c(10), $$$NL) _ $$$NL _ "write ##class(" _ classObj.Name _ ")." _ $case($zname(method,6), 1:method, :"""" _ method _ """") _ "()"
 	
 	if arguments="" {
 		set methodObj.FormalSpec = "args..."
@@ -253,7 +252,14 @@ ClassMethod GetClassMethods(class, Output methods As %List) As %Status
 		//set sc =  ##class(isc.py.Main).SimpleString("", "zzztype", , .type)
 		//quit:$$$ISERR(sc)
 		// todo get only things defined in the class
-		continue:$e(value)="_"
+		//continue:$e(value)="_"
+		
+		// Class does not implement the method, only inherits it.
+		set sc = ##class(isc.py.Main).SimpleString("zzzdef = '" _ value _ "' in " _ class _ ".__dict__", "zzzdef", , .zzzdef)
+		quit:$$$ISERR(sc)
+		set zzzdef = ##class(isc.py.util.Converter).PythonToBoolean(zzzdef)
+		continue:zzzdef=$$$NO
+		
 		set sc = ##class(isc.py.Main).GetVariableType(class _ "." _ value, .type)
 		continue:type="type"
 		

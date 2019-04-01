@@ -57,5 +57,18 @@ ClassMethod InitPerson() As %Status [ CodeMode = expression ]
 									"        return self.age + add")
 }
 
+/// https://www.python-course.eu/python3_class_and_instance_attributes.php
+ClassMethod InitZEmployee() As %Status [ CodeMode = expression ]
+{
+##class(isc.py.Main).SimpleString(  "class Employee(Person):" _ $c(10) _
+									"    def __init__(self, name, age, city, company):" _ $c(10) _
+									"        super().__init__(name, age, city)" _ $c(10) _
+									"        self.company = company" _ $c(10) _
+									"    def getCompany(self):" _ $c(10) _
+									"        return self.company" _ $c(10) _
+									"    def getAgePlus(self, add):" _ $c(10) _
+									"        return self.age + add*2")
+}
+
 }
 

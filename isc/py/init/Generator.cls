@@ -9,5 +9,11 @@ ClassMethod InitGetMembers() As %Status [ CodeMode = expression ]
 									"    return json.dumps([item[0] for item in inspect.getmembers(object, predicate)])")
 }
 
+ClassMethod InitUncallable() As %Status [ CodeMode = expression ]
+{
+##class(isc.py.Main).SimpleString(  "def zzzuncallable(object):" _ $c(10) _ 
+									"    return not callable(object)")
+}
+
 }
 
