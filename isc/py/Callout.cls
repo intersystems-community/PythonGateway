@@ -126,6 +126,7 @@ ClassMethod StreamWrite(code As %String = "") As %Status
 {
 	#dim sc As %Status = $$$OK
 	try {
+		set:$ZISWIDE(code) code = $zcvt(code, "O", "UTF8")
 		do $ZF(-6, ..#PyLibId, ..#StreamWrite, code)
 	} catch ex {
 		#dim ex As %Exception.General

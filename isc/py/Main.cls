@@ -64,7 +64,7 @@ ClassMethod ExecuteCode(code As %Stream.Object, variable As %String = "") As %St
 		
 		if $isObject(code) {
 			while 'code.AtEnd {
-				set codePiece = code.Read($$$MaxStringLength)
+				set codePiece = code.Read($$$MaxStringLength \ 2)
 				set sc = ##class(isc.py.Callout).StreamWrite(codePiece)
 				quit:$$$ISERR(sc)
 			}
