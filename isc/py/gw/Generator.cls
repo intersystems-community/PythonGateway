@@ -254,12 +254,20 @@ Method GenerateMethod(class As %String, classObj As %Dictionary.ClassDefinition,
 	}
 	// end - calculating caller obj on Python side
 	
+	do methodObj.Implementation.WriteLine($c(9) _ "set variable = ..%GetNewVar()")
+	
 	if irisArgs'="" {
-		do methodObj.Implementation.WriteLine($c(9) _ "$$$TOE(sc, ##class(isc.py.Main).SimpleString(""zzzresult = " _ caller _ "(""_" _ callArgs  _ "_"")"", ""zzzresult"", , .zzzresult))") //$lts(irisArgs, "_"",""_")
+		do methodObj.Implementation.WriteLine($c(9) _ "$$$TOE(sc, ##class(isc.py.Main).SimpleString(variable _ "" = " _ caller _ "(""_" _ callArgs  _ "_"")"", variable, , .result))") //$lts(irisArgs, "_"",""_")
 	} else {
-		do methodObj.Implementation.WriteLine($c(9) _ "$$$TOE(sc, ##class(isc.py.Main).SimpleString(""zzzresult = " _ caller _ "()"", ""zzzresult"", , .zzzresult))")
+		do methodObj.Implementation.WriteLine($c(9) _ "$$$TOE(sc, ##class(isc.py.Main).SimpleString(variable _ "" = " _ caller _ "()"", variable, , .result))")
 	}
-	do methodObj.Implementation.WriteLine($c(9) _ "quit zzzresult")
+	
+	do methodObj.Implementation.WriteLine($c(9) _ "$$$TOE(sc, ##class(isc.py.Main).GetVariableType(variable, .type))")
+	
+	do methodObj.Implementation.WriteLine($c(9) _ "if ..%IsPrimitive(type) = $$$NO {")
+	do methodObj.Implementation.WriteLine($c(9,9) _ "set result = $classmethod(..%TypeToClass(type), ""%New"", , variable)")
+	do methodObj.Implementation.WriteLine($c(9) _ "}")
+	do methodObj.Implementation.WriteLine($c(9) _ "quit result")
 	set methodObj.FormalSpec = irisArgs
 	
 	quit sc

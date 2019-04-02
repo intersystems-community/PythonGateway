@@ -67,7 +67,7 @@ Method %DispatchGetProperty(property As %String) [ ServerOnly = 1 ]
 /// Set python object property
 Method %DispatchSetProperty(property As %String, val) [ ServerOnly = 1 ]
 {
-	set value = ..%EscapeArgStatic(val, ..%EscapeOnSet)
+	set value = ..%EscapeArg(val, ..%EscapeOnSet)
 	set arguments = $lb(..%Variable, ##class(isc.py.util.Converter).EscapeString(property), value)
 	
 	$$$TOE(sc, ##class(isc.py.Main).ExecuteFunction("setattr", arguments))
@@ -78,12 +78,12 @@ Method %DispatchMethod(method As %String, args...) [ ServerOnly = 1 ]
 {
 	for i=1:1:$g(args) {
 		if $d(args(i)) {
-			set value = ..%EscapeArgStatic(args(i), ..%EscapeOnCall)
+			set value = ..%EscapeArg(args(i), ..%EscapeOnCall)
 			set args(i) = value
 		}
 	}
 	
-	set variable = "variable" _ $random(100000000)
+	set variable = ..%GetNewVar()
 	
 	$$$TOE(sc, ##class(isc.py.Main).ExecuteFunctionArgs(..%Variable _ "." _ method, variable ,..%Serialization, .result, args...))
 	
@@ -187,11 +187,11 @@ ClassMethod %ArgsToString(args) As %String
 	
 	if (($listvalid(args)) && ($ll(args)>0)) {
 		for i=1:1:$ll(args) {
-			set $li(args, i) = ..%EscapeArgStatic($lg(args, i), ..#EscapeOnCall)
+			set $li(args, i) = ..%EscapeArg($lg(args, i), ..#EscapeOnCall)
 		}
 		set result = $lts(args)
 	} else {
-		set result = ..%EscapeArgStatic(args, ..#EscapeOnCall)
+		set result = ..%EscapeArg(args, ..#EscapeOnCall)
 	}
 	quit result
 }
@@ -220,7 +220,7 @@ ClassMethod %KWArgsToString(args) As %String
 		set argsComputed = ""
 		for i=1:1:$ll(args) {
 			set arg = $lg(args, i)
-			set argsComputed = argsComputed _ $lb($lg(arg) _ "=" _ ..%EscapeArgStatic($lg(arg,2), ..#EscapeOnCall))
+			set argsComputed = argsComputed _ $lb($lg(arg) _ "=" _ ..%EscapeArg($lg(arg,2), ..#EscapeOnCall))
 		}
 		set result = $lts(argsComputed)
 	} else {
@@ -230,7 +230,7 @@ ClassMethod %KWArgsToString(args) As %String
 	quit result
 }
 
-/// Convert positional args to string
+/// Convert args... to string
 /// w ##class(isc.py.gw.DynamicObject).%CallArgsToString()
 ClassMethod %CallArgsToString(args...) As %String
 {
@@ -241,7 +241,7 @@ ClassMethod %CallArgsToString(args...) As %String
 	set result = ""
 	for i=1:1:args {
 		if $d(args(i)) {
-			set value = ..%EscapeArgStatic(args(i))
+			set value = ..%EscapeArg(args(i))
 		} else {
 			set value = ""
 		}
@@ -253,8 +253,9 @@ ClassMethod %CallArgsToString(args...) As %String
 	quit result
 }
 
+/// Escape one argumet if needed
 /// w ##class(isc.py.gw.DynamicObject).%EscapeArg()
-ClassMethod %EscapeArgStatic(arg, escapeString As %Boolean = {..#EscapeOnCall}) As %String
+ClassMethod %EscapeArg(arg, escapeString As %Boolean = {..#EscapeOnCall}) As %String
 {
 	quit:'$d(arg) ""
 	
@@ -267,6 +268,27 @@ ClassMethod %EscapeArgStatic(arg, escapeString As %Boolean = {..#EscapeOnCall}) 
 	}
 
 	quit value
+}
+
+/// Get unused Python variable
+/// w ##class(isc.py.gw.DynamicObject).%GetNewVar()
+ClassMethod %GetNewVar() [ CodeMode = expression ]
+{
+"variable" _ $random(100000000000000000)
+}
+
+/// Convert python type to InterSystems IRIS class
+/// w ##class(isc.py.gw.DynamicObject).%TypeToClass
+ClassMethod %TypeToClass(type) As %String
+{
+	set basePackage = $p($classname(), ".", 1)
+	set class = basePackage _ "." _ type
+	
+	if '##class(%Dictionary.CompiledClass).%ExistsId(class) {
+		set class = $classname()
+	}
+	
+	quit class
 }
 
 }
