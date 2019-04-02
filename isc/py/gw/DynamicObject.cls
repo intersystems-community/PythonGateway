@@ -2,6 +2,9 @@
 Class isc.py.gw.DynamicObject Extends %RegisteredObject
 {
 
+/// Automatically escape values on property set
+Parameter %EscapeOnSet As %Boolean = {$$$YES};
+
 /// Name of python variable holding the object
 Property %Variable As %String(MAXLEN = 1000);
 
@@ -80,16 +83,18 @@ Method %DispatchSetProperty(property As %String, val) [ ServerOnly = 1 ]
 Method %DispatchMethod(method As %String, args...) [ ServerOnly = 1 ]
 {
 	for i=1:1:$g(args) {
-		set val = args(i)
-		if ($isObject(val) && val.%Extends("isc.py.gw.DynamicObject")) {
-			set value = val.%Variable
-		} elseif (..%EscapeOnCall) {
-			set value = ##class(isc.py.util.Converter).EscapeString(val)
-		} else {
-			set value = val
+		if $d(args(i)) {
+			set val = args(i)
+			if ($isObject(val) && val.%Extends("isc.py.gw.DynamicObject")) {
+				set value = val.%Variable
+			} elseif (..%EscapeOnCall) {
+				set value = ##class(isc.py.util.Converter).EscapeString(val)
+			} else {
+				set value = val
+			}
+			
+			set args(i) = value
 		}
-		
-		set args(i) = value
 	}
 	
 	set variable = "variable" _ $random(100000000)
@@ -172,6 +177,63 @@ ClassMethod %IsPrimitive(type As %String) As %Boolean
 {
 	quit:$lf($lb("str", "int", "bool", "float"), type)>0 $$$YES
 	quit $$$NO
+}
+
+ClassMethod %ArgsToString(args) As %String
+{
+	quit ""
+	quit $lts(args)
+}
+
+ClassMethod %KWArgsToString(kwargs) As %String
+{
+	quit ""
+	quit $lts(args)
+}
+
+/// w ##class(isc.py.gw.DynamicObject).%CallArgsToString()
+ClassMethod %CallArgsToString(args...) As %String
+{
+	quit:'$d(args) ""
+	
+	#dim firstArg As %Boolean = $$$YES
+	
+	set result = ""
+	for i=1:1:args {
+		if $d(args(i)) {
+			set val = args(i)
+			if ($isObject(val) && val.%Extends("isc.py.gw.DynamicObject")) {
+				set value = val.%Variable
+			} elseif (..#%EscapeOnCall) {
+				set value = ##class(isc.py.util.Converter).EscapeString(val)
+			} else {
+				set value = val
+			}
+		} else {
+			set value = ""
+		}
+		
+		set result = result _ $case(firstArg, $$$YES:"", :", ") _ value
+		set firstArg = $$$NO
+	}
+	
+	quit result
+}
+
+/// w ##class(isc.py.gw.DynamicObject).%EscapeArg()
+ClassMethod %EscapeArg(arg) As %String
+{
+	quit:'$d(arg) ""
+	
+	if ($isObject(arg) && arg.%Extends("isc.py.gw.DynamicObject")) {
+		set value = arg.%Variable
+	} elseif (..#%EscapeOnCall) {
+		set value = ##class(isc.py.util.Converter).EscapeString(arg)
+	} else {
+		set value = arg
+	}
+
+	quit value
 }
 
 }

@@ -112,6 +112,8 @@ Method GetInitialClass(class As %String, Output classObj As %Dictionary.ClassDef
 		set classObj = ##class(%Dictionary.ClassDefinition).%New(irisClass)
 	}
 	
+	do classObj.ProcedureBlockReset()
+	
 	set sc = ##class(isc.py.Main).SimpleString("zzzdocs=" _ ..Inspect _ ".getdoc(" _ class _ ")", "zzzdocs", , .docs)
 	quit:$$$ISERR(sc) sc
 	set sc = ##class(isc.py.Main).SimpleString("del zzzdocs")
@@ -163,8 +165,22 @@ Method GenerateMethod(class As %String, classObj As %Dictionary.ClassDefinition,
 	set methodObj.ClassMethod = $$$YES
 	set methodObj.Description = "Signature: " _ signature _ $$$NL _ "Type: " _ type _ $$$NL _ $replace(docs, $c(10), $$$NL) _ $$$NL _ "write ##class(" _ classObj.Name _ ")." _ $case($zname(method,6), 1:method, :"""" _ method _ """") _ "()"
 	
+	
+	// start - calculating sifgnatures
+	
+	// Method signature
+	set irisArgs = ""
+	
+	// python call signature 
+	set callArgs = ""
+	
+	// Are we currently on first arg
+	#dim firstArg As %Boolean = $$$YES
+	
+	
 	if arguments="" {
-		set methodObj.FormalSpec = "args..."
+		set irisArgs = "args..."
+		set callArgs = "..%CallArgsToString(args...)"
 		if type["method" {
 			set methodObj.ClassMethod = $$$NO
 		}
@@ -190,34 +206,61 @@ Method GenerateMethod(class As %String, classObj As %Dictionary.ClassDefinition,
 		#dim hasKWArgs As %Boolean = (varkw'="")
 	 
 	 	
-	 	set irisArgs = ""
+	 	
 		
 		set iterator = args.%GetIterator()
 		while iterator.%GetNext(.key, .value) {
-			set irisArgs = irisArgs _ $lb(..VarNameToIRIS(value))
+			set irisArgs = irisArgs _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(value)
+			set callArgs = callArgs _ $case(firstArg, $$$YES:"", :"_"",""_") _ "..%EscapeArg(" _ ..VarNameToIRIS(value) _ ")"
+			set firstArg = $$$NO
+			
+			
+			//set default = $case($isObject($g(defaults)), $$$YES:defaults.%Get(key), :"")
+			//set:default'="" irisArgs = irisArgs _ "=" _ default
 		}
 		
-		set:hasArgs irisArgs = irisArgs _ $lb(..VarNameToIRIS(varargs))
+		if hasArgs {
+			set irisArgs = irisArgs _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(varargs)
+			set callArgs = callArgs _ $case(firstArg, $$$YES:"", :"_"",""_") _ "..%ArgsToString(" _ ..VarNameToIRIS(varargs) _ ")"
+			set firstArg = $$$NO
+		}
 		
 		set iterator = kwonlyargs.%GetIterator()
-		while iterator.%GetNext(.key, .value) {
-			set irisArgs = irisArgs _ $lb(..VarNameToIRIS(value))
+		while iterator.%GetNext(.key, .value) {			
+			set irisArgs = irisArgs _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(value)		
+			set callArgs = callArgs _ $case(firstArg, $$$YES:"", :"_"",""_") _ """" _ value _ "=""_..%EscapeArg(" _ ..VarNameToIRIS(value) _ ")"
+			set firstArg = $$$NO
+
+			//set default = $case($isObject($g(kwonlydefaults)), $$$YES:kwonlydefaults.%Get(key), :"")
+			//set:default'="" irisArgs = irisArgs _ "=" _ default
 		}
 		
-		set:hasKWArgs irisArgs = irisArgs _ $lb(..VarNameToIRIS(varkw))	
-		
-		set methodObj.FormalSpec = $lts(irisArgs)
-		
-		if irisArgs'="" {
-		
-			do methodObj.Implementation.WriteLine($c(9) _ "set sc = ##class(isc.py.Main).SimpleString(""zzzresult = " _ class _ "." _ method _ "(""_" _ $lts(irisArgs, "_"",""_") _ "_"")"", ""zzzresult"", , .zzzresult)")
-		} else {
-			do methodObj.Implementation.WriteLine($c(9) _ "set sc = ##class(isc.py.Main).SimpleString(""zzzresult = " _ class _ "." _ method _ "()"", ""zzzresult"", , .zzzresult)")
+		if hasKWArgs {
+			set irisArgs = irisArgs _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(varkw)
+			set callArgs = callArgs _ $case(firstArg, $$$YES:"", :"_"",""_") _ "..%KWArgsToString(" _ ..VarNameToIRIS(varkw) _ ")"
+			set firstArg = $$$NO
 		}
-		do methodObj.Implementation.WriteLine($c(9) _ "quit zzzresult")
 	}
+	// end - calculating signatures
+	
 	
 	set:class=..Module methodObj.ClassMethod = $$$YES
+
+	// start - calculating caller obj on Python side
+	if methodObj.ClassMethod {
+		set caller =  class _ "." _ method
+	} else {
+		set caller = """ _ ..%Variable _ """
+	}
+	// end - calculating caller obj on Python side
+	
+	if irisArgs'="" {
+		do methodObj.Implementation.WriteLine($c(9) _ "$$$TOE(sc, ##class(isc.py.Main).SimpleString(""zzzresult = " _ caller _ "(""_" _ callArgs  _ "_"")"", ""zzzresult"", , .zzzresult))") //$lts(irisArgs, "_"",""_")
+	} else {
+		do methodObj.Implementation.WriteLine($c(9) _ "$$$TOE(sc, ##class(isc.py.Main).SimpleString(""zzzresult = " _ caller _ "()"", ""zzzresult"", , .zzzresult))")
+	}
+	do methodObj.Implementation.WriteLine($c(9) _ "quit zzzresult")
+	set methodObj.FormalSpec = irisArgs
 	
 	quit sc
 }
