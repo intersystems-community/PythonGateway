@@ -2,8 +2,8 @@
 Class isc.py.gw.DynamicObject Extends %RegisteredObject
 {
 
-/// Automatically escape values on property set
-Parameter %EscapeOnSet As %Boolean = {$$$YES};
+/// Automatically escape values on  method call
+Parameter EscapeOnCall As %Boolean = {$$$NO};
 
 /// Name of python variable holding the object
 Property %Variable As %String(MAXLEN = 1000);
@@ -67,13 +67,7 @@ Method %DispatchGetProperty(property As %String) [ ServerOnly = 1 ]
 /// Set python object property
 Method %DispatchSetProperty(property As %String, val) [ ServerOnly = 1 ]
 {
-	if ($isObject(val) && val.%Extends("isc.py.gw.DynamicObject")) {
-		set value = val.%Variable
-	} elseif (..%EscapeOnSet) {
-		set value = ##class(isc.py.util.Converter).EscapeString(val)
-	} else {
-		set value = val
-	}
+	set value = ..%EscapeArgStatic(val, ..%EscapeOnSet)
 	set arguments = $lb(..%Variable, ##class(isc.py.util.Converter).EscapeString(property), value)
 	
 	$$$TOE(sc, ##class(isc.py.Main).ExecuteFunction("setattr", arguments))
@@ -84,15 +78,7 @@ Method %DispatchMethod(method As %String, args...) [ ServerOnly = 1 ]
 {
 	for i=1:1:$g(args) {
 		if $d(args(i)) {
-			set val = args(i)
-			if ($isObject(val) && val.%Extends("isc.py.gw.DynamicObject")) {
-				set value = val.%Variable
-			} elseif (..%EscapeOnCall) {
-				set value = ##class(isc.py.util.Converter).EscapeString(val)
-			} else {
-				set value = val
-			}
-			
+			set value = ..%EscapeArgStatic(args(i), ..%EscapeOnCall)
 			set args(i) = value
 		}
 	}
@@ -179,18 +165,72 @@ ClassMethod %IsPrimitive(type As %String) As %Boolean
 	quit $$$NO
 }
 
+/// Convert incoming args argument to string.
+/// args can be one of:
+/// - $lb(val1, val2, ..., valN) 
+/// - any %Collection.AbstractIterator class 
+/// - Dynamic array
+/// - singular value
 ClassMethod %ArgsToString(args) As %String
 {
-	quit ""
-	quit $lts(args)
+	quit:'$d(args) ""
+	
+	if $isObject(args) {
+		if args.%Extends("%Collection.AbstractIterator") {
+			set args = $lts(##class(isc.py.util.Converter).CollectionToList(args))
+		} elseif args.%Extends("%Library.DynamicAbstractObject") {
+			set args = $lts(##class(isc.py.util.Converter).DynamicToList(args))
+		} else {
+			throw ##class(%Exception.General).%New("<PGTW>:%ArgsToString", args)
+		}
+	}
+	
+	if (($listvalid(args)) && ($ll(args)>0)) {
+		for i=1:1:$ll(args) {
+			set $li(args, i) = ..%EscapeArgStatic($lg(args, i), ..#EscapeOnCall)
+		}
+		set result = $lts(args)
+	} else {
+		set result = ..%EscapeArgStatic(args, ..#EscapeOnCall)
+	}
+	quit result
 }
 
-ClassMethod %KWArgsToString(kwargs) As %String
+/// Convert incoming kwargs argument to string.
+/// kwargs can be one of:
+/// - $lb($lb(name1, val1), $lb(name2, val2), ..., $lb(nameN, valN)) 
+/// - any %Collection.AbstractArray class 
+/// - flat Dynamic object
+/// - singular key=value pair  
+ClassMethod %KWArgsToString(args) As %String
 {
-	quit ""
-	quit $lts(args)
+	quit:'$d(args) ""
+	
+	if $isObject(args) {
+		if args.%Extends("%Collection.AbstractIterator") {
+			set args = $lts(##class(isc.py.util.Converter).CollectionToList(args, $$$YES))
+		} elseif args.%Extends("%Library.DynamicAbstractObject") {
+			return "**" _ args.%ToJSON()
+		} else {
+			throw ##class(%Exception.General).%New("<PGTW>:%KWArgsToString", args)
+		}
+	}
+	
+	if (($listvalid(args)) && ($ll(args)>0)) {
+		set argsComputed = ""
+		for i=1:1:$ll(args) {
+			set arg = $lg(args, i)
+			set argsComputed = argsComputed _ $lb($lg(arg) _ "=" _ ..%EscapeArgStatic($lg(arg,2), ..#EscapeOnCall))
+		}
+		set result = $lts(argsComputed)
+	} else {
+		// We don't want to escape singular key=value expression
+		set result = args
+	}
+	quit result
 }
 
+/// Convert positional args to string
 /// w ##class(isc.py.gw.DynamicObject).%CallArgsToString()
 ClassMethod %CallArgsToString(args...) As %String
 {
@@ -201,14 +241,7 @@ ClassMethod %CallArgsToString(args...) As %String
 	set result = ""
 	for i=1:1:args {
 		if $d(args(i)) {
-			set val = args(i)
-			if ($isObject(val) && val.%Extends("isc.py.gw.DynamicObject")) {
-				set value = val.%Variable
-			} elseif (..#%EscapeOnCall) {
-				set value = ##class(isc.py.util.Converter).EscapeString(val)
-			} else {
-				set value = val
-			}
+			set value = ..%EscapeArgStatic(args(i))
 		} else {
 			set value = ""
 		}
@@ -221,13 +254,13 @@ ClassMethod %CallArgsToString(args...) As %String
 }
 
 /// w ##class(isc.py.gw.DynamicObject).%EscapeArg()
-ClassMethod %EscapeArg(arg) As %String
+ClassMethod %EscapeArgStatic(arg, escapeString As %Boolean = {..#EscapeOnCall}) As %String
 {
 	quit:'$d(arg) ""
 	
 	if ($isObject(arg) && arg.%Extends("isc.py.gw.DynamicObject")) {
 		set value = arg.%Variable
-	} elseif (..#%EscapeOnCall) {
+	} elseif escapeString {
 		set value = ##class(isc.py.util.Converter).EscapeString(arg)
 	} else {
 		set value = arg
