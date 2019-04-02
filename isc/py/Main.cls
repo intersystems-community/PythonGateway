@@ -396,16 +396,18 @@ ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean
 			set signature = ""
 		}
 		
-		set sc = ..SimpleString("zzzargs="_json_".dumps(" _ inspect _ ".getfullargspec(" _ function _ "))", "zzzargs", , .arguments)
-		if $$$OK {
+		set sc = ..SimpleString("zzzargs=" _ inspect _ ".getfullargspec(" _ function _ ")")
+		if $$$ISOK(sc) {
+			set sc = ..GetVariableJson("zzzargs", .arguments, $$$YES)
+			quit:$$$ISERR(sc) sc
+			
 			set sc = ..SimpleString("del zzzargs")
 		} else {
+			// Some C defined functions do not have introspectable arguments and signature 
+			// https://stackoverflow.com/a/42225667/2425753
 			set arguments = ""
+			set sc = $$$OK
 		}
-		
-		// Some C defined functions do not have introspectable arguments and signature 
-		// https://stackoverflow.com/a/42225667/2425753
-		set sc = $$$OK
 	}
 	
 	quit sc
