@@ -79,7 +79,9 @@ Generally the main interface to Python is `isc.py.Main`. It offers these methods
 - `SimpleString(code, returnVariable, serialization, .result)` - for cases where both code and variable are strings.
 - `ExecuteCode(code, variable)` - execute `code` (it may be a stream or string), optionally set result into `variable`.
 - `GetVariable(variable, serialization, .stream, useString)` - get `serialization` of `variable` in `stream`. If `useString` is 1 and variable serialization can fit into string then string is returned instead of the stream.
-- `GetVariableInfo(variable, serialization, .defined, .type, .length)` - get info about variable: is it defined, type,and serialization length.
+- `GetVariableInfo(variable, serialization, .defined, .type, .length)` - get info about variable: is it defined, type and serialized length.
+- `GetVariableDefined(variable, .defined)` - is variable defined.
+- `GetVariableType(variable, .type)` - get variable FQCN.
 - `GetStatus()` - returns last occurred exception in Python and clears it.
 - `GetVariableJson(variable, .stream, useString)` - get JSON serialization of variable.
 - `GetVariablePickle(variable, .stream, useString, useDill)` - get Pickle (or Dill) serialization of variable.
@@ -183,6 +185,19 @@ There are several limitations associated with the use of PythonAdapter.
 
 Development of ObjectScript is done via [cache-tort-git](https://github.com/MakarovS96/cache-tort-git) in UDL mode. 
 Development of C code is done in Eclipse.
+
+# Commits
+
+Commits should follow the pattern: `moule: description issue`. List of modules:
+
+- Callout - C and ObjectScript callout interface in `isc.py.Callout`.
+- API - terminal API, mainly `isc.py.Main`.
+- Gateway - proxy classes generation.
+- Proxyless Gateway - `isc.py.gw.DynamicObject` class.
+- Interoperability - support utilities for Interoperability Business Processes.
+- Tests - unit tests and test production.
+- Docker - containers.
+- Docs - documentation.
 
 # Building
 
