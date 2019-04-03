@@ -179,7 +179,7 @@ ClassMethod ExecuteQuery(query As %String, variable As %String, type As %String(
 			if colType = "bool" {
 				set rowList = rowList _ $lb(##class(isc.py.util.Converter).BooleanToPython(value))
 			} elseif colType = "numeric" {
-				set:value="" value = "''"
+				set:value="" value = "None"
 				set rowList = rowList _ $lb(value)
 			} elseif colType = "timestamp" {
 				set rowList = rowList _ $lb(##class(isc.py.util.Converter).ODBCTimeStampToPython(datetime, value))
