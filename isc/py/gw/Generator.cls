@@ -185,7 +185,17 @@ Method GetInitialClass(type As %String, Output classObj As %Dictionary.ClassDefi
 			set extends = extends _ $lb(value)
 			set irisExtends = irisExtends _ $lb(..TypeToClass(value))
 		}
-		set classObj.Super = $lg(irisExtends, 1, ..BaseClass)
+		
+		for i=1:1:$ll(irisExtends) {
+			set irisExtendsClass = $lg(irisExtends, i)
+			if classObj.Name'=irisExtendsClass {
+				set classObj.Super = irisExtendsClass
+				quit
+			}
+		}
+		set:classObj.Super="" classObj.Super = ..BaseClass
+		
+		
 		do ..AppendToTypeList(extends)
 	}
 		
@@ -257,9 +267,11 @@ Method TypeToClass(type As %String) As %String
 }
 
 /// Translate method argument names from Python to IRIS.
-ClassMethod VarNameToIRIS(string) As %String [ CodeMode = expression ]
+ClassMethod VarNameToIRIS(string) As %String
 {
-$tr(string, "_")
+	set arg = $tr(string, "_")
+	set:arg="" arg = "arg" _ $l(string)
+	quit arg
 }
 
 /// Generate method code.
@@ -286,7 +298,8 @@ Method GenerateMethod(type As %String, classObj As %Dictionary.ClassDefinition, 
 		
 		// Is it class or object method? - Start
 		set methodObj.ClassMethod = $$$YES
-		set:methodType["method" methodObj.ClassMethod = $$$NO
+		set:methodType="method" methodObj.ClassMethod = $$$NO
+		set:methodType="method_descriptor" methodObj.ClassMethod = $$$NO
 		// Is it class or object method? - Ens
 		// Not really the end
 		
@@ -295,10 +308,18 @@ Method GenerateMethod(type As %String, classObj As %Dictionary.ClassDefinition, 
 			set formalSpec = "args..."
 			set callArgs = "..%CallArgsToString(args...)"
 		} else {
+			set arguments = $replace(arguments, "NaN", "null")
 			#dim funcArgObj As %DynamicArray = [].%FromJSON(arguments)
 			// If it has self arg, it's probably an instance method
-			if (($isObject(funcArgObj.%Get(0)) && (funcArgObj.%Get(0).%Get(0)="self"))) {
-				set methodObj.ClassMethod = $$$NO
+			
+			if $isObject(funcArgObj.%Get(0)) { 
+				if (funcArgObj.%Get(0).%Get(0)="self") {
+					set methodObj.ClassMethod = $$$NO
+				} else {
+					set methodObj.ClassMethod = $$$YES
+				}
+			} else {
+				set methodObj.ClassMethod = $$$YES
 			}
 
 			do ..GenereateMethodSignature(funcArgObj, .formalSpec, .callArgs)
@@ -307,7 +328,10 @@ Method GenerateMethod(type As %String, classObj As %Dictionary.ClassDefinition, 
 		
 		// Module methods can always be called
 		set:type=..Module methodObj.ClassMethod = $$$YES
-			
+		
+		set isClassMethod = ##class(isc.py.util.Generator).IsClassMethod(type, method)
+		set:isClassMethod'="" methodObj.ClassMethod = isClassMethod  ///$case(isClassMethod, $$$YES:$$$YES, $$$NO:"")
+		
 		do ..GenerateMethodBody(methodObj, type, method, formalSpec, callArgs)
 		set methodObj.Description = methodObj.Description _  ..GenerateCall(classObj.Name, methodObj.Name, methodObj.ClassMethod) 
 	}
@@ -417,12 +441,24 @@ ClassMethod GenereateMethodSignature(funcArgObj As %DynamicArray, Output formalS
 ClassMethod GenerateMethodBody(methodObj As %Dictionary.MethodDefinition, class, method, formalSpec, callArgs)
 {
 	if methodObj.Name = "%OnNew" {
+		do ..FixOnNewArgs(.formalSpec, .callArgs)
 		do ..GenerateOnNewMethodBody(methodObj, formalSpec, callArgs)
 	} else {
 		do ..GenerateCommonMethodBody(methodObj, class, method, formalSpec, callArgs)
 	}
 	
 	do:methodObj.Abstract methodObj.Implementation.Clear()
+}
+
+/// Fix formalSpec and callArgs for %OnNew method if they contain "init" and/or "variable" arguments already 
+ClassMethod FixOnNewArgs(ByRef formalSpec, ByRef callArgs)
+{
+	for variable = "init","variable" {
+		if $find(formalSpec, variable)>0 {
+			set formalSpec = $replace(formalSpec, variable, variable _ "Arg")
+			set callArgs = $replace(callArgs, variable, variable _"Arg")
+		}
+	}
 }
 
 /// Generate %OnNew method

@@ -1,7 +1,7 @@
 Class isc.py.init.Generator Extends isc.py.init.Abstract
 {
 
-Parameter Modules = {$lb("types", "json", "inspect", "random", "builtins", "collections")};
+Parameter Modules = {$lb("types", "json", "inspect", "random")};
 
 ClassMethod InitGetMembers() As %Status [ CodeMode = expression ]
 {

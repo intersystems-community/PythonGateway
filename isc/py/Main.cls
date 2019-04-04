@@ -627,6 +627,7 @@ ClassMethod GetStatus() As %Status
 
 /// Returns last occured exception in Python and clears it
 /// zwrite ##class(isc.py.Main).GetVariableJson()
+/// Can return invalid json (NaN, Infinity), see: https://stackoverflow.com/questions/28639953/python-nan-json-encoder
 ClassMethod GetVariableJson(variable As %String, ByRef stream As %Stream.Object, useString As %Boolean = {$$$NO}) As %Status
 {
 	set stream = ""
