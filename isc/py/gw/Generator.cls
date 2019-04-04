@@ -1,31 +1,40 @@
+/// Generate IRIS classes from Pyhton types 
 Class isc.py.gw.Generator Extends %RegisteredObject
 {
 
-/// Display logging info
-Property Debug As %Boolean [ InitialExpression = {$$$YES} ];
+/// Display logging info. Increasing the number shows more messages.
+/// -1 display nothing
+/// 0 - display modules info
+/// 1 - display types info
+/// 2 - display methods/properties info
+Property LogLevel As %Integer [ InitialExpression = 1 ];
 
-/// Already done
-Property GeneratedClassList As %List;
+/// Already done python types
+Property GeneratedTypeList As %List;
 
-/// Work to do
+/// Work to do - python types
+Property TypeList As %List;
+
+/// Created IRIS classes
 Property ClassList As %List;
 
 /// Base pachage for generated classes
-Property Package As %String;
+Property Package As %String [ InitialExpression = "py" ];
 
 /// Inspect alias
 Property Inspect As %String [ InitialExpression = "inspect" ];
 
-/// Module we're currently importing
+/// Module alias we're currently importing
 Property Module As %String;
 
 /// Base class for all python classes
 Property BaseClass As %String [ InitialExpression = "isc.py.gw.DynamicObject" ];
 
+/// List of modules loaded in memory
 Property ImportedModules As %List;
 
 /// do ##class(isc.py.gw.Generator).Test()
-ClassMethod Test(modules = {$lb("builtins","random")})
+ClassMethod Test(modules As %List = {$lb("builtins","random")})
 {
 	set package = "py"
 	do $system.OBJ.DeletePackage(package)
@@ -41,55 +50,53 @@ ClassMethod Test(modules = {$lb("builtins","random")})
 	w $System.Status.GetErrorText(sc)
 }
 
+/// Compile all generated classes
 Method Compile()
 {
 	set irisClasses = ""
 	set ptr=0
-	while $listnext(..GeneratedClassList, ptr, value) {
-		set irisClasses = irisClasses _ $lb(..PythonClassToIRIS(value))
+	
+	if ..LogLevel>0 {
+		set displayFlags = "/display=all"
+	} else {
+		set displayFlags = "/checkuptodate=expandedonly /displaylog=0 /displayerror=0"
 	}
 	
-	
-	set sc = $system.OBJ.Compile($lts(irisClasses), "cukd")
+	set sc = $system.OBJ.Compile($lts(..ClassList), "cuks /checkuptodate=expandedonly " _ displayFlags)
 	quit sc
 }
 
+/// Generate module
 Method GenerateModule(module) As %Status
 {
-	set sc = ##class(isc.py.init.Generator).Initialize(,..Debug)
+	set sc = ##class(isc.py.init.Generator).Initialize(,(..LogLevel>0))
 	quit:$$$ISERR(sc) sc
-	
-	
 	
 	set sc = ##class(isc.py.Main).ImportModule(module, .imported, .alias)
 	quit:$$$ISERR(sc) sc
 	
 	set ..Module = alias
-	do ..AppendToClassList($lb(alias))
+	do ..AppendToTypeList($lb(alias))
 	
 	do ..AppendImportedModule(alias)
-	
-
-	
-	do ..Log("Generating module: %1 alias %2 into package: %3", module, alias, ..Package)
-	
-	set sc = ..GetModuleClasses(alias, .classes)
-	do ..AppendToClassList(classes)
-
-	while $ll(..ClassList)>0 {
-		set list = ..ClassList
-		set class = $lg(list, *)
-		set $li(list, *, *) = ""
-		set ..GeneratedClassList = ..GeneratedClassList _ $lb(class)
-		set ..ClassList = list
 		
-		set currentModule = $p(class, ".", 1)
-		if (($lf(..ImportedModules, currentModule)=0) && ($l(class, ".")>1)) { 
-			set sc = ##class(isc.py.Main).ImportModule(currentModule)
-			quit:$$$ISERR(sc)
-		}
-		set sc = ..GenerateClass(class)
+	do ..Log(0, "Generating module: %1 alias %2 into package: %3", module, alias, ..Package)
+	
+	set sc = ..GetModuleTypes(alias, .classes)
+	do ..AppendToTypeList(classes)
+
+	while $ll(..TypeList)>0 {
+		set type = $lg(..TypeList, *)
+		set $li(i%TypeList, *, *) = ""
+		set ..GeneratedTypeList = ..GeneratedTypeList _ $lb(type)
+		
+		set sc = ..CheckImportedModule(type)
 		quit:$$$ISERR(sc)
+		
+		set sc = ..GenerateClass(type)
+		quit:$$$ISERR(sc)
+		
+		set ..ClassList = ..ClassList _ $lb(..TypeToClass(type))
 		//break	
 	}
 	quit:$$$ISERR(sc) sc
@@ -97,33 +104,33 @@ Method GenerateModule(module) As %Status
 	quit sc
 }
 
-/// Generate IRIS class from Python class.
-Method GenerateClass(class As %String) As %Status
+/// Generate IRIS type from Python type
+Method GenerateClass(type As %String) As %Status
 {
 	#dim sc As %Status = $$$OK
-	do ..Log("Generating class: %1", class)
+	do ..Log(1, "Generating type: %1", type)
 
-	set sc = ..GetInitialClass(class, .classObj)
+	set sc = ..GetInitialClass(type, .classObj)
 	quit:$$$ISERR(sc) sc
 	
-	do ..GenerateTypeParameter(class, classObj)
+	do ..GenerateTypeParameter(type, classObj)
 	
-	set sc = ..GetClassMethods(class, .methods)
+	set sc = ..GetTypeMembers(type, "callable", .methods)
 	quit:$$$ISERR(sc) sc
 	
 	set ptr=0
-	while $listnext(methods, ptr, value) {
-		set sc = ..GenerateMethod(class, classObj, value) 
+	while $listnext(methods, ptr, method) {
+		set sc = ..GenerateMethod(type, classObj, method) 
 		quit:$$$ISERR(sc)
 	}
 	quit:$$$ISERR(sc) sc
 	
-	set sc = ..GetClassProperties(class, .properties)
+	set sc = ..GetTypeMembers(type, "zzzuncallable", .properties)
 	quit:$$$ISERR(sc) sc
 	
 	set ptr=0
-	while $listnext(properties, ptr, value) {
-		set sc = ..GenerateProperty(class, classObj, value) 
+	while $listnext(properties, ptr, property) {
+		set sc = ..GenerateProperty(classObj, property) 
 		quit:$$$ISERR(sc)
 	}
 	quit:$$$ISERR(sc) sc
@@ -134,31 +141,30 @@ Method GenerateClass(class As %String) As %Status
 }
 
 /// Get class object. Populates docs and inheritance.
-Method GetInitialClass(class As %String, Output classObj As %Dictionary.ClassDefinition) As %Status
+Method GetInitialClass(type As %String, Output classObj As %Dictionary.ClassDefinition) As %Status
 {
 	#dim sc As %Status = $$$OK
-	set irisClass = ..PythonClassToIRIS(class)
-	if ##class(%Dictionary.ClassDefinition).%ExistsId(irisClass) {
-		set classObj = ##class(%Dictionary.ClassDefinition).%OpenId(irisClass)
+	set class = ..TypeToClass(type)
+	if ##class(%Dictionary.ClassDefinition).%ExistsId(class) {
+		set classObj = ##class(%Dictionary.ClassDefinition).%OpenId(class)
 	} else {
-		set classObj = ##class(%Dictionary.ClassDefinition).%New(irisClass)
+		set classObj = ##class(%Dictionary.ClassDefinition).%New(class)
 	}
 	
 	do classObj.ProcedureBlockReset()
 	
-	set sc = ..IsAbstract(class, .isAbstract)
+	set sc = ..IsAbstract(type, .isAbstract)
 	quit:$$$ISERR(sc) sc
 	set classObj.Abstract = isAbstract
 	
-	set sc = ##class(isc.py.Main).SimpleString("zzzdocs=" _ ..Inspect _ ".getdoc(" _ class _ ")", "zzzdocs", , .docs)
+	set sc = ##class(isc.py.Main).SimpleString("zzzdocs=" _ ..Inspect _ ".getdoc(" _ type _ ")", "zzzdocs", , .docs)
 	quit:$$$ISERR(sc) sc
 	set sc = ##class(isc.py.Main).SimpleString("del zzzdocs")
 	set:docs="None" docs = ""
 	
-	set classObj.Description = "Pyhton class: " _ class _ $$$NL _ $replace(docs, $c(10), $$$NL) _ $$$NL _ ..GenerateCall($$$NO, classObj.Name, "%OnNew") 
-	//set classObj.GeneratedBy = "Python Gateway"
+	set classObj.Description = "Pyhton type: " _ type _ $$$NL _ $replace(docs, $c(10), $$$NL) _ $$$NL _ ..GenerateCall(classObj.Name, "%OnNew", $$$NO) 
 	
-	set sc = ##class(isc.py.Main).SimpleString("zzzextends=json.dumps([item.__module__ + '.' + item.__name__ for item in " _ ..Inspect _ ".getmro(" _ class _ ")])", "zzzextends", , .zzzextends)
+	set sc = ##class(isc.py.Main).SimpleString("zzzextends=json.dumps([item.__module__ + '.' + item.__name__ for item in " _ ..Inspect _ ".getmro(" _ type _ ")])", "zzzextends", , .zzzextends)
 	// TODO - modules
 	if $$$ISERR(sc) {
 		set sc = $$$OK
@@ -169,26 +175,28 @@ Method GetInitialClass(class As %String, Output classObj As %Dictionary.ClassDef
 		set extends = ""
 		set irisExtends = ""
 		set iterator = obj.%GetIterator()
-		while iterator.%GetNext(.key, .value) {
+		while iterator.%GetNext(.key, .value) {	
+			// todo classes with underscores, i.e. random._Random and random.Random 
 			continue:$e(value)="_"
-			continue:$l(value, ".")=1
+			
+			// todo replace with __builtins__
 			set:$p(value, ".")="builtins" value = $p(value, ".", 2, *)
-			continue:value=class
+			continue:value=type
 			set extends = extends _ $lb(value)
-			set irisExtends = irisExtends _ $lb(..PythonClassToIRIS(value))
+			set irisExtends = irisExtends _ $lb(..TypeToClass(value))
 		}
 		set classObj.Super = $lg(irisExtends, 1, ..BaseClass)
-		do ..AppendToClassList(extends)
+		do ..AppendToTypeList(extends)
 	}
 		
 	quit sc
 }
 
 /// Generate property code.
-Method GenerateProperty(class As %String, classObj As %Dictionary.ClassDefinition, property As %String) As %Status
+Method GenerateProperty(classObj As %Dictionary.ClassDefinition, property As %String) As %Status
 {
 	#dim sc As %Status = $$$OK
-	//do ..Log("Property: %1", property)
+	do ..Log(2, "Property: %1", property)
 	#dim propIndex As %Integer = classObj.Properties.FindObjectId(classObj.Name _ "||" _ property)
 	if (+propIndex > 0) {
 		set propObj = classObj.Properties.GetAt(propIndex)
@@ -196,10 +204,10 @@ Method GenerateProperty(class As %String, classObj As %Dictionary.ClassDefinitio
 		set propObj = ##class(%Dictionary.PropertyDefinition).%New()
 		set propObj.Name = property
 		set propObj.parent = classObj
-		
 		set propObj.Type = "%String"
 	}
 	
+	// Property getter
 	#dim getIndex As %Integer = classObj.Methods.FindObjectId(classObj.Name _ "||" _ property _ "Get")
 	if getIndex="" {
 		set getObj = ##class(%Dictionary.MethodDefinition).%New()
@@ -209,6 +217,7 @@ Method GenerateProperty(class As %String, classObj As %Dictionary.ClassDefinitio
 		do getObj.Implementation.WriteLine($c(9) _ "..%DispatchGetProperty(""" _ property _ """)")
 	}	
 
+	// Property setter
 	#dim setIndex As %Integer = classObj.Methods.FindObjectId(classObj.Name _ "||" _ property _ "Set")
 	if setIndex="" {
 		set setObj = ##class(%Dictionary.MethodDefinition).%New()
@@ -218,19 +227,12 @@ Method GenerateProperty(class As %String, classObj As %Dictionary.ClassDefinitio
 		set setObj.FormalSpec = "val"
 		do setObj.Implementation.WriteLine($c(9) _ "..%DispatchSetProperty(""" _ property _ """, val)")
 		set setObj.ReturnType = "%Status"
-	}		
-		
-	/*set sc = ##class(isc.py.Main).SimpleString("zzzdocs=" _ ..Inspect _ ".getdoc(" _ class _"." _ property _ ")", "zzzdocs", , .docs)
-	quit:$$$ISERR(sc) sc
-	set sc = ##class(isc.py.Main).SimpleString("del zzzdocs")
-	set:docs="None" docs = ""
-	set propObj.Description = $replace(docs, $c(10), $$$NL) _ $$$NL _ "write obj." _ property)*/
-
-	
+	}	
 	quit sc
 }
 
-ClassMethod GenerateTypeParameter(class As %String, Output classObj As %Dictionary.ClassDefinition)
+/// Add Type parameter to IRIS Class
+ClassMethod GenerateTypeParameter(type As %String, Output classObj As %Dictionary.ClassDefinition)
 {
 	set name = "Type"
 	#dim paramIndex As %Integer = classObj.Parameters.FindObjectId(classObj.Name _ "||" _ name)
@@ -238,21 +240,20 @@ ClassMethod GenerateTypeParameter(class As %String, Output classObj As %Dictiona
 		set paramObj = ##class(%Dictionary.ParameterDefinition).%New()
 		set paramObj.Name = name
 		set paramObj.parent = classObj
-		
 		set paramObj.Type = "%String"
-		set paramObj.Description = "Python class"
-		set paramObj.Default = class
+		set paramObj.Description = "Python type"
+		set paramObj.Default = type
 	}
 }
 
 /// TODO - skip udserscore classes?
 /// Translate python FQCN to IRIS class.
-Method PythonClassToIRIS(class As %String)
+Method TypeToClass(type As %String) As %String
 {
-	if ((class'=..Module) && ((..Module = "__builtins__") || ($l(class,".")=1))) {
-		set class = "builtins." _ class	
+	if ((type'=..Module) && ((..Module = "__builtins__") || ($l(type,".")=1))) {
+		set type = "builtins." _ type	
 	}
-	quit $zstrip($tr(..Package _ "." _ class, "_", "."),"=>P")
+	quit $zstrip($tr(..Package _ "." _ type, "_", "."),"=>P")
 }
 
 /// Translate method argument names from Python to IRIS.
@@ -262,9 +263,11 @@ $tr(string, "_")
 }
 
 /// Generate method code.
-Method GenerateMethod(class As %String, classObj As %Dictionary.ClassDefinition, method As %String) As %Status
+Method GenerateMethod(type As %String, classObj As %Dictionary.ClassDefinition, method As %String) As %Status
 {
-	set sc = ##class(isc.py.Main).GetFunctionInfo(class _ "." _ method, .defined, .type, .docs, .signature, .arguments)
+	#dim sc As %Status = $$$OK
+	do ..Log(2, "Method: %1", method)
+	set sc = ##class(isc.py.Main).GetFunctionInfo(type _ "." _ method, .defined, .methodType, .docs, .signature, .arguments)
 	quit:$$$ISERR(sc) sc
 	
 	set name = $case(method, "__init__":"%OnNew", :method)
@@ -275,80 +278,82 @@ Method GenerateMethod(class As %String, classObj As %Dictionary.ClassDefinition,
 		
 		set methodObj.Name = name
 		set methodObj.parent = classObj
-		set methodObj.Description = "Signature: " _ signature _ $$$NL _ "Type: " _ type _ $$$NL _ $replace(docs, $c(10), $$$NL) _ $$$NL
+		set methodObj.Description = "Signature: " _ signature _ $$$NL _ "Type: " _ methodType _ $$$NL _ $replace(docs, $c(10), $$$NL) _ $$$NL
 		
-		set sc = ..IsAbstract(class _ "." _ method, .isAbstract)
+		set sc = ..IsAbstract(type _ "." _ method, .isAbstract)
 		quit:$$$ISERR(sc) sc
 		set methodObj.Abstract = isAbstract
 		
 		// Is it class or object method? - Start
 		set methodObj.ClassMethod = $$$YES
-		set:type["method" methodObj.ClassMethod = $$$NO
+		set:methodType["method" methodObj.ClassMethod = $$$NO
 		// Is it class or object method? - Ens
 		// Not really the end
 		
 		// start - calculating signatures
 		if arguments="" {
-			set irisArgs = "args..."
+			set formalSpec = "args..."
 			set callArgs = "..%CallArgsToString(args...)"
 		} else {
 			#dim funcArgObj As %DynamicArray = [].%FromJSON(arguments)
-			// Remove self argument if it's a method or a constructor function
+			// If it has self arg, it's probably an instance method
 			if (($isObject(funcArgObj.%Get(0)) && (funcArgObj.%Get(0).%Get(0)="self"))) {
 				set methodObj.ClassMethod = $$$NO
-
 			}
 
-			do ..GenereateMethodSignature(funcArgObj, .irisArgs, .callArgs)
+			do ..GenereateMethodSignature(funcArgObj, .formalSpec, .callArgs)
 		}	
 		// end - calculating signatures
 		
-		
-		set:class=..Module methodObj.ClassMethod = $$$YES
+		// Module methods can always be called
+		set:type=..Module methodObj.ClassMethod = $$$YES
 			
-		do ..GenerateMethodBody(methodObj, class, method, irisArgs, callArgs)
-		set methodObj.Description = methodObj.Description _  ..GenerateCall(methodObj.ClassMethod, classObj.Name, methodObj.Name) 
+		do ..GenerateMethodBody(methodObj, type, method, formalSpec, callArgs)
+		set methodObj.Description = methodObj.Description _  ..GenerateCall(classObj.Name, methodObj.Name, methodObj.ClassMethod) 
 	}
 	quit sc
 }
 
-ClassMethod GenerateCall(classMethod As %Boolean, irisclass, irismethod) As %String
+/// Generate ObjectScript code to call method of class.
+ClassMethod GenerateCall(class As %String, method As %String, classMethod As %Boolean) As %String
 {
-	if irismethod = "%OnNew" {
+	if method = "%OnNew" {
 		set command = "set obj = "
 	} else {
 		set command ="write "
 	}
 	
-	if (classMethod || (irismethod="%OnNew")){
-		set objCall = "##class(" _ irisclass _ ")"
+	if (classMethod || (method="%OnNew")){
+		set objCall = "##class(" _ class _ ")"
 	} else {
 		set objCall = "obj"
 	}
 	 
-	if $zname(irismethod, 6) = 0 {
-		set methodCall = """" _ irismethod _ """"
-	} elseif irismethod="%OnNew" {
+	if $zname(method, 6) = 0 {
+		set methodCall = """" _ method _ """"
+	} elseif method="%OnNew" {
 		set methodCall = "%New"
 	} else {
-		set methodCall = irismethod
+		set methodCall = method
 	}
 	
-	if irismethod = "%OnNew" {
+	if method = "%OnNew" {
 		set args = "(,"""")"
 	} else {
 		set args ="()"
 	}
 	
-	
 	set call = command _ objCall _ "." _ methodCall _ args
 	quit call
 }
 
-ClassMethod GenereateMethodSignature(funcArgObj As %DynamicArray, Output irisArgs, Output callArgs)
+/// From pyton signature funcArgObj determine:
+/// - formalSpec - method signature
+/// - callArgs - arguments to call python code
+ClassMethod GenereateMethodSignature(funcArgObj As %DynamicArray, Output formalSpec, Output callArgs)
 {
 	// Method signature
-	set irisArgs = ""
+	set formalSpec = ""
 	
 	// python call signature 
 	set callArgs = ""
@@ -373,63 +378,59 @@ ClassMethod GenereateMethodSignature(funcArgObj As %DynamicArray, Output irisArg
 	#dim hasArgs As %Boolean = (varargs'="")
 	#dim hasKWArgs As %Boolean = (varkw'="")
  
- 	
- 	
-	
 	set iterator = args.%GetIterator()
 	while iterator.%GetNext(.key, .value) {
-		set irisArgs = irisArgs _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(value)
+		set formalSpec = formalSpec _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(value)
 		set callArgs = callArgs _ $case(firstArg, $$$YES:"", :"_"",""_") _ "..%EscapeArg(." _ ..VarNameToIRIS(value) _ ")"
 		set firstArg = $$$NO
-		
-		
+			
 		//set default = $case($isObject($g(defaults)), $$$YES:defaults.%Get(key), :"")
-		//set:default'="" irisArgs = irisArgs _ "=" _ default
+		//set:default'="" formalSpec = formalSpec _ "=" _ default
 	}
 	
 	if hasArgs {
-		set irisArgs = irisArgs _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(varargs)
+		set formalSpec = formalSpec _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(varargs)
 		set callArgs = callArgs _ $case(firstArg, $$$YES:"", :"_"",""_") _ "..%ArgsToString(." _ ..VarNameToIRIS(varargs) _ ")"
 		set firstArg = $$$NO
 	}
 	
 	set iterator = kwonlyargs.%GetIterator()
 	while iterator.%GetNext(.key, .value) {			
-		set irisArgs = irisArgs _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(value)		
+		set formalSpec = formalSpec _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(value)		
 		set callArgs = callArgs _ $case(firstArg, $$$YES:"", :"_"",""_") _ """" _ value _ "=""_..%EscapeArg(." _ ..VarNameToIRIS(value) _ ")"
 		set firstArg = $$$NO
 
 		//set default = $case($isObject($g(kwonlydefaults)), $$$YES:kwonlydefaults.%Get(key), :"")
-		//set:default'="" irisArgs = irisArgs _ "=" _ default
+		//set:default'="" formalSpec = formalSpec _ "=" _ default
 	}
 	
 	if hasKWArgs {
-		set irisArgs = irisArgs _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(varkw)
+		set formalSpec = formalSpec _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(varkw)
 		set callArgs = callArgs _ $case(firstArg, $$$YES:"", :"_"",""_") _ "..%KWArgsToString(." _ ..VarNameToIRIS(varkw) _ ")"
 		set firstArg = $$$NO
 	}
-	
 	
 	// Remove trailing commas
 	set:callArgs'="" callArgs = "$zstrip(" _ callArgs _ ","">"","","")"
 }
 
-ClassMethod GenerateMethodBody(methodObj As %Dictionary.MethodDefinition, class, method, irisArgs, callArgs)
+ClassMethod GenerateMethodBody(methodObj As %Dictionary.MethodDefinition, class, method, formalSpec, callArgs)
 {
 	if methodObj.Name = "%OnNew" {
-		do ..GenerateOnNewMethodBody(methodObj, irisArgs, callArgs)
+		do ..GenerateOnNewMethodBody(methodObj, formalSpec, callArgs)
 	} else {
-		do ..GenerateCommonMethodBody(methodObj, class, method, irisArgs, callArgs)
+		do ..GenerateCommonMethodBody(methodObj, class, method, formalSpec, callArgs)
 	}
 	
 	do:methodObj.Abstract methodObj.Implementation.Clear()
 }
 
-ClassMethod GenerateOnNewMethodBody(methodObj As %Dictionary.MethodDefinition, irisArgs, callArgs)
+/// Generate %OnNew method
+ClassMethod GenerateOnNewMethodBody(methodObj As %Dictionary.MethodDefinition, formalSpec As %String, callArgs As %String)
 {
 	set methodObj.ClassMethod = $$$NO
 	set methodObj.ReturnType = "%Status"
-	set methodObj.FormalSpec = "init:%String=$$$YES,variable:%String" _ $case(irisArgs'="", $$$YES:", ", :"") _ irisArgs 
+	set methodObj.FormalSpec = "init:%String=$$$YES,variable:%String" _ $case(formalSpec'="", $$$YES:", ", :"") _ formalSpec 
 	
 	do methodObj.Implementation.WriteLine($c(9) _ "set ..%Variable = variable")
 	
@@ -446,7 +447,8 @@ ClassMethod GenerateOnNewMethodBody(methodObj As %Dictionary.MethodDefinition, i
 	do methodObj.Implementation.WriteLine($c(9) _ "quit sc")
 }
 
-ClassMethod GenerateCommonMethodBody(methodObj As %Dictionary.MethodDefinition, class, method, irisArgs, callArgs)
+/// Generate all other methods.
+ClassMethod GenerateCommonMethodBody(methodObj As %Dictionary.MethodDefinition, class, method, formalSpec, callArgs)
 {
 	// start - calculating caller obj on Python side
 	if methodObj.ClassMethod {
@@ -466,9 +468,26 @@ ClassMethod GenerateCommonMethodBody(methodObj As %Dictionary.MethodDefinition, 
 	do methodObj.Implementation.WriteLine($c(9,9) _ "set result = $classmethod(..%TypeToClass(type), ""%New"", , variable)")
 	do methodObj.Implementation.WriteLine($c(9) _ "}")
 	do methodObj.Implementation.WriteLine($c(9) _ "quit result")
-	set methodObj.FormalSpec = irisArgs
+	set methodObj.FormalSpec = formalSpec
 }
 
+/// Check that module definig type is imported
+Method CheckImportedModule(type) As %Status
+{
+	#dim sc As %Status = $$$OK
+	quit:$l(type, ".")=1 sc
+	set module = $p(type, ".", 1)
+	if $lf(..ImportedModules, module)=0 {
+		set sc = ##class(isc.py.Main).ImportModule(module)
+		quit:$$$ISERR(sc) sc
+		
+		do ..AppendImportedModule(module)
+	}
+	
+	quit sc
+}
+
+/// Add imported module to ImportedModules property
 Method AppendImportedModule(module As %String)
 {
 	if $lf(..ImportedModules, module)=0 {
@@ -476,21 +495,23 @@ Method AppendImportedModule(module As %String)
 	}
 }
 
-/// Append a %List of python classes to ClassList.
-/// If GeneratedClassList or ClassList alredy clontain python class it would be skipped.
-Method AppendToClassList(classes As %List)
+/// Append a %List of python types to TypeList.
+/// If GeneratedTypeList or TypeList alredy clontain python type it would be skipped.
+Method AppendToTypeList(types As %List)
 {
 	set ptr=0
-	while $listnext(classes, ptr, value) {
-		if (($lf(..GeneratedClassList, value)=0) && ($lf(..ClassList, value)=0)) {
-			set ..ClassList = ..ClassList _ $lb(value)
+	while $listnext(types, ptr, type) {
+		if (($lf(..GeneratedTypeList, type)=0) && ($lf(..TypeList, type)=0)) {
+			set ..TypeList = ..TypeList _ $lb(type)
 		}
 	}
 }
 
-/// Check wherever class is abstract
+/// Check if callable object is abstract
 ClassMethod IsAbstract(object As %String, Output isAbstract As %Boolean) As %Status
 {
+	kill isAbstract
+	#dim sc As %Status = $$$OK
 	set sc = ##class(isc.py.Main).SimpleString("zzzisabstract = inspect.isabstract(" _ object _ ")", "zzzisabstract", ,.isAbstract)
 	quit:$$$ISERR(sc) sc
 	
@@ -499,77 +520,45 @@ ClassMethod IsAbstract(object As %String, Output isAbstract As %Boolean) As %Sta
 	quit sc
 }
 
-/// Get a %List of methods defined by python class
+/// Get a %List of methods defined by python type satisfying the condition function
 /// zw ##class(isc.py.gw.Generator).GetClassMethods("random.Random", .c), c
-ClassMethod GetClassMethods(class, Output methods As %List) As %Status
+ClassMethod GetTypeMembers(type, condition As %String, Output elements As %List) As %Status
 {
-	set methods = ""
-	set sc = ##class(isc.py.Main).SimpleString("zzzmethods = zzzgetmembers(" _ class _ ", callable)", "zzzmethods",, .zzzmethods)
+	set elements = ""
+	set sc = ##class(isc.py.Main).SimpleString("zzzmembers = zzzgetmembers(" _ type _ ", " _ condition _ ")", "zzzmembers",, .zzzmembers)
 	quit:$$$ISERR(sc) sc
 	
-	set sc = ##class(isc.py.Main).SimpleString("del zzzmethods")
+	set sc = ##class(isc.py.Main).SimpleString("del zzzmembers")
 	quit:$$$ISERR(sc) sc
 	
-	set obj = [].%FromJSON(zzzmethods)
+	set obj = [].%FromJSON(zzzmembers)
 	
 	set iterator = obj.%GetIterator()
 	while iterator.%GetNext(.key, .value) {	
-		// Class does not implement the method, only inherits it.
-		set sc = ##class(isc.py.Main).SimpleString("zzzdef = '" _ value _ "' in " _ class _ ".__dict__", "zzzdef", , .zzzdef)
+		// Class does not implement member, only inherits it.
+		set sc = ##class(isc.py.Main).SimpleString("zzzdef = '" _ value _ "' in " _ type _ ".__dict__", "zzzdef", , .zzzdef)
 		quit:$$$ISERR(sc)
 		set sc = ##class(isc.py.Main).SimpleString("del zzzdef")
 		quit:$$$ISERR(sc)
 		set zzzdef = ##class(isc.py.util.Converter).PythonToBoolean(zzzdef)
 		continue:zzzdef=$$$NO
 		
-		// Skip inner classes, we're getting them in other passes and they are not methods anyway
-		set sc = ##class(isc.py.Main).GetVariableType(class _ "." _ value, .type)
-		continue:type="type"
+		// Skip inner classes, we're getting them in other passes and they are not methods/props anyway
+		set sc = ##class(isc.py.Main).GetVariableType(type _ "." _ value, .memberType)
+		continue:memberType="type"
 		
-		set methods = methods _ $lb(value)
+		set elements = elements _ $lb(value)
 	}
 
 	quit sc
 }
 
-/// Get a %List of properties defined by python class
-/// zw ##class(isc.py.gw.Generator).GetClassProperties("random.Random", .c), c
-ClassMethod GetClassProperties(class, Output properties As %List) As %Status
+/// Get %List of python types belonging to a module  
+/// zw ##class(isc.py.gw.Generator).GetModuleTypes("random", .c), c
+ClassMethod GetModuleTypes(module, Output types As %List) As %Status
 {
-	set properties = ""
-	set sc = ##class(isc.py.Main).SimpleString("zzzproperties = zzzgetmembers(" _ class _ ", zzzuncallable)", "zzzproperties",, .zzzproperties)
-	quit:$$$ISERR(sc) sc
-	
-	set sc = ##class(isc.py.Main).SimpleString("del zzzproperties")
-	quit:$$$ISERR(sc) sc
-	
-	set obj = [].%FromJSON(zzzproperties)
-	
-	set iterator = obj.%GetIterator()
-	while iterator.%GetNext(.key, .value) {	
-		// Class does not implement the property, only inherits it.
-		set sc = ##class(isc.py.Main).SimpleString("zzzdef = '" _ value _ "' in " _ class _ ".__dict__", "zzzdef", , .zzzdef)
-		quit:$$$ISERR(sc)
-		set sc = ##class(isc.py.Main).SimpleString("del zzzdef")
-		quit:$$$ISERR(sc)
-		set zzzdef = ##class(isc.py.util.Converter).PythonToBoolean(zzzdef)
-		continue:zzzdef=$$$NO
-		
-		// Skip inner classes, we're getting them in other passes and they are not methods anyway
-		set sc = ##class(isc.py.Main).GetVariableType(class _ "." _ value, .type)
-		continue:type="type"
-		
-		set properties = properties _ $lb(value)
-	}
-
-	quit sc
-}
-
-/// Get %List of classes belonging to a module  
-/// zw ##class(isc.py.gw.Generator).GetModuleClasses("random", .c), c
-ClassMethod GetModuleClasses(module, Output classes As %List) As %Status
-{
-	set classes = ""
+	#dim sc As %Status = $$$OK
+	set types = ""
 	set sc = ##class(isc.py.Main).SimpleString("zzzclasses = zzzgetmembers(" _ module _ ", inspect.isclass)", "zzzclasses",, .zzzclasses)
 	quit:$$$ISERR(sc) sc
 	
@@ -585,28 +574,28 @@ ClassMethod GetModuleClasses(module, Output classes As %List) As %Status
 		continue:(($l(type, ".")=1) && (module'["builtins"))
 		set:$p(type, ".")="builtins" type = $p(type, ".", 2, *)
 
-		set classes = classes _ $lb(type)
+		set types = types _ $lb(type)
 	}
 	
 	quit sc
 }
 
 /// do ##class(isc.py.gw.Generator).LogException()
-Method LogException(msg As %String, ex As %Exception.AbstractException)
+Method LogException(level As %Integer, msg As %String, ex As %Exception.AbstractException)
 {
-	Do ..Log(msg _ ". Caught exception: " _ ex.DisplayString())
+	Do ..Log(level, msg _ ". Caught exception: " _ ex.DisplayString())
 }
 
 /// do ##class(isc.py.init.Abstract).LogStatus()
-Method LogStatus(msg As %String, sc As %Status)
+Method LogStatus(level As %Integer, msg As %String, sc As %Status)
 {
-	Do ..Log(msg _ ". Completed with " _ $select($$$ISERR(sc):$System.Status.GetErrorText(sc), 1:"success."))
+	Do ..Log(level, msg _ ". Completed with " _ $select($$$ISERR(sc):$System.Status.GetErrorText(sc), 1:"success."))
 }
 
 /// do ##class(isc.py.init.Abstract).Log()
-Method Log(msg As %String, args...)
+Method Log(level As %Integer, msg As %String, args...)
 {
-	Write:..Debug $ZDATETIME($ZTIMESTAMP, 3, 1) _ " " _ $$$FormatText(msg, args...),!
+	Write:level<=..LogLevel $ZDATETIME($ZTIMESTAMP, 3, 1) _ " " _ $$$FormatText(msg, args...),!
 }
 
 }
