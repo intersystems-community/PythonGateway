@@ -116,6 +116,16 @@ Method GenerateClass(class As %String) As %Status
 	}
 	quit:$$$ISERR(sc) sc
 	
+	set sc = ..GetClassProperties(class, .properties)
+	quit:$$$ISERR(sc) sc
+	
+	set ptr=0
+	while $listnext(properties, ptr, value) {
+		set sc = ..GenerateProperty(class, classObj, value) 
+		quit:$$$ISERR(sc)
+	}
+	quit:$$$ISERR(sc) sc
+	
 	set sc = classObj.%Save()
 	
 	quit sc
@@ -169,6 +179,52 @@ Method GetInitialClass(class As %String, Output classObj As %Dictionary.ClassDef
 		do ..AppendToClassList(extends)
 	}
 		
+	quit sc
+}
+
+/// Generate property code.
+Method GenerateProperty(class As %String, classObj As %Dictionary.ClassDefinition, property As %String) As %Status
+{
+	#dim sc As %Status = $$$OK
+	do ..Log("Property: %1", property)
+	#dim propIndex As %Integer = classObj.Properties.FindObjectId(classObj.Name _ "||" _ property)
+	if (+propIndex > 0) {
+		set propObj = classObj.Properties.GetAt(propIndex)
+	} else {
+		set propObj = ##class(%Dictionary.PropertyDefinition).%New()
+		set propObj.Name = property
+		set propObj.parent = classObj
+		
+		set propObj.Type = "%String"
+	}
+	
+	#dim getIndex As %Integer = classObj.Methods.FindObjectId(classObj.Name _ "||" _ property _ "Get")
+	if getIndex="" {
+		set getObj = ##class(%Dictionary.MethodDefinition).%New()
+		set getObj.Name = property _ "Get"
+		set getObj.parent = classObj
+		set getObj.CodeMode = "expression"
+		do getObj.Implementation.WriteLine($c(9) _ "..%DispatchGetProperty(""" _ property _ """)")
+	}	
+
+	#dim setIndex As %Integer = classObj.Methods.FindObjectId(classObj.Name _ "||" _ property _ "Set")
+	if setIndex="" {
+		set setObj = ##class(%Dictionary.MethodDefinition).%New()
+		set setObj.Name = property _ "Set"
+		set setObj.parent = classObj
+		set setObj.CodeMode = "expression"
+		set setObj.FormalSpec = "val"
+		do setObj.Implementation.WriteLine($c(9) _ "..%DispatchSetProperty(""" _ property _ """, val)")
+		set setObj.ReturnType = "%Status"
+	}		
+		
+	/*set sc = ##class(isc.py.Main).SimpleString("zzzdocs=" _ ..Inspect _ ".getdoc(" _ class _"." _ property _ ")", "zzzdocs", , .docs)
+	quit:$$$ISERR(sc) sc
+	set sc = ##class(isc.py.Main).SimpleString("del zzzdocs")
+	set:docs="None" docs = ""
+	set propObj.Description = $replace(docs, $c(10), $$$NL) _ $$$NL _ "write obj." _ property)*/
+
+	
 	quit sc
 }
 
@@ -426,6 +482,39 @@ ClassMethod GetClassMethods(class, Output methods As %List) As %Status
 	quit sc
 }
 
+/// Get a %List of properties defined by python class
+/// zw ##class(isc.py.gw.Generator).GetClassProperties("random.Random", .c), c
+ClassMethod GetClassProperties(class, Output properties As %List) As %Status
+{
+	set properties = ""
+	set sc = ##class(isc.py.Main).SimpleString("zzzproperties = zzzgetmembers(" _ class _ ", zzzuncallable)", "zzzproperties",, .zzzproperties)
+	quit:$$$ISERR(sc) sc
+	
+	set sc = ##class(isc.py.Main).SimpleString("del zzzproperties")
+	quit:$$$ISERR(sc) sc
+	
+	set obj = [].%FromJSON(zzzproperties)
+	
+	set iterator = obj.%GetIterator()
+	while iterator.%GetNext(.key, .value) {	
+		// Class does not implement the property, only inherits it.
+		set sc = ##class(isc.py.Main).SimpleString("zzzdef = '" _ value _ "' in " _ class _ ".__dict__", "zzzdef", , .zzzdef)
+		quit:$$$ISERR(sc)
+		set sc = ##class(isc.py.Main).SimpleString("del zzzdef")
+		quit:$$$ISERR(sc)
+		set zzzdef = ##class(isc.py.util.Converter).PythonToBoolean(zzzdef)
+		continue:zzzdef=$$$NO
+		
+		// Skip inner classes, we're getting them in other passes and they are not methods anyway
+		set sc = ##class(isc.py.Main).GetVariableType(class _ "." _ value, .type)
+		continue:type="type"
+		
+		set properties = properties _ $lb(value)
+	}
+
+	quit sc
+}
+
 /// Get %List of classes belonging to a module  
 /// zw ##class(isc.py.gw.Generator).GetModuleClasses("random", .c), c
 ClassMethod GetModuleClasses(module, Output classes As %List) As %Status
@@ -443,7 +532,7 @@ ClassMethod GetModuleClasses(module, Output classes As %List) As %Status
 		quit:$$$ISERR(sc)
 		
 		// todo?
-		//continue:$l(type, ".")=1
+		continue:(($l(type, ".")=1) && (module'["builtins"))
 		set:$p(type, ".")="builtins" type = $p(type, ".", 2, *)
 
 		set classes = classes _ $lb(type)
