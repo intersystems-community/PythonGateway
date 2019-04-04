@@ -25,27 +25,30 @@ Property BaseClass As %String [ InitialExpression = "isc.py.gw.DynamicObject" ];
 Property ImportedModules As %List;
 
 /// do ##class(isc.py.gw.Generator).Test()
-ClassMethod Test(module = "random")
+ClassMethod Test(modules = {$lb("builtins","random")})
 {
 	set package = "py"
 	do $system.OBJ.DeletePackage(package)
 	
 	set obj = ..%New()
 	set obj.Package = package
-	set sc = obj.GenerateModule(module)
-	w $System.Status.GetErrorText(sc)
 	
+	for i=1:1:$ll(modules) {
+		set sc = obj.GenerateModule($lg(modules, i))
+		w $System.Status.GetErrorText(sc)
+	}
 	set sc = obj.Compile()
 	w $System.Status.GetErrorText(sc)
 }
 
 Method Compile()
 {
-	set irisClasses = $lb(..PythonClassToIRIS(..Module))
+	set irisClasses = ""
 	set ptr=0
 	while $listnext(..GeneratedClassList, ptr, value) {
 		set irisClasses = irisClasses _ $lb(..PythonClassToIRIS(value))
 	}
+	
 	
 	set sc = $system.OBJ.Compile($lts(irisClasses), "cukd")
 	quit sc
@@ -56,20 +59,21 @@ Method GenerateModule(module) As %Status
 	set sc = ##class(isc.py.init.Generator).Initialize(,..Debug)
 	quit:$$$ISERR(sc) sc
 	
-	set ..Module = module
-
+	
+	
 	set sc = ##class(isc.py.Main).ImportModule(module, .imported, .alias)
 	quit:$$$ISERR(sc) sc
 	
+	set ..Module = alias
+	do ..AppendToClassList($lb(alias))
 	
-	do ..AppendImportedModule(module)
+	do ..AppendImportedModule(alias)
 	
 
 	
-	do ..Log("Generating module: %1 into package: %2", module, ..Package)
+	do ..Log("Generating module: %1 alias %2 into package: %3", module, alias, ..Package)
 	
-	set sc = ..GetModuleClasses(module, .classes)
-	
+	set sc = ..GetModuleClasses(alias, .classes)
 	do ..AppendToClassList(classes)
 
 	while $ll(..ClassList)>0 {
@@ -90,8 +94,6 @@ Method GenerateModule(module) As %Status
 	}
 	quit:$$$ISERR(sc) sc
 	
-	set sc = ..GenerateClass(module)
-	
 	quit sc
 }
 
@@ -104,7 +106,7 @@ Method GenerateClass(class As %String) As %Status
 	set sc = ..GetInitialClass(class, .classObj)
 	quit:$$$ISERR(sc) sc
 	
-	do ..GenerateTypeProperty(class, classObj)
+	do ..GenerateTypeParameter(class, classObj)
 	
 	set sc = ..GetClassMethods(class, .methods)
 	quit:$$$ISERR(sc) sc
@@ -153,7 +155,7 @@ Method GetInitialClass(class As %String, Output classObj As %Dictionary.ClassDef
 	set sc = ##class(isc.py.Main).SimpleString("del zzzdocs")
 	set:docs="None" docs = ""
 	
-	set classObj.Description = "Pyhton class: " _ class _ $$$NL _ $replace(docs, $c(10), $$$NL)
+	set classObj.Description = "Pyhton class: " _ class _ $$$NL _ $replace(docs, $c(10), $$$NL) _ $$$NL _ ..GenerateCall($$$NO, classObj.Name, "%OnNew") 
 	//set classObj.GeneratedBy = "Python Gateway"
 	
 	set sc = ##class(isc.py.Main).SimpleString("zzzextends=json.dumps([item.__module__ + '.' + item.__name__ for item in " _ ..Inspect _ ".getmro(" _ class _ ")])", "zzzextends", , .zzzextends)
@@ -186,7 +188,7 @@ Method GetInitialClass(class As %String, Output classObj As %Dictionary.ClassDef
 Method GenerateProperty(class As %String, classObj As %Dictionary.ClassDefinition, property As %String) As %Status
 {
 	#dim sc As %Status = $$$OK
-	do ..Log("Property: %1", property)
+	//do ..Log("Property: %1", property)
 	#dim propIndex As %Integer = classObj.Properties.FindObjectId(classObj.Name _ "||" _ property)
 	if (+propIndex > 0) {
 		set propObj = classObj.Properties.GetAt(propIndex)
@@ -228,32 +230,32 @@ Method GenerateProperty(class As %String, classObj As %Dictionary.ClassDefinitio
 	quit sc
 }
 
-ClassMethod GenerateTypeProperty(class As %String, Output classObj As %Dictionary.ClassDefinition)
+ClassMethod GenerateTypeParameter(class As %String, Output classObj As %Dictionary.ClassDefinition)
 {
-	set name = "%Type"
-	#dim propIndex As %Integer = classObj.Properties.FindObjectId(classObj.Name _ "||" _ name)
-	if (+propIndex > 0) {
-		set propObj = classObj.Properties.GetAt(propIndex)
-	} else {
-		set propObj = ##class(%Dictionary.PropertyDefinition).%New()
-		set propObj.Name = name
-		set propObj.parent = classObj
+	set name = "Type"
+	#dim paramIndex As %Integer = classObj.Parameters.FindObjectId(classObj.Name _ "||" _ name)
+	if paramIndex = "" {
+		set paramObj = ##class(%Dictionary.ParameterDefinition).%New()
+		set paramObj.Name = name
+		set paramObj.parent = classObj
 		
-		set propObj.Type = "%String"
-		set propObj.Description = "Python class"
+		set paramObj.Type = "%String"
+		set paramObj.Description = "Python class"
+		set paramObj.Default = class
 	}
-	
-	set propObj.InitialExpression = """" _ class _ """"
 }
 
 /// TODO - skip udserscore classes?
 /// Translate python FQCN to IRIS class.
-Method PythonClassToIRIS(class As %String) [ CodeMode = expression ]
+Method PythonClassToIRIS(class As %String)
 {
-$zstrip($tr(..Package _ "." _ class, "_", "."),"=P")
+	if ((class'=..Module) && ((..Module = "__builtins__") || ($l(class,".")=1))) {
+		set class = "builtins." _ class	
+	}
+	quit $zstrip($tr(..Package _ "." _ class, "_", "."),"=>P")
 }
 
-/// Translate argument names from Python to IRIS.
+/// Translate method argument names from Python to IRIS.
 ClassMethod VarNameToIRIS(string) As %String [ CodeMode = expression ]
 {
 $tr(string, "_")
@@ -265,19 +267,86 @@ Method GenerateMethod(class As %String, classObj As %Dictionary.ClassDefinition,
 	set sc = ##class(isc.py.Main).GetFunctionInfo(class _ "." _ method, .defined, .type, .docs, .signature, .arguments)
 	quit:$$$ISERR(sc) sc
 	
-	set methodObj = ##class(%Dictionary.MethodDefinition).%New()
+	set name = $case(method, "__init__":"%OnNew", :method)
 	
-	set methodObj.Name = $case(method, "__init__":"%OnNew", :method)
-	set methodObj.parent = classObj
-	set methodObj.ClassMethod = $$$YES
-	set methodObj.Description = "Signature: " _ signature _ $$$NL _ "Type: " _ type _ $$$NL _ $replace(docs, $c(10), $$$NL) _ $$$NL _ "write ##class(" _ classObj.Name _ ")." _ $case($zname(method,6), 1:method, :"""" _ method _ """") _ "()"
+	#dim methodIndex As %Integer = classObj.Methods.FindObjectId(classObj.Name _ "||" _ name)
+	if methodIndex = "" {
+		set methodObj = ##class(%Dictionary.MethodDefinition).%New()
+		
+		set methodObj.Name = name
+		set methodObj.parent = classObj
+		set methodObj.Description = "Signature: " _ signature _ $$$NL _ "Type: " _ type _ $$$NL _ $replace(docs, $c(10), $$$NL) _ $$$NL
+		
+		set sc = ..IsAbstract(class _ "." _ method, .isAbstract)
+		quit:$$$ISERR(sc) sc
+		set methodObj.Abstract = isAbstract
+		
+		// Is it class or object method? - Start
+		set methodObj.ClassMethod = $$$YES
+		set:type["method" methodObj.ClassMethod = $$$NO
+		// Is it class or object method? - Ens
+		// Not really the end
+		
+		// start - calculating signatures
+		if arguments="" {
+			set irisArgs = "args..."
+			set callArgs = "..%CallArgsToString(args...)"
+		} else {
+			#dim funcArgObj As %DynamicArray = [].%FromJSON(arguments)
+			// Remove self argument if it's a method or a constructor function
+			if (($isObject(funcArgObj.%Get(0)) && (funcArgObj.%Get(0).%Get(0)="self"))) {
+				set methodObj.ClassMethod = $$$NO
+
+			}
+
+			do ..GenereateMethodSignature(funcArgObj, .irisArgs, .callArgs)
+		}	
+		// end - calculating signatures
+		
+		
+		set:class=..Module methodObj.ClassMethod = $$$YES
+			
+		do ..GenerateMethodBody(methodObj, class, method, irisArgs, callArgs)
+		set methodObj.Description = methodObj.Description _  ..GenerateCall(methodObj.ClassMethod, classObj.Name, methodObj.Name) 
+	}
+	quit sc
+}
+
+ClassMethod GenerateCall(classMethod As %Boolean, irisclass, irismethod) As %String
+{
+	if irismethod = "%OnNew" {
+		set command = "set obj = "
+	} else {
+		set command ="write "
+	}
 	
-	set sc = ..IsAbstract(class _ "." _ method, .isAbstract)
-	quit:$$$ISERR(sc) sc
-	set methodObj.Abstract = isAbstract
+	if (classMethod || (irismethod="%OnNew")){
+		set objCall = "##class(" _ irisclass _ ")"
+	} else {
+		set objCall = "obj"
+	}
+	 
+	if $zname(irismethod, 6) = 0 {
+		set methodCall = """" _ irismethod _ """"
+	} elseif irismethod="%OnNew" {
+		set methodCall = "%New"
+	} else {
+		set methodCall = irismethod
+	}
 	
-	// start - calculating sifgnatures
+	if irismethod = "%OnNew" {
+		set args = "(,"""")"
+	} else {
+		set args ="()"
+	}
 	
+	
+	set call = command _ objCall _ "." _ methodCall _ args
+	quit call
+}
+
+ClassMethod GenereateMethodSignature(funcArgObj As %DynamicArray, Output irisArgs, Output callArgs)
+{
 	// Method signature
 	set irisArgs = ""
 	
@@ -287,82 +356,62 @@ Method GenerateMethod(class As %String, classObj As %Dictionary.ClassDefinition,
 	// Are we currently on first arg
 	#dim firstArg As %Boolean = $$$YES
 	
+	#dim args As %DynamicArray = funcArgObj.%Get(0)
+	#dim varargs As %String = funcArgObj.%Get(1)
+	#dim varkw As %String = funcArgObj.%Get(2)
+	#dim defaults As %DynamicArray = funcArgObj.%Get(3)
+	#dim kwonlyargs As %DynamicArray = funcArgObj.%Get(4)
+	#dim kwonlydefaults As %DynamicArray = funcArgObj.%Get(5)
 	
-	if arguments="" {
-		set irisArgs = "args..."
-		set callArgs = "..%CallArgsToString(args...)"
-		if type["method" {
-			set methodObj.ClassMethod = $$$NO
-		}
-	} else {		
-		set funcArgObj = [].%FromJSON(arguments)
-		
-		#dim args As %DynamicArray = funcArgObj.%Get(0)
-		#dim varargs As %String = funcArgObj.%Get(1)
-		#dim varkw As %String = funcArgObj.%Get(2)
-		#dim defaults As %DynamicArray = funcArgObj.%Get(3)
-		#dim kwonlyargs As %DynamicArray = funcArgObj.%Get(4)
-		#dim kwonlydefaults As %DynamicArray = funcArgObj.%Get(5)
-		
-		// Remove self argument if it's a method or a constructor function
-		if ((type["method") || ($isObject(args) && (args.%Get(0)="self"))) {
-			set methodObj.ClassMethod = $$$NO
-			do args.%Remove(0)
-		} 
-		
-		#dim posCount As %Integer = $case($isObject(args), $$$YES: args.%Size(), :0)
-		#dim kwCount As %Integer = $case($isObject(kwonlyargs), $$$YES: kwonlyargs.%Size(), :0)
-		#dim hasArgs As %Boolean = (varargs'="")
-		#dim hasKWArgs As %Boolean = (varkw'="")
-	 
-	 	
-	 	
-		
-		set iterator = args.%GetIterator()
-		while iterator.%GetNext(.key, .value) {
-			set irisArgs = irisArgs _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(value)
-			set callArgs = callArgs _ $case(firstArg, $$$YES:"", :"_"",""_") _ "..%EscapeArg(." _ ..VarNameToIRIS(value) _ ")"
-			set firstArg = $$$NO
-			
-			
-			//set default = $case($isObject($g(defaults)), $$$YES:defaults.%Get(key), :"")
-			//set:default'="" irisArgs = irisArgs _ "=" _ default
-		}
-		
-		if hasArgs {
-			set irisArgs = irisArgs _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(varargs)
-			set callArgs = callArgs _ $case(firstArg, $$$YES:"", :"_"",""_") _ "..%ArgsToString(." _ ..VarNameToIRIS(varargs) _ ")"
-			set firstArg = $$$NO
-		}
-		
-		set iterator = kwonlyargs.%GetIterator()
-		while iterator.%GetNext(.key, .value) {			
-			set irisArgs = irisArgs _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(value)		
-			set callArgs = callArgs _ $case(firstArg, $$$YES:"", :"_"",""_") _ """" _ value _ "=""_..%EscapeArg(." _ ..VarNameToIRIS(value) _ ")"
-			set firstArg = $$$NO
-
-			//set default = $case($isObject($g(kwonlydefaults)), $$$YES:kwonlydefaults.%Get(key), :"")
-			//set:default'="" irisArgs = irisArgs _ "=" _ default
-		}
-		
-		if hasKWArgs {
-			set irisArgs = irisArgs _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(varkw)
-			set callArgs = callArgs _ $case(firstArg, $$$YES:"", :"_"",""_") _ "..%KWArgsToString(." _ ..VarNameToIRIS(varkw) _ ")"
-			set firstArg = $$$NO
-		}
+	// Remove self argument if it's a method or a constructor function
+	if (($isObject(args) && (args.%Get(0)="self"))) {
+		do args.%Remove(0)
 	}
+
+	#dim posCount As %Integer = $case($isObject(args), $$$YES: args.%Size(), :0)
+	#dim kwCount As %Integer = $case($isObject(kwonlyargs), $$$YES: kwonlyargs.%Size(), :0)
+	#dim hasArgs As %Boolean = (varargs'="")
+	#dim hasKWArgs As %Boolean = (varkw'="")
+ 
+ 	
+ 	
+	
+	set iterator = args.%GetIterator()
+	while iterator.%GetNext(.key, .value) {
+		set irisArgs = irisArgs _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(value)
+		set callArgs = callArgs _ $case(firstArg, $$$YES:"", :"_"",""_") _ "..%EscapeArg(." _ ..VarNameToIRIS(value) _ ")"
+		set firstArg = $$$NO
+		
+		
+		//set default = $case($isObject($g(defaults)), $$$YES:defaults.%Get(key), :"")
+		//set:default'="" irisArgs = irisArgs _ "=" _ default
+	}
+	
+	if hasArgs {
+		set irisArgs = irisArgs _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(varargs)
+		set callArgs = callArgs _ $case(firstArg, $$$YES:"", :"_"",""_") _ "..%ArgsToString(." _ ..VarNameToIRIS(varargs) _ ")"
+		set firstArg = $$$NO
+	}
+	
+	set iterator = kwonlyargs.%GetIterator()
+	while iterator.%GetNext(.key, .value) {			
+		set irisArgs = irisArgs _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(value)		
+		set callArgs = callArgs _ $case(firstArg, $$$YES:"", :"_"",""_") _ """" _ value _ "=""_..%EscapeArg(." _ ..VarNameToIRIS(value) _ ")"
+		set firstArg = $$$NO
+
+		//set default = $case($isObject($g(kwonlydefaults)), $$$YES:kwonlydefaults.%Get(key), :"")
+		//set:default'="" irisArgs = irisArgs _ "=" _ default
+	}
+	
+	if hasKWArgs {
+		set irisArgs = irisArgs _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(varkw)
+		set callArgs = callArgs _ $case(firstArg, $$$YES:"", :"_"",""_") _ "..%KWArgsToString(." _ ..VarNameToIRIS(varkw) _ ")"
+		set firstArg = $$$NO
+	}
+	
 	
 	// Remove trailing commas
 	set:callArgs'="" callArgs = "$zstrip(" _ callArgs _ ","">"","","")"
-	
-	// end - calculating signatures
-	
-	
-	set:class=..Module methodObj.ClassMethod = $$$YES
-
-	do ..GenerateMethodBody(methodObj, class, method, irisArgs, callArgs)
-	
-	quit sc
 }
 
 ClassMethod GenerateMethodBody(methodObj As %Dictionary.MethodDefinition, class, method, irisArgs, callArgs)
@@ -378,6 +427,7 @@ ClassMethod GenerateMethodBody(methodObj As %Dictionary.MethodDefinition, class,
 
 ClassMethod GenerateOnNewMethodBody(methodObj As %Dictionary.MethodDefinition, irisArgs, callArgs)
 {
+	set methodObj.ClassMethod = $$$NO
 	set methodObj.ReturnType = "%Status"
 	set methodObj.FormalSpec = "init:%String=$$$YES,variable:%String" _ $case(irisArgs'="", $$$YES:", ", :"") _ irisArgs 
 	

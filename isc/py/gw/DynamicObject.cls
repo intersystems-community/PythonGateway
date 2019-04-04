@@ -2,6 +2,9 @@
 Class isc.py.gw.DynamicObject Extends %RegisteredObject
 {
 
+/// Python Type
+Parameter Type;
+
 /// Automatically escape values on  method call
 Parameter EscapeOnCall As %Boolean = {$$$NO};
 
@@ -9,7 +12,7 @@ Parameter EscapeOnCall As %Boolean = {$$$NO};
 Property %Variable As %String(MAXLEN = 1000);
 
 /// Python type
-Property %Type As %String(MAXLEN = 1000);
+Property %Type As %String(MAXLEN = 1000) [ InitialExpression = {..#Type} ];
 
 /// Default serialization for methods
 Property %Serialization As %Integer [ InitialExpression = {##class(isc.py.Callout).#SerializationStr} ];
@@ -21,7 +24,7 @@ Property %EscapeOnSet As %Boolean [ InitialExpression = {$$$YES} ];
 Property %EscapeOnCall As %Boolean [ InitialExpression = {$$$NO} ];
 
 /// do ##class(isc.py.init.Test).Initialize(,1)
-/// set obj = ##class(isc.py.gw.DynamicObject).%New("Person", "p1", , "'Ed'", "25", "'Test'")
+/// set obj = ##class(isc.py.gw.DynamicObject).%New("Person", "p1", "'Ed'", "25", "'Test'")
 /// w obj.name
 /// s obj.name="Bob"
 /// w obj.name
