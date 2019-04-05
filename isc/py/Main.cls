@@ -1,4 +1,5 @@
-/// Public entry point to call Python Context
+/// Public entry point to call Python.
+/// Also may be refernced as API or Terminal API.
 Class isc.py.Main
 {
 
