@@ -31,7 +31,10 @@ Property Module As %String;
 Property BaseClass As %String [ InitialExpression = "isc.py.gw.DynamicObject" ];
 
 /// List of modules loaded in memory
-Property ImportedModules As %List;
+Property ImportedModulesList As %List;
+
+/// List of currently generated proprties in lowercase
+Property CurrentPropertiesList As %List;
 
 /// do ##class(isc.py.gw.Generator).Test()
 ClassMethod Test(modules As %List = {$lb("builtins","random")})
@@ -45,6 +48,7 @@ ClassMethod Test(modules As %List = {$lb("builtins","random")})
 	for i=1:1:$ll(modules) {
 		set sc = obj.GenerateModule($lg(modules, i))
 		w $System.Status.GetErrorText(sc)
+		break:$$$ISERR(sc)
 	}
 	set sc = obj.Compile()
 	w $System.Status.GetErrorText(sc)
@@ -128,6 +132,7 @@ Method GenerateClass(type As %String) As %Status
 	set sc = ..GetTypeMembers(type, "zzzuncallable", .properties)
 	quit:$$$ISERR(sc) sc
 	
+	set ..CurrentPropertiesList = ""
 	set ptr=0
 	while $listnext(properties, ptr, property) {
 		set sc = ..GenerateProperty(classObj, property) 
@@ -207,31 +212,33 @@ Method GenerateProperty(classObj As %Dictionary.ClassDefinition, property As %St
 {
 	#dim sc As %Status = $$$OK
 	do ..Log(2, "Property: %1", property)
-	#dim propIndex As %Integer = classObj.Properties.FindObjectId(classObj.Name _ "||" _ property)
-	if (+propIndex > 0) {
-		set propObj = classObj.Properties.GetAt(propIndex)
-	} else {
+	
+	set irisProperty = ..FixPropertyName(property)
+	
+	#dim propIndex As %Integer = classObj.Properties.FindObjectId(classObj.Name _ "||" _ irisProperty)
+	if propIndex = "" {
 		set propObj = ##class(%Dictionary.PropertyDefinition).%New()
-		set propObj.Name = property
+		set propObj.Name = irisProperty
 		set propObj.parent = classObj
 		set propObj.Type = "%String"
+		set propObj.Description = "Python property: " _ property
 	}
 	
 	// Property getter
-	#dim getIndex As %Integer = classObj.Methods.FindObjectId(classObj.Name _ "||" _ property _ "Get")
+	#dim getIndex As %Integer = classObj.Methods.FindObjectId(classObj.Name _ "||" _ irisProperty _ "Get")
 	if getIndex="" {
 		set getObj = ##class(%Dictionary.MethodDefinition).%New()
-		set getObj.Name = property _ "Get"
+		set getObj.Name = irisProperty _ "Get"
 		set getObj.parent = classObj
 		set getObj.CodeMode = "expression"
 		do getObj.Implementation.WriteLine($c(9) _ "..%DispatchGetProperty(""" _ property _ """)")
 	}	
 
 	// Property setter
-	#dim setIndex As %Integer = classObj.Methods.FindObjectId(classObj.Name _ "||" _ property _ "Set")
+	#dim setIndex As %Integer = classObj.Methods.FindObjectId(classObj.Name _ "||" _ irisProperty _ "Set")
 	if setIndex="" {
 		set setObj = ##class(%Dictionary.MethodDefinition).%New()
-		set setObj.Name = property _ "Set"
+		set setObj.Name = irisProperty _ "Set"
 		set setObj.parent = classObj
 		set setObj.CodeMode = "expression"
 		set setObj.FormalSpec = "val"
@@ -239,6 +246,18 @@ Method GenerateProperty(classObj As %Dictionary.ClassDefinition, property As %St
 		set setObj.ReturnType = "%Status"
 	}	
 	quit sc
+}
+
+/// Add number to property name if property name already exists.
+/// This is a fix for the fact that Python attributes are case sensitive and ObjectScript properties are not. 
+Method FixPropertyName(property) As %String
+{
+	set lowerProperty = $zcvt(property, "l")
+	for i="",1:1:$$$MaxCacheInt {
+		quit:$lf(..CurrentPropertiesList, lowerProperty _ i)=0
+	}
+	set ..CurrentPropertiesList = ..CurrentPropertiesList _ $lb(lowerProperty _ i)
+	quit property _ i
 }
 
 /// Add Type parameter to IRIS Class
@@ -329,8 +348,8 @@ Method GenerateMethod(type As %String, classObj As %Dictionary.ClassDefinition, 
 		// Module methods can always be called
 		set:type=..Module methodObj.ClassMethod = $$$YES
 		
-		set isClassMethod = ##class(isc.py.util.Generator).IsClassMethod(type, method)
-		set:isClassMethod'="" methodObj.ClassMethod = isClassMethod  ///$case(isClassMethod, $$$YES:$$$YES, $$$NO:"")
+		//set isClassMethod = ##class(isc.py.util.Generator).IsClassMethod(type, method)
+		//set:isClassMethod'="" methodObj.ClassMethod = isClassMethod  ///$case(isClassMethod, $$$YES:$$$YES, $$$NO:"")
 		
 		do ..GenerateMethodBody(methodObj, type, method, formalSpec, callArgs)
 		set methodObj.Description = methodObj.Description _  ..GenerateCall(classObj.Name, methodObj.Name, methodObj.ClassMethod) 
@@ -513,7 +532,7 @@ Method CheckImportedModule(type) As %Status
 	#dim sc As %Status = $$$OK
 	quit:$l(type, ".")=1 sc
 	set module = $p(type, ".", 1)
-	if $lf(..ImportedModules, module)=0 {
+	if $lf(..ImportedModulesList, module)=0 {
 		set sc = ##class(isc.py.Main).ImportModule(module)
 		quit:$$$ISERR(sc) sc
 		
@@ -523,11 +542,11 @@ Method CheckImportedModule(type) As %Status
 	quit sc
 }
 
-/// Add imported module to ImportedModules property
+/// Add imported module to ImportedModulesList property
 Method AppendImportedModule(module As %String)
 {
-	if $lf(..ImportedModules, module)=0 {
-			set ..ImportedModules = ..ImportedModules _ $lb(module)
+	if $lf(..ImportedModulesList, module)=0 {
+			set ..ImportedModulesList = ..ImportedModulesList _ $lb(module)
 	}
 }
 
