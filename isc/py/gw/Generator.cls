@@ -2,12 +2,16 @@
 Class isc.py.gw.Generator Extends %RegisteredObject
 {
 
+Parameter MaxMethods = 900;
+
 /// Display logging info. Increasing the number shows more messages.
 /// -1 display nothing
 /// 0 - display modules info
 /// 1 - display types info
 /// 2 - display methods/properties info
 Property LogLevel As %Integer [ InitialExpression = 1 ];
+
+Property Initialized As %Boolean [ InitialExpression = {$$$NO} ];
 
 /// Already done python types
 Property GeneratedTypeList As %List;
@@ -36,9 +40,17 @@ Property ImportedModulesList As %List;
 /// List of currently generated proprties in lowercase
 Property CurrentPropertiesList As %List;
 
+/// List of currently generated methods in lowercase
+Property CurrentMethodsList As %List;
+
+Property Warnings As list Of %String;
+
 /// do ##class(isc.py.gw.Generator).Test()
 ClassMethod Test(modules As %List = {$lb("builtins","random")})
 {
+	quit:modules=""
+	set:'$listvalid(modules) modules = $lb(modules)
+	
 	set package = "py"
 	do $system.OBJ.DeletePackage(package)
 	
@@ -57,6 +69,7 @@ ClassMethod Test(modules As %List = {$lb("builtins","random")})
 /// Compile all generated classes
 Method Compile()
 {
+	#include %occErrors
 	set irisClasses = ""
 	set ptr=0
 	
@@ -66,15 +79,82 @@ Method Compile()
 		set displayFlags = "/checkuptodate=expandedonly /displaylog=0 /displayerror=0"
 	}
 	
-	set sc = $system.OBJ.Compile($lts(..ClassList), "cuks /checkuptodate=expandedonly " _ displayFlags)
+	set sc = $system.OBJ.Compile($lts(..ClassList), "cuks /checkuptodate=expandedonly " _ displayFlags, .errors)
+	
+	/*
+	errors(4)="ERROR #5477: Keyword signature error in py.matplotlib.text.Text:Method:draw, keyword 'ClassMethod' must be '0'"_$c(13,10)_"  > ERROR #5030: An error occurred while compiling class 'py.matplotlib.text.Text'"
+	errors(4,"caller")="ConstructCompileTree+736^%occInherit"
+	errors(4,"code")=5477
+	errors(4,"dcode")=5477
+	errors(4,"domain")="%ObjectErrors"
+	errors(4,"embeddederror")=1
+	errors(4,"embeddederror",1)="0 "_$lb($lb(5030,"py.matplotlib.text.Text",,,,,,,,$lb(,"PYTHON",$lb("e^compile+43^%occClass^1"))))
+	errors(4,"embeddedstatus")="0 "_$lb($lb(5030,"py.matplotlib.text.Text",,,,,,,,$lb(,"PYTHON",$lb("e^compile+43^%occClass^1"))))
+	errors(4,"namespace")="PYTHON"
+	errors(4,"param")=3
+	errors(4,"param",1)="py.matplotlib.text.Text:Method:draw"
+	errors(4,"param",2)="ClassMethod"
+	errors(4,"param",3)=0
+	errors(4,"stack")=$lb("e^ConstructCompileTree+736^%occInherit^2","e^memberSuper+333^%occInherit^1","e^memberSuper+206^%occInherit^1","e^ConstructCompileTree+20^%occInherit^1","e^compile+12^%occClass^2","e^startWork+218^%SYS.WorkQueueMgr^1","x^startWork+218^%SYS.WorkQueueMgr^1","d^startWork+215^%SYS.WorkQueueMgr^1","d^startWork+87^%SYS.WorkQueueMgr^1","d^^^0")
+	*/
+	
+	write "Compile error fixes: ",!
+	for i=1:1:errors {
+		set errorCode = errors(i, "code")
+		if errorCode=$$$KeywordSignatureError {
+			set class = $p(errors(i,"param",1), ":", 1)
+			set type = $$$defMemberKeyGet(class,$$$cCLASSparameter,"Type",$$$cPARAMdefault)
+			
+			set method = $p(errors(i,"param",1), ":", 3)
+			set isClassMethod = errors(i,"param", 3)
+			
+			set methods(type, isClassMethod) = $g(methods(type, isClassMethod)) _ $lb(method)
+			//write "quit:((type=""" _ type _ """) && (method="""_method_""")) " _ $case(isClassMethod, $$$YES:"$$$YES", :"$$$NO"),!
+		}
+	}
+	
+	set type="" 
+	for {
+		set type = $o(methods(type))
+		quit:type=""
+		
+		set isClassMethod=""
+		for {
+			set isClassMethod = $o(methods(type, isClassMethod),1,methodList)
+			quit:isClassMethod=""
+			
+			if $ll(methodList)=1 {
+				write "quit:((type=""" _ type _ """) && (method="""_$lg(methodList)_""")) " _ $case(isClassMethod, $$$YES:"$$$YES", :"$$$NO"),!
+			} else {
+				write "quit:((type=""" _ type _ """) && ($lf($lb("""_$lts(methodList, """,""")_"""),method))) " _ $case(isClassMethod, $$$YES:"$$$YES", :"$$$NO"),!
+			}	
+		}
+	}	
+	
+	write "Compile error fixes end. ",!
+	
+	do ..DisplayWarnings()
+	
 	quit sc
+}
+
+Method DisplayWarnings()
+{
+	write "Warnings: ",..Warnings.Count(),!
+	for i = 1:1:..Warnings.Count() {
+		write ..Warnings.GetAt(i),!
+	}
+	write "End warnings.",!
 }
 
 /// Generate module
 Method GenerateModule(module) As %Status
 {
-	set sc = ##class(isc.py.init.Generator).Initialize(,(..LogLevel>0))
-	quit:$$$ISERR(sc) sc
+	if '..Initialized {
+		set sc = ##class(isc.py.init.Generator).Initialize(,(..LogLevel>0))
+		quit:$$$ISERR(sc) sc
+		set ..Initialized = $$$YES
+	}
 	
 	set sc = ##class(isc.py.Main).ImportModule(module, .imported, .alias)
 	quit:$$$ISERR(sc) sc
@@ -92,16 +172,26 @@ Method GenerateModule(module) As %Status
 	while $ll(..TypeList)>0 {
 		set type = $lg(..TypeList, *)
 		set $li(i%TypeList, *, *) = ""
-		set ..GeneratedTypeList = ..GeneratedTypeList _ $lb(type)
 		
 		set sc = ..CheckImportedModule(type)
 		quit:$$$ISERR(sc)
 		
-		set sc = ..GenerateClass(type)
+		set sc = ##class(isc.py.Main).GetVariableDefined(type, .defined)
 		quit:$$$ISERR(sc)
 		
+		if defined {
+			set sc = ..GenerateClass(type)
+		} else {
+			set warning = "Failed to find class '" _ type _ "' for generation"
+			do ..Log(0, warning)
+			do ..Warnings.Insert(warning)
+			
+			set sc = ..GenerateMissingClass(type)
+			
+		}
+		quit:$$$ISERR(sc)
+		set ..GeneratedTypeList = ..GeneratedTypeList _ $lb(type)
 		set ..ClassList = ..ClassList _ $lb(..TypeToClass(type))
-		//break	
 	}
 	quit:$$$ISERR(sc) sc
 	
@@ -122,6 +212,16 @@ Method GenerateClass(type As %String) As %Status
 	set sc = ..GetTypeMembers(type, "callable", .methods)
 	quit:$$$ISERR(sc) sc
 	
+	set methodsCount = $ll(methods)
+	if methodsCount>..#MaxMethods {
+		set warning = $$$FormatText("Type '%1' contains %2 methods. Generating only first %3 methods", type, methodsCount, ..#MaxMethods) 
+		do ..Log(0, warning)
+		do ..Warnings.Insert(warning)
+		set methods = $list(methods, 1, ..#MaxMethods)
+		set methodsCount = ..#MaxMethods
+	}
+	
+	set ..CurrentMethodsList = ""
 	set ptr=0
 	while $listnext(methods, ptr, method) {
 		set sc = ..GenerateMethod(type, classObj, method) 
@@ -132,6 +232,17 @@ Method GenerateClass(type As %String) As %Status
 	set sc = ..GetTypeMembers(type, "zzzuncallable", .properties)
 	quit:$$$ISERR(sc) sc
 	
+	
+	set propertiesCount = $ll(properties)
+	
+	if ((methodsCount+(2*propertiesCount))>..#MaxMethods) {
+		set newPropertiesCount = (..#MaxMethods-methodsCount)\2
+		set properties = $list(properties, 1, newPropertiesCount)
+		set warning = $$$FormatText("Type '%1' contains %2 properties. Generating only first %3 properties", type, propertiesCount, newPropertiesCount) 
+		do ..Log(0, warning)
+		do ..Warnings.Insert(warning)
+	}
+	
 	set ..CurrentPropertiesList = ""
 	set ptr=0
 	while $listnext(properties, ptr, property) {
@@ -140,6 +251,28 @@ Method GenerateClass(type As %String) As %Status
 	}
 	quit:$$$ISERR(sc) sc
 	
+	set sc = classObj.%Save()
+	
+	quit sc
+}
+
+/// Generate empty class so compilation succeeds.
+Method GenerateMissingClass(type As %String) As %Status
+{
+	set class = ..TypeToClass(type)
+	if ##class(%Dictionary.ClassDefinition).%ExistsId(class) {
+		set classObj = ##class(%Dictionary.ClassDefinition).%OpenId(class)
+	} else {
+		set classObj = ##class(%Dictionary.ClassDefinition).%New(class)
+	}
+	
+	do classObj.ProcedureBlockReset()
+	set classObj.Abstract = $$$YES
+		
+	set classObj.Description = "Pyhton type: " _ type _ $$$NL _ "This type can't be found by name."
+	set classObj.Super = ..BaseClass
+	
+	do ..GenerateTypeParameter(type, classObj)
 	set sc = classObj.%Save()
 	
 	quit sc
@@ -160,7 +293,7 @@ Method GetInitialClass(type As %String, Output classObj As %Dictionary.ClassDefi
 	
 	set sc = ..IsAbstract(type, .isAbstract)
 	quit:$$$ISERR(sc) sc
-	set classObj.Abstract = isAbstract
+	set:isAbstract classObj.Abstract = isAbstract
 	
 	set sc = ##class(isc.py.Main).SimpleString("zzzdocs=" _ ..Inspect _ ".getdoc(" _ type _ ")", "zzzdocs", , .docs)
 	quit:$$$ISERR(sc) sc
@@ -199,8 +332,6 @@ Method GetInitialClass(type As %String, Output classObj As %Dictionary.ClassDefi
 			}
 		}
 		set:classObj.Super="" classObj.Super = ..BaseClass
-		
-		
 		do ..AppendToTypeList(extends)
 	}
 		
@@ -301,13 +432,15 @@ Method GenerateMethod(type As %String, classObj As %Dictionary.ClassDefinition, 
 	set sc = ##class(isc.py.Main).GetFunctionInfo(type _ "." _ method, .defined, .methodType, .docs, .signature, .arguments)
 	quit:$$$ISERR(sc) sc
 	
-	set name = $case(method, "__init__":"%OnNew", :method)
+	do ##class(isc.py.util.Generator).GetArguments(type, method, .arguments)
 	
-	#dim methodIndex As %Integer = classObj.Methods.FindObjectId(classObj.Name _ "||" _ name)
+	set irisMethod = $case(method, "__init__":"%OnNew", : ..FixMethodName(method))
+	
+	#dim methodIndex As %Integer = classObj.Methods.FindObjectId(classObj.Name _ "||" _ irisMethod)
 	if methodIndex = "" {
 		set methodObj = ##class(%Dictionary.MethodDefinition).%New()
 		
-		set methodObj.Name = name
+		set methodObj.Name = irisMethod
 		set methodObj.parent = classObj
 		set methodObj.Description = "Signature: " _ signature _ $$$NL _ "Type: " _ methodType _ $$$NL _ $replace(docs, $c(10), $$$NL) _ $$$NL
 		
@@ -348,13 +481,25 @@ Method GenerateMethod(type As %String, classObj As %Dictionary.ClassDefinition, 
 		// Module methods can always be called
 		set:type=..Module methodObj.ClassMethod = $$$YES
 		
-		//set isClassMethod = ##class(isc.py.util.Generator).IsClassMethod(type, method)
-		//set:isClassMethod'="" methodObj.ClassMethod = isClassMethod  ///$case(isClassMethod, $$$YES:$$$YES, $$$NO:"")
+		set isClassMethod = ##class(isc.py.util.Generator).IsClassMethod(type, method)
+		set:isClassMethod'="" methodObj.ClassMethod = isClassMethod  ///$case(isClassMethod, $$$YES:$$$YES, $$$NO:"")
 		
 		do ..GenerateMethodBody(methodObj, type, method, formalSpec, callArgs)
-		set methodObj.Description = methodObj.Description _  ..GenerateCall(classObj.Name, methodObj.Name, methodObj.ClassMethod) 
+		set methodObj.Description = methodObj.Description _  ..GenerateCall(classObj.Name, irisMethod, methodObj.ClassMethod) 
 	}
 	quit sc
+}
+
+/// Add number to method name if property name already exists.
+/// This is a fix for the fact that Python attributes are case sensitive and ObjectScript methods are not. 
+Method FixMethodName(method) As %String
+{
+	set lowerMethod = $zcvt(method, "l")
+	for i="",1:1:$$$MaxCacheInt {
+		quit:'$lf(..CurrentMethodsList, lowerMethod _ i)
+	}
+	set ..CurrentMethodsList = ..CurrentMethodsList _ $lb(lowerMethod _ i)
+	quit method _ i
 }
 
 /// Generate ObjectScript code to call method of class.
@@ -533,7 +678,12 @@ Method CheckImportedModule(type) As %Status
 	quit:$l(type, ".")=1 sc
 	set module = $p(type, ".", 1)
 	if $lf(..ImportedModulesList, module)=0 {
-		set sc = ##class(isc.py.Main).ImportModule(module)
+		set sc = ##class(isc.py.Main).ImportModule(module, .imported, .alias)
+		quit:$$$ISERR(sc) sc
+
+		// fix for cases where module is already imported.
+		// we need canonical name
+		set:alias'=module sc = ##class(isc.py.Main).SimpleString(module _ "=" _ alias)
 		quit:$$$ISERR(sc) sc
 		
 		do ..AppendImportedModule(module)
@@ -575,8 +725,8 @@ ClassMethod IsAbstract(object As %String, Output isAbstract As %Boolean) As %Sta
 	quit sc
 }
 
-/// Get a %List of methods defined by python type satisfying the condition function
-/// zw ##class(isc.py.gw.Generator).GetClassMethods("random.Random", .c), c
+/// Get a %List of members defined by python type satisfying the condition function
+/// zw ##class(isc.py.gw.Generator).GetTypeMembers("random.Random", .c), c
 ClassMethod GetTypeMembers(type, condition As %String, Output elements As %List) As %Status
 {
 	set elements = ""

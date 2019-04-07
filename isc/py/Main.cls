@@ -323,6 +323,11 @@ ClassMethod GetVariableDefined(variable As %String = "", Output defined As %Bool
 		set varLocal = $p(variable, ".", *)	
 	}
 	
+	for i=2:1:$l(module, ".") {
+		set sc = ..GetVariableDefined($p(module, ".", 1, i), .defined)
+		return:defined=0 sc
+	}
+	
 	set sc = ..SimpleString("zzzdef='" _ variable _ "' in (vars() or globals()) or hasattr(" _ module _ ", '" _ varLocal _ "')", "zzzdef", , .defined)
 	quit:$$$ISERR(sc) sc
 	
