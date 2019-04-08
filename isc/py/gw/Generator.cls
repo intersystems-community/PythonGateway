@@ -317,6 +317,8 @@ Method GetInitialClass(type As %String, Output classObj As %Dictionary.ClassDefi
 			// todo classes with underscores, i.e. random._Random and random.Random 
 			continue:$e(value)="_"
 			
+			set value = $replace(value, "<unknown>", ..Module)
+			
 			// todo replace with __builtins__
 			set:$p(value, ".")="builtins" value = $p(value, ".", 2, *)
 			continue:value=type
@@ -774,6 +776,9 @@ ClassMethod GetModuleTypes(module, Output types As %List) As %Status
 		set variable = module _ "." _ value
 		set sc =  ##class(isc.py.Main).SimpleString("zzztype=('' if " _ variable _ ".__module__ is None or " _ variable _ ".__module__ == str.__class__.__module__ else " _ variable _ ".__module__ + '.') + " _ variable _ ".__name__", "zzztype", , .type)
 		quit:$$$ISERR(sc)
+		
+		// enums? triggered on ssl module.
+		set type = $replace(type, "<unknown>", module)
 		
 		// todo?
 		continue:(($l(type, ".")=1) && (module'["builtins"))
