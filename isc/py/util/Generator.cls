@@ -1,14 +1,14 @@
 Class isc.py.util.Generator
 {
 
-///  "wave", "aifc", "ast", "six", "pkg_resources", "hashlib", "setuptools", "astor", "botocore", "ssl"
-Parameter Modules = {$lb("nyoka", "collections", "configparser", "pandas",  "csv", "dbi", "typing",  "feedparser", "chardet", "multiprocess", "tokenize", "commctrl", "win32con", "multiprocessing", "tensorflow", "Cython","odbc", "unittest", "ctypes", "parser", "numpy", "bz2file", "mimetypes", "string", "cProfile", "mmap", "stringprep", "OpenSSL", "calendar", "mmapfile", "struct", "certifi", "mmsystem", "subprocess", "cffi", "modulefinder", "sunau", "cgi", "msilib", "symbol", "cgitb", "msvcrt", "symtable", "sys", "chunk", "sysconfig", "click", "netbios", "tabnanny", "cmath", "netrc", "tarfile", "cmd", "nntplib", "telnetlib", "code", "nt", "tempfile", "codecs", "ntpath", "tensorboard", "codeop", "ntsecuritycon", "nturl2path", "termcolor", "colorama", "numbers", "test", "colorsys", "textwrap", "this", "compileall", "threading", "concurrent", "opcode", "time", "operator", "timeit", "contextlib", "optparse", "timer", "copy", "os", "tkinter", "copyreg", "pandas", "token", "pandas_ml", "cryptography", "pandocfilters", "trace",  "traceback", "pathlib", "tracemalloc", "patsy", "transmissionrpc", "cycler", "pdb", "perfmon", "turtle", "datetime", "pickle", "turtledemo", "dateutil", "pickletools", "types", "pip", "dbm", "pipes", "win32ui", "unicodedata", "dde", "decimal", "pkgutil", "urllib", "difflib", "platform", "urllib3", "dill", "plistlib", "uu", "dis", "poplib", "uuid", "distutils", "posixpath", "venv", "doctest", "pprint", "warnings", "docutils", "profile", "dummy_threading", "pstats", "weakref", "easy_install", "webbrowser", "email", "py2jdbc", "werkzeug", "encodings", "py_compile", "wheel", "ensurepip", "pyasn1", "win2kras", "enum", "pyclbr", "win32api", "errno", "pycparser", "win32clipboard", "examples", "pydoc", "win32com", "faulthandler", "pydoc_data", "pyexpat", "win32console", "filecmp", "pylab", "win32cred", "fileinput", "pyodbc", "win32crypt", "fnmatch", "pyparsing", "win32cryptcon", "formatter", "pyreadline", "win32event", "fractions", "python_jsonschema_objects", "win32evtlog", "ftplib", "pythoncom", "win32evtlogutil", "functools", "pytz", "win32file", "gast", "pywin", "win32gui", "gc", "pywin32_testutil", "win32gui_struct", "genericpath", "pywintypes", "win32help", "gensim", "pyximport", "win32inet", "getopt", "queue", "win32inetcon", "getpass", "quopri", "win32job", "gettext", "random", "win32lz", "glob", "rasutil", "win32net", "grpc", "re", "win32netcon", "gzip", "readline", "win32pdh", "h5py", "regcheck", "win32pdhquery", "regutil", "win32pdhutil", "heapq", "reprlib", "win32pipe", "hmac", "requests", "win32print", "html", "requests_negotiate_sspi", "win32process", "http", "rlcompleter", "win32profile", "idlelib", "rsa", "win32ras", "idna", "runpy", "win32rcparser", "imaplib", "s3transfer", "win32security", "imghdr", "sched", "win32service", "imp", "scipy", "win32serviceutil", "importlib", "seaborn", "win32timezone", "inflection", "secrets", "win32trace", "inspect", "select", "win32traceutil", "abc", "io", "selectors", "win32transaction", "absl", "ipaddress", "servicemanager", "win32ts", "isapi", "afxres", "itertools", "shelve", "win32uiole", "jaydebeapi", "shlex", "win32verstamp", "antigravity", "jmespath", "shutil", "win32wnet", "argparse", "json", "signal", "winerror", "array", "jsonschema", "simplejson", "winioctlcon", "asn1crypto", "keras", "site", "winnt", "keras_applications", "winperf", "keras_preprocessing", "winreg", "asynchat", "keyword", "sklearn", "winsound", "asyncio", "kiwisolver", "sklearn_pandas", "winxpgui", "asyncore", "smart_open", "winxptheme", "atexit", "lib2to3", "smtpd", "ws4py", "audioop", "linecache", "smtplib", "wsgiref", "aws_adfs", "locale", "sndhdr", "xdrlib", "awscli", "logging", "socket", "xgboost", "base64", "lxml", "socketserver", "xml", "bdb", "lzma", "sqlite3", "xmlrpc", "binascii", "macpath", "sre_compile", "xxsubtype", "binhex", "macurl2path", "sre_constants", "yaml", "bisect", "mailbox", "sre_parse", "zipapp", "boto", "mailcap", "zipfile", "boto3", "markdown", "sspi", "zipimport", "marshal", "sspicon", "zlib", "math", "stat", "builtins", "matplotlib", "statistics", "bz2", "statsmodels")};
+///  "wave", "aifc", "ast", "six","hashlib", "setuptools", 
+Parameter Modules = {$lb( "pkg_resources", "astor", "botocore", "ssl", "nyoka", "collections", "configparser", "pandas",  "csv", "dbi", "typing",  "feedparser", "chardet", "multiprocess", "tokenize", "commctrl", "win32con", "multiprocessing", "tensorflow", "Cython","odbc", "unittest", "ctypes", "parser", "numpy", "bz2file", "mimetypes", "string", "cProfile", "mmap", "stringprep", "OpenSSL", "calendar", "mmapfile", "struct", "certifi", "mmsystem", "subprocess", "cffi", "modulefinder", "sunau", "cgi", "msilib", "symbol", "cgitb", "msvcrt", "symtable", "sys", "chunk", "sysconfig", "click", "netbios", "tabnanny", "cmath", "netrc", "tarfile", "cmd", "nntplib", "telnetlib", "code", "nt", "tempfile", "codecs", "ntpath", "tensorboard", "codeop", "ntsecuritycon", "nturl2path", "termcolor", "colorama", "numbers", "test", "colorsys", "textwrap", "this", "compileall", "threading", "concurrent", "opcode", "time", "operator", "timeit", "contextlib", "optparse", "timer", "copy", "os", "tkinter", "copyreg", "pandas", "token", "pandas_ml", "cryptography", "pandocfilters", "trace",  "traceback", "pathlib", "tracemalloc", "patsy", "transmissionrpc", "cycler", "pdb", "perfmon", "turtle", "datetime", "pickle", "turtledemo", "dateutil", "pickletools", "types", "pip", "dbm", "pipes", "win32ui", "unicodedata", "dde", "decimal", "pkgutil", "urllib", "difflib", "platform", "urllib3", "dill", "plistlib", "uu", "dis", "poplib", "uuid", "distutils", "posixpath", "venv", "doctest", "pprint", "warnings", "docutils", "profile", "dummy_threading", "pstats", "weakref", "easy_install", "webbrowser", "email", "py2jdbc", "werkzeug", "encodings", "py_compile", "wheel", "ensurepip", "pyasn1", "win2kras", "enum", "pyclbr", "win32api", "errno", "pycparser", "win32clipboard", "examples", "pydoc", "win32com", "faulthandler", "pydoc_data", "pyexpat", "win32console", "filecmp", "pylab", "win32cred", "fileinput", "pyodbc", "win32crypt", "fnmatch", "pyparsing", "win32cryptcon", "formatter", "pyreadline", "win32event", "fractions", "python_jsonschema_objects", "win32evtlog", "ftplib", "pythoncom", "win32evtlogutil", "functools", "pytz", "win32file", "gast", "pywin", "win32gui", "gc", "pywin32_testutil", "win32gui_struct", "genericpath", "pywintypes", "win32help", "gensim", "pyximport", "win32inet", "getopt", "queue", "win32inetcon", "getpass", "quopri", "win32job", "gettext", "random", "win32lz", "glob", "rasutil", "win32net", "grpc", "re", "win32netcon", "gzip", "readline", "win32pdh", "h5py", "regcheck", "win32pdhquery", "regutil", "win32pdhutil", "heapq", "reprlib", "win32pipe", "hmac", "requests", "win32print", "html", "requests_negotiate_sspi", "win32process", "http", "rlcompleter", "win32profile", "idlelib", "rsa", "win32ras", "idna", "runpy", "win32rcparser", "imaplib", "s3transfer", "win32security", "imghdr", "sched", "win32service", "imp", "scipy", "win32serviceutil", "importlib", "seaborn", "win32timezone", "inflection", "secrets", "win32trace", "inspect", "select", "win32traceutil", "abc", "io", "selectors", "win32transaction", "absl", "ipaddress", "servicemanager", "win32ts", "isapi", "afxres", "itertools", "shelve", "win32uiole", "jaydebeapi", "shlex", "win32verstamp", "antigravity", "jmespath", "shutil", "win32wnet", "argparse", "json", "signal", "winerror", "array", "jsonschema", "simplejson", "winioctlcon", "asn1crypto", "keras", "site", "winnt", "keras_applications", "winperf", "keras_preprocessing", "winreg", "asynchat", "keyword", "sklearn", "winsound", "asyncio", "kiwisolver", "sklearn_pandas", "winxpgui", "asyncore", "smart_open", "winxptheme", "atexit", "lib2to3", "smtpd", "ws4py", "audioop", "linecache", "smtplib", "wsgiref", "aws_adfs", "locale", "sndhdr", "xdrlib", "awscli", "logging", "socket", "xgboost", "base64", "lxml", "socketserver", "xml", "bdb", "lzma", "sqlite3", "xmlrpc", "binascii", "macpath", "sre_compile", "xxsubtype", "binhex", "macurl2path", "sre_constants", "yaml", "bisect", "mailbox", "sre_parse", "zipapp", "boto", "mailcap", "zipfile", "boto3", "markdown", "sspi", "zipimport", "marshal", "sspicon", "zlib", "math", "stat", "builtins", "matplotlib", "statistics", "bz2", "statsmodels")};
 
 /// do ##class(isc.py.util.Generator).Test()
 ClassMethod Test(start = 1)
 {
 	set package = "py"
-	do $system.OBJ.DeletePackage(package)
+	//do $system.OBJ.DeletePackage(package)
 	
 	set obj = ##class(isc.py.gw.Generator).%New()
 	set obj.Package = package
@@ -41,24 +41,7 @@ ClassMethod Test(start = 1)
 	/*
 	
 	feedparser tensorflow - class name/attribute issue. But they compile OK.
-  	
-  	collection, configparser, csv
-	ERROR #5475: Error compiling routine: py.collections.OrderedDict.1.  
-	Errors:  ERROR: py.collections.OrderedDict.cls(fromkeys) #1010: Missing right parenthesis : 'zfromkeys(args...,iterable,value)' : Offset:18 [zfromkeys^py.collections.OrderedDict.1]
-  	> ERROR #5030: An error occurred while compiling class 'py.collections.OrderedDict'
- 
- 	pkg_resources
- 	ERROR #5001: code: zzzjson=json.dumps(zzzargs, default=zzztoserializable, allow_nan=True), variable: , serialization: 0, result:
-	ERROR #5001: ['Traceback (most recent call last):
-	', '  File "<string>", line 1, in <module>
-	', '  File "C:\Users\eduard\AppData\Local\Programs\Python\Python36\lib\json\__init__.py", line 238, in dumps
-	    **kw).encode(obj)
-	', '  File "C:\Users\eduard\AppData\Local\Programs\Python\Python36\lib\json\encoder.py", line 199, in encode
-	    chunks = self.iterencode(o, _one_shot=True)
-	', '  File "C:\Users\eduard\AppData\Local\Programs\Python\Python36\lib\json\encoder.py", line 257, in iterencode
-	    return _iterencode(o, 0)
-	', 'ValueError: Circular reference detected
- 	
+  	 	
  	wave aifc
  	2019-04-04 19:47:07 Generating type: wave.Wave_write
 	ERROR #5093: Name conflict on class 'py.wave.Wave.write' because package 'py.wave.wave' has the same name but differs in case.
@@ -90,23 +73,7 @@ ClassMethod Test(start = 1)
 	', '  File "C:\Users\eduard\AppData\Local\Programs\Python\Python36\lib\dbm\gnu.py", line 3, in <module>
 	    from _gdbm import *
 	', "ModuleNotFoundError: No module named '_gdbm'
-	
-	astor botocore
-	ERROR #5001: code: zzzjson=json.dumps(zzzargs, default=zzztoserializable), variable: , serialization: 0, result:
-	ERROR #5001: ['Traceback (most recent call last):
-	', '  File "<string>", line 1, in <module>
-	', '  File "C:\Users\eduard\AppData\Local\Programs\Python\Python36\lib\json\__init__.py", line 238, in dumps
-	    **kw).encode(obj)
-	', '  File "C:\Users\eduard\AppData\Local\Programs\Python\Python36\lib\json\encoder.py", line 199, in encode
-	    chunks = self.iterencode(o, _one_shot=True)
-	', '  File "C:\Users\eduard\AppData\Local\Programs\Python\Python36\lib\json\encoder.py", line 257, in iterencode
-	    return _iterencode(o, 0)
-	', 'TypeError: keys must be a string
-	']
-	
-	ssl
-	2019-04-07 19:33:17 Generating type: ssl.SSLContext
-	ERROR #5001: code: import <unknown>
+
 	
   	*/
 }
@@ -163,6 +130,8 @@ ClassMethod IsClassMethod(type, method) As %Boolean
 	
 	quit:((type="sklearn_pandas.cross_validation.GridSearchCV") && (method="predict")) $$$YES
 	quit:((type="sklearn_pandas.cross_validation.RandomizedSearchCV") && (method="predict")) $$$YES
+	
+	quit:((type="pkg_resources.MemoizedZipManifests") && (method="load")) $$$YES
 	
 	quit ""
 }
