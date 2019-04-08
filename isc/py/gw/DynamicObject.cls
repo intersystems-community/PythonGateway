@@ -285,7 +285,7 @@ ClassMethod %GetNewVar() [ CodeMode = expression ]
 ClassMethod %TypeToClass(type) As %String
 {
 	set basePackage = $p($classname(), ".", 1)
-	set class = basePackage _ "." _ type
+	set class = basePackage _ "." _ $case($l(type,"."), 1:"builtins.", :"") _ type
 	
 	if '##class(%Dictionary.CompiledClass).%ExistsId(class) {
 		set class = $classname()

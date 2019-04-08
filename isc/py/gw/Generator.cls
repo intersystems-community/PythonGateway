@@ -667,7 +667,7 @@ ClassMethod GenerateCommonMethodBody(methodObj As %Dictionary.MethodDefinition, 
 	do methodObj.Implementation.WriteLine($c(9) _ "$$$TOE(sc, ##class(isc.py.Main).GetVariableType(variable, .type))")
 	
 	do methodObj.Implementation.WriteLine($c(9) _ "if ..%IsPrimitive(type) = $$$NO {")
-	do methodObj.Implementation.WriteLine($c(9,9) _ "set result = $classmethod(..%TypeToClass(type), ""%New"", , variable)")
+	do methodObj.Implementation.WriteLine($c(9,9) _ "set result = $classmethod(..%TypeToClass(type), ""%New"", $$$NO, variable)")
 	do methodObj.Implementation.WriteLine($c(9) _ "}")
 	do methodObj.Implementation.WriteLine($c(9) _ "quit result")
 	set methodObj.FormalSpec = formalSpec
