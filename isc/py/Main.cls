@@ -360,12 +360,13 @@ ClassMethod GetVariableType(variable As %String = "", Output type As %String) As
 /// docs - function description if any
 /// signature - function signature as it apperas in Python source code
 /// arguments - signature parsed into JSON array: [args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, annotations]
+/// getDefaults - do not replace defaults with null if true. Defaults to false.
 /// see https://docs.python.org/3/library/inspect.html#inspect.getfullargspec for details 
 /// also https://docs.python.org/3/glossary.html#term-parameter
 /// signature and arguments can be empty - means it's a C function without Argument Clinic declaration. 
 /// For details on Argument Clinic see https://stackoverflow.com/a/42225667/2425753 for details
 /// set sc = ##class(isc.py.Main).GetFunctionInfo()
-ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean, Output type, Output docs As %VarString, Output signature As %VarString, Output arguments As %VarString) As %Status
+ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean, Output type, Output docs As %VarString, Output signature As %VarString, Output arguments As %VarString, getDefaults As %Boolean = {$$$NO}) As %Status
 {
 	#dim sc As %Status = $$$OK
 	kill defined, type
@@ -402,7 +403,7 @@ ClassMethod GetFunctionInfo(function As %String = "", Output defined As %Boolean
 			set signature = ""
 		}
 		
-		set sc = ..SimpleString("zzzargs=" _ inspect _ ".getfullargspec(" _ function _ ")")
+		set sc = ..SimpleString("zzzargs=" _ inspect _ ".getfullargspec(" _ function _ ")" _ $case(getDefaults, $$$YES:"", :"._replace(defaults=None)"))
 		if $$$ISOK(sc) {
 			set sc = ..GetVariableJson("zzzargs", .arguments, $$$YES)
 			quit:$$$ISERR(sc) sc
