@@ -8,7 +8,7 @@ Parameter Modules = {$lb( "pkg_resources", "astor", "botocore", "ssl", "nyoka", 
 ClassMethod Test(start = 1)
 {
 	set package = "py"
-	//do $system.OBJ.DeletePackage(package)
+	do $system.OBJ.DeletePackage(package)
 	
 	set obj = ##class(isc.py.gw.Generator).%New()
 	set obj.Package = package

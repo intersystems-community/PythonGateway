@@ -69,11 +69,19 @@ ClassMethod MaskToPattern(mask As %String) As %String
 /// zwrite ##class(isc.py.util.Matcher).FilterList($lb("classA","classB","_classC","pack._ClassD","classA_B","clasE_"), "*", "_*,*_")
 ClassMethod FilterList(input As %List, whiteMask As %String = "", blackMask = "") As %List
 {
+	set whiteList = $lfs(whiteMask)
+	set blackList = $lfs(blackMask)
 	set out = ""
 	set ptr=0
 	while $listnext(input, ptr, value) {
-		continue:((whiteMask'="")&&('..MatchOr(value, whiteMask)))
-		continue:((blackMask'="")&&(..MatchOr(value, blackMask)))
+		if $lf(whiteList, value) {
+			// Always add exact matches
+		} elseif $lf(blackList, value) {
+			continue
+		} else {
+			continue:((whiteMask'="")&&('..MatchOr(value, whiteMask)))
+			continue:((blackMask'="")&&(..MatchOr(value, blackMask)))
+		}
 		set out = out _ $lb(value)
 	}
 	

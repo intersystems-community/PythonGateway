@@ -55,7 +55,7 @@ Property ClassesWhiteMask As %String [ InitialExpression = "*" ];
 Property ClassesBlackMask As %String [ InitialExpression = "*_*" ];
 
 /// Methods satisfying this mask would be imported
-Property MethodsWhiteMask As %String [ InitialExpression = "*" ];
+Property MethodsWhiteMask As %String [ InitialExpression = "*,__init__" ];
 
 /// Methods satisfying this mask would not be imported
 Property MethodsBlackMask As %String [ InitialExpression = "_*,*_" ];
@@ -457,7 +457,9 @@ Method GenerateMethod(type As %String, classObj As %Dictionary.ClassDefinition, 
 		set methodObj.ClassMethod = $$$YES
 		set:methodType="method" methodObj.ClassMethod = $$$NO
 		set:methodType="method_descriptor" methodObj.ClassMethod = $$$NO
-		// Is it class or object method? - Ens
+		// Module methods can always be called
+		set:type=..Module methodObj.ClassMethod = $$$YES
+		// Is it class or object method? - End
 		// Not really the end
 		
 		// start - calculating signatures
@@ -469,7 +471,7 @@ Method GenerateMethod(type As %String, classObj As %Dictionary.ClassDefinition, 
 			#dim funcArgObj As %DynamicArray = [].%FromJSON(arguments)
 			// If it has self arg, it's probably an instance method
 			
-			if $isObject(funcArgObj.%Get(0)) { 
+			if (($isObject(funcArgObj.%Get(0))) && (type'=..Module)) { 
 				if (funcArgObj.%Get(0).%Get(0)="self") {
 					set methodObj.ClassMethod = $$$NO
 				} else {
@@ -483,8 +485,7 @@ Method GenerateMethod(type As %String, classObj As %Dictionary.ClassDefinition, 
 		}	
 		// end - calculating signatures
 		
-		// Module methods can always be called
-		set:type=..Module methodObj.ClassMethod = $$$YES
+
 		
 		set isClassMethod = ##class(isc.py.util.Generator).IsClassMethod(type, method)
 		set:isClassMethod'="" methodObj.ClassMethod = isClassMethod  ///$case(isClassMethod, $$$YES:$$$YES, $$$NO:"")
