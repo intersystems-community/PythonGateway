@@ -63,5 +63,22 @@ ClassMethod MaskToPattern(mask As %String) As %String
 	quit pattern
 }
 
+/// Filter %List against a comma-separated list of masks.
+/// List element should both be on a whiteMask and not on blackMask
+/// Skip mask to skip that check. 
+/// zwrite ##class(isc.py.util.Matcher).FilterList($lb("classA","classB","_classC","pack._ClassD","classA_B","clasE_"), "*", "_*,*_")
+ClassMethod FilterList(input As %List, whiteMask As %String = "", blackMask = "") As %List
+{
+	set out = ""
+	set ptr=0
+	while $listnext(input, ptr, value) {
+		continue:((whiteMask'="")&&('..MatchOr(value, whiteMask)))
+		continue:((blackMask'="")&&(..MatchOr(value, blackMask)))
+		set out = out _ $lb(value)
+	}
+	
+	quit out
+}
+
 }
 

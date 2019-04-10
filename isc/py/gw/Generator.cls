@@ -2,7 +2,9 @@
 Class isc.py.gw.Generator Extends %RegisteredObject
 {
 
-Parameter MaxMethods = 900;
+Parameter MaxMethods = 1900;
+
+Parameter MaxProperties = 950;
 
 /// Display logging info. Increasing the number shows more messages.
 /// -1 display nothing
@@ -45,6 +47,24 @@ Property CurrentMethodsList As %List;
 
 /// Warnings, usually about failures to generate something
 Property Warnings As list Of %String;
+
+/// Classes satisfying this mask would be imported
+Property ClassesWhiteMask As %String [ InitialExpression = "*" ];
+
+/// Classes satisfying this mask would not be imported
+Property ClassesBlackMask As %String [ InitialExpression = "*_*" ];
+
+/// Methods satisfying this mask would be imported
+Property MethodsWhiteMask As %String [ InitialExpression = "*" ];
+
+/// Methods satisfying this mask would not be imported
+Property MethodsBlackMask As %String [ InitialExpression = "_*,*_" ];
+
+/// Properties satisfying this mask would be imported
+Property PropertiesWhiteMask As %String [ InitialExpression = "*" ];
+
+/// Properties satisfying this mask would not be imported
+Property PropertiesBlackMask As %String [ InitialExpression = "_*,*_" ];
 
 /// do ##class(isc.py.gw.Generator).Test()
 ClassMethod Test(modules As %List = {$lb("builtins","random")})
@@ -168,6 +188,7 @@ Method GenerateModule(module) As %Status
 	do ..Log(0, "Generating module: %1 alias %2 into package: %3", module, alias, ..Package)
 	
 	set sc = ..GetModuleTypes(alias, .classes)
+	set classes = ##class(isc.py.util.Matcher).FilterList(classes, ..ClassesWhiteMask, ..ClassesBlackMask)	
 	do ..AppendToTypeList(classes)
 
 	while $ll(..TypeList)>0 {
@@ -212,6 +233,7 @@ Method GenerateClass(type As %String) As %Status
 	
 	set sc = ..GetTypeMembers(type, "callable", .methods)
 	quit:$$$ISERR(sc) sc
+	set methods = ##class(isc.py.util.Matcher).FilterList(methods, ..MethodsWhiteMask, ..MethodsBlackMask)
 	
 	set methodsCount = $ll(methods)
 	if methodsCount>..#MaxMethods {
@@ -232,16 +254,16 @@ Method GenerateClass(type As %String) As %Status
 	
 	set sc = ..GetTypeMembers(type, "zzzuncallable", .properties)
 	quit:$$$ISERR(sc) sc
-	
+	set properties = ##class(isc.py.util.Matcher).FilterList(properties, ..PropertiesWhiteMask, ..PropertiesBlackMask)
 	
 	set propertiesCount = $ll(properties)
 	
-	if ((methodsCount+(2*propertiesCount))>..#MaxMethods) {
-		set newPropertiesCount = (..#MaxMethods-methodsCount)\2
-		set properties = $list(properties, 1, newPropertiesCount)
-		set warning = $$$FormatText("Type '%1' contains %2 properties. Generating only first %3 properties", type, propertiesCount, newPropertiesCount) 
+	if (propertiesCount>..#MaxProperties) {
+		set warning = $$$FormatText("Type '%1' contains %2 properties. Generating only first %3 properties", type, propertiesCount, ..#MaxProperties) 
 		do ..Log(0, warning)
 		do ..Warnings.Insert(warning)
+		set properties = $list(properties, 1, ..#MaxProperties)
+		set propertiesCount = ..#MaxProperties
 	}
 	
 	set ..CurrentPropertiesList = ""
