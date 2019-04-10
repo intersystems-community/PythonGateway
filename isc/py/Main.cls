@@ -236,13 +236,13 @@ ClassMethod GetVariable(variable As %String, serialization As %Integer = {##clas
 	quit:'defined $$$ERROR($$$GeneralError, "Variable '" _ variable _ "' is not defined")
 	
 	if ((length<=$$$MaxStringLength) && useString) {
-		set sc = ..SimpleString(, variable, serialization, .stream)
+		set sc = ..SimpleString("zzzvar = " _ variable, "zzzvar", serialization, .stream)
 	} else {
 		set step = $$$MaxStringLength \ 2
 		set:'$isObject($g(stream)) stream = ##class(%Stream.GlobalCharacter).%New()
 		
 		if (length<=step) {
-			set sc = ..SimpleString(, variable, serialization, .zzzvar)
+			set sc = ..SimpleString("zzzvar = " _ variable, "zzzvar", serialization, .zzzvar)
 			do stream.Write(zzzvar)
 		} else {
 			if serialization = ##class(isc.py.Callout).#SerializationRepr {
@@ -257,7 +257,7 @@ ClassMethod GetVariable(variable As %String, serialization As %Integer = {##clas
 				quit:$$$ISERR(sc)
 				do stream.Write(zzzvarpiece)
 			}
-			set sc = ..SimpleString("del zzzvar, zzzvarpiece")
+			set sc = ..SimpleString("del zzzvarpiece")
 		}
 		quit:$$$ISERR(sc) sc
 		set sc = stream.%Save()
@@ -265,7 +265,9 @@ ClassMethod GetVariable(variable As %String, serialization As %Integer = {##clas
 	}
 	
 	set sc = $$$ADDSC(sc, ..GetStatus())
+	quit:$$$ISERR(sc) sc
 	
+	set sc = ..SimpleString("del zzzvar")
 	quit sc
 }
 
