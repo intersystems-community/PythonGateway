@@ -2,6 +2,27 @@
 Class isc.py.util.BPEmulator
 {
 
+/// Init context and process variables
+/// do ##class(isc.py.util.BPEmulator).Init()
+ClassMethod Init() [ PublicList = (context, process) ]
+{
+	set context = {}
+	set process = {"WorkDirectory": (##class(%File).NormalizeDirectory(##class(%SYS.System).TempDirectory()))}
+}
+
+/// Execute sentiment process
+/// do ##class(isc.py.util.BPEmulator).ExecuteSentiment()
+ClassMethod ExecuteSentiment()
+{
+	set class = "CONVERGENCE.WEB.SENTIMENT"
+	set activities = $lb("Import Python Libraries", 
+						 $lb("Query In Negative Tweets", "data_negative"),
+						 $lb("Query In Positive Tweets", "data_positive"),
+						 $lb("Query In Unknown Tweets", "data_unknown"),
+						 "Preprocess & Split")
+	do ..RunActivities(class, activities)
+}
+
 /// Execute intra process
 /// do ##class(isc.py.util.BPEmulator).ExecuteIntra()
 ClassMethod ExecuteIntra()
@@ -48,6 +69,7 @@ ClassMethod ExecuteCampaign()
 /// Execute activities from class
 ClassMethod RunActivities(class As %Dictionary.CacheClassname, activities As %List)
 {
+	do ..Init()
 	for i=1:1:$ll(activities) {
 		set activity = $lg(activities, i)
 		
