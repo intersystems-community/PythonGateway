@@ -23,6 +23,9 @@ Property %EscapeOnSet As %Boolean [ InitialExpression = {$$$YES} ];
 /// Automatically escape values on method call
 Property %EscapeOnCall As %Boolean [ InitialExpression = {$$$NO} ];
 
+/// Delete corresponding Python object when IRIS object dies.
+Property %DeleteOnClose As %Boolean [ InitialExpression = {$$$YES} ];
+
 /// do ##class(isc.py.init.Test).Initialize(,1)
 /// set obj = ##class(isc.py.gw.DynamicObject).%New("Person", "p1", "'Ed'", "25", "'Test'")
 /// w obj.name
@@ -294,6 +297,34 @@ ClassMethod %TypeToClass(type) As %String
 	}
 	
 	quit class
+}
+
+/// This callback method is invoked by the <METHOD>%Close</METHOD> method to 
+/// provide notification that the current object is being closed.
+/// 
+/// <P>The return value of this method is ignored.
+Method %OnClose() As %Status [ Private, ServerOnly = 1 ]
+{
+	do:..%DeleteOnClose ..%Delete()
+	quit $$$OK
+}
+
+/// Delete Python variable
+Method %Delete() As %Status [ CodeMode = expression ]
+{
+##class(isc.py.Main).SimpleString("del " _ ..%Variable)
+}
+
+/// Rename variable on Python side
+Method %Rename(variable As %String) As %Status
+{
+	set sc = ##class(isc.py.Main).SimpleString(variable _ " = " _ ..%Variable)
+	quit:$$$ISERR(sc) sc
+	set sc = ..%Delete()
+	quit:$$$ISERR(sc) sc
+	set ..%Variable = variable
+	
+	quit sc
 }
 
 }
