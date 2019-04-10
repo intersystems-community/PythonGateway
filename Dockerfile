@@ -1,4 +1,5 @@
-FROM intersystems/iris:2019.1.0.510.0-1
+ARG IMAGE=intersystems/iris:2019.1.0.510.0-1
+FROM ${IMAGE}
 
 # ensure local python is preferred over distribution python
 ENV PATH /usr/local/bin:$PATH
