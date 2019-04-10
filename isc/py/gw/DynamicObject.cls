@@ -31,7 +31,7 @@ Property %EscapeOnCall As %Boolean [ InitialExpression = {$$$NO} ];
 /// w obj.age
 /// w obj.getAge()
 /// w obj.getAgePlus(10)
-Method %OnNew(type As %String = "", variable As %String, args...) As %Status [ Private, ServerOnly = 1 ]
+Method %OnNew(type As %String = "", variable As %String = {..%GetNewVar()}, args...) As %Status [ Private, ServerOnly = 1 ]
 {
 	set ..%Variable = variable
 	
@@ -60,8 +60,10 @@ Method %DispatchGetProperty(property As %String) [ ServerOnly = 1 ]
 	if ..%IsPrimitive(type) = $$$YES {
 		$$$TOE(sc, ##class(isc.py.Main).SimpleString("zzzproperty=" _ ..%Variable _ "." _ property, "zzzproperty", ..%Serialization, .zzzproperty))
 		$$$TOE(sc, ##class(isc.py.Main).SimpleString("del zzzproperty"))
-	} else {
+	} elseif ..%ClassName(1) = "isc.py.gw.DynamicObject" {
 		set zzzproperty = ..%New(, ..%Variable _ "." _ property)
+	} else {
+		set zzzproperty = $classmethod(..%TypeToClass(type), "%New", $$$NO, ..%Variable _ "." _ property)
 	}
 	
 	quit zzzproperty

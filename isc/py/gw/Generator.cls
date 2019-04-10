@@ -43,6 +43,7 @@ Property CurrentPropertiesList As %List;
 /// List of currently generated methods in lowercase
 Property CurrentMethodsList As %List;
 
+/// Warnings, usually about failures to generate something
 Property Warnings As list Of %String;
 
 /// do ##class(isc.py.gw.Generator).Test()
@@ -353,31 +354,11 @@ Method GenerateProperty(classObj As %Dictionary.ClassDefinition, property As %St
 		set propObj = ##class(%Dictionary.PropertyDefinition).%New()
 		set propObj.Name = irisProperty
 		set propObj.parent = classObj
-		set propObj.Type = "%String"
+		set propObj.Type = "isc.py.gw.PyString"
 		set propObj.Description = "Python property: " _ property
+		do:irisProperty'=property propObj.Parameters.SetAt(property, "PyName")
 	}
 	
-	// Property getter
-	#dim getIndex As %Integer = classObj.Methods.FindObjectId(classObj.Name _ "||" _ irisProperty _ "Get")
-	if getIndex="" {
-		set getObj = ##class(%Dictionary.MethodDefinition).%New()
-		set getObj.Name = irisProperty _ "Get"
-		set getObj.parent = classObj
-		set getObj.CodeMode = "expression"
-		do getObj.Implementation.WriteLine($c(9) _ "..%DispatchGetProperty(""" _ property _ """)")
-	}	
-
-	// Property setter
-	#dim setIndex As %Integer = classObj.Methods.FindObjectId(classObj.Name _ "||" _ irisProperty _ "Set")
-	if setIndex="" {
-		set setObj = ##class(%Dictionary.MethodDefinition).%New()
-		set setObj.Name = irisProperty _ "Set"
-		set setObj.parent = classObj
-		set setObj.CodeMode = "expression"
-		set setObj.FormalSpec = "val"
-		do setObj.Implementation.WriteLine($c(9) _ "..%DispatchSetProperty(""" _ property _ """, val)")
-		set setObj.ReturnType = "%Status"
-	}	
 	quit sc
 }
 
@@ -527,13 +508,7 @@ ClassMethod GenerateCall(class As %String, method As %String, classMethod As %Bo
 		set methodCall = method
 	}
 	
-	if method = "%OnNew" {
-		set args = "(,"""")"
-	} else {
-		set args ="()"
-	}
-	
-	set call = command _ objCall _ "." _ methodCall _ args
+	set call = command _ objCall _ "." _ methodCall _ "()"
 	quit call
 }
 
@@ -632,7 +607,7 @@ ClassMethod GenerateOnNewMethodBody(methodObj As %Dictionary.MethodDefinition, f
 {
 	set methodObj.ClassMethod = $$$NO
 	set methodObj.ReturnType = "%Status"
-	set methodObj.FormalSpec = "init:%String=$$$YES,variable:%String" _ $case(formalSpec'="", $$$YES:", ", :"") _ formalSpec 
+	set methodObj.FormalSpec = "init:%String=$$$YES,variable:%String=..%GetNewVar()" _ $case(formalSpec'="", $$$YES:", ", :"") _ formalSpec 
 	
 	do methodObj.Implementation.WriteLine($c(9) _ "set ..%Variable = variable")
 	
