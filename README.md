@@ -137,6 +137,19 @@ Settings:
 
 Note: `isc.py.util.BPEmulator` class is added to allow easy testing of Python Interoperability business processes. It can execute business process (python parts) in a current job.
 
+## Variable substitution
+
+All business processes inheriting from `isc.py.ens.ProcessUtils` can use `GetAnnotation(name)` method to get value of activity annotation by activity name. Activity annotation can contain variables which would be calculated on ObjectScript side before being passed to Python. This is the syntax for variable substitution:
+
+- `${class:method:arg1:...:argN}` - execute method
+- `#{expr}` - execute ObjectScript code
+
+Check test `isc.py.test.Process` business process for example in `Correlation Matrix: Graph` activity: `f.savefig(r'#{process.WorkDirectory}SHOWCASE${%PopulateUtils:Integer:1:100}.png')`
+
+In this example:
+- `#{process.WorkDirectory}` returns WorkDirectory property of `process` object which is an instance of `isc.py.test.Process` class and current businedd process.
+- `${%PopulateUtils:Integer:1:100}` calls `Integer` method of `%PopulateUtils` class passing arguments `1` and `100`, returning random integer in range `1...100`.
+
 # Test Business Process
 
 Along with callout code and Interoperability adapter there's also a test Interoperability Production and test Business Process. To use them:
