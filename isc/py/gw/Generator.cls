@@ -72,11 +72,8 @@ ClassMethod Test(modules As %List = {$lb("builtins","random")})
 	quit:modules=""
 	set:'$listvalid(modules) modules = $lb(modules)
 	
-	set package = "py"
-	do $system.OBJ.DeletePackage(package)
-	
 	set obj = ..%New()
-	set obj.Package = package
+	do $system.OBJ.DeletePackage(obj.Package)
 	
 	for i=1:1:$ll(modules) {
 		set sc = obj.GenerateModule($lg(modules, i))
@@ -341,9 +338,6 @@ Method GetInitialClass(type As %String, Output classObj As %Dictionary.ClassDefi
 			continue:$e(value)="_"
 			
 			set value = $replace(value, "<unknown>", ..Module)
-			
-			// todo replace with __builtins__
-			set:$p(value, ".")="builtins" value = $p(value, ".", 2, *)
 			continue:value=type
 			set extends = extends _ $lb(value)
 			set irisExtends = irisExtends _ $lb(..TypeToClass(value))
@@ -415,7 +409,7 @@ ClassMethod GenerateTypeParameter(type As %String, Output classObj As %Dictionar
 /// Translate python FQCN to IRIS class.
 Method TypeToClass(type As %String) As %String
 {
-	if ((type'=..Module) && ((..Module = "__builtins__") || ($l(type,".")=1))) {
+	if ((type'=..Module) && ($l(type,".")=1)) {
 		set type = "builtins." _ type	
 	}
 	quit $zstrip($tr(..Package _ "." _ type, "_", "."),"=>P")
@@ -780,7 +774,6 @@ ClassMethod GetModuleTypes(module, Output types As %List) As %Status
 		
 		// todo?
 		continue:(($l(type, ".")=1) && (module'["builtins"))
-		set:$p(type, ".")="builtins" type = $p(type, ".", 2, *)
 
 		set types = types _ $lb(type)
 	}
