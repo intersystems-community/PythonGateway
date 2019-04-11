@@ -69,22 +69,26 @@ Property PropertiesWhiteMask As %String [ InitialExpression = "*" ];
 /// Properties satisfying this mask would not be imported
 Property PropertiesBlackMask As %String [ InitialExpression = "_*,*_" ];
 
-/// Generate a  list of python modules
-/// set sc = ##class(isc.py.gw.Generator).Import()
-ClassMethod Import(modules As %List = {$lb("builtins", "random")}) As %Status
+/// Generate a  list of python modules using default parameters.
+/// modules can be either a %List if modules or one module string.
+/// set sc = ##class(isc.py.gw.Generator).Generate()
+ClassMethod Generate(modules As %List = {$lb("builtins", "random")}) As %Status
 {
 	quit:modules="" $$$ERROR($$$GeneralError, "Provide a list of modules")
 	set:'$listvalid(modules) modules = $lb(modules)
 	
 	set obj = ..%New()
-	set sc = $system.OBJ.DeletePackage(obj.Package)
-	quit:$$$ISERR(sc) sc
 	
 	for i=1:1:$ll(modules) {
-		set sc = obj.GenerateModule($lg(modules, i))
-		write $System.Status.GetErrorText(sc)
+		set module = $lg(modules, i)
+		
+		set sc = $system.OBJ.DeletePackage(obj.Package _ "." _ module)
+		quit:$$$ISERR(sc)
+		
+		set sc = obj.GenerateModule(module)
 		quit:$$$ISERR(sc)
 	}
+	write $System.Status.GetErrorText(sc)
 	set:$$$ISOK(sc) sc = obj.Compile()
 	quit sc
 }
@@ -270,7 +274,9 @@ Method GenerateMissingClass(type As %String) As %Status
 	if ##class(%Dictionary.ClassDefinition).%ExistsId(class) {
 		set warning = $$$FormatText("Duplicate generation hit on missing type %1, class %2,", type, class)
 		do ..Warnings.Insert(warning)
-		do ..Log(3, warning)
+		do ..Log(1, warning)
+		
+		set classObj = ##class(%Dictionary.ClassDefinition).%OpenId(class)
 	} else {
 		set classObj = ##class(%Dictionary.ClassDefinition).%New(class)	
 		do classObj.ProcedureBlockReset()
@@ -294,7 +300,9 @@ Method GetInitialClass(type As %String, Output classObj As %Dictionary.ClassDefi
 	if ##class(%Dictionary.ClassDefinition).%ExistsId(class) {
 		set warning = $$$FormatText("Duplicate generation hit on type %1, class %2,", type, class)
 		do ..Warnings.Insert(warning)
-		do ..Log(3, warning)
+		do ..Log(1, warning)
+		
+		set classObj = ##class(%Dictionary.ClassDefinition).%OpenId(class)
 	} else {
 		set classObj = ##class(%Dictionary.ClassDefinition).%New(class)	
 		do classObj.ProcedureBlockReset()
@@ -388,7 +396,7 @@ ClassMethod GenerateTypeParameter(type As %String, Output classObj As %Dictionar
 		set paramObj.parent = classObj
 		set paramObj.Type = "%String"
 		set paramObj.Description = "Python type"
-		set paramObj.Default = type
+		set paramObj.Default = $case($p(type, ".", 1)="builtins", $$$YES:$p(type, ".", 2,*), :type)
 	}
 }
 

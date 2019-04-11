@@ -67,7 +67,7 @@ ClassMethod MaskToPattern(mask As %String) As %String
 /// List element should both be on a whiteMask and not on blackMask
 /// Skip mask to skip that check. 
 /// zwrite ##class(isc.py.util.Matcher).FilterList($lb("classA","classB","_classC","pack._ClassD","classA_B","clasE_"), "*", "_*,*_")
-ClassMethod FilterList(input As %List, whiteMask As %String = "", blackMask = "") As %List
+ClassMethod FilterList(input As %List, whiteMask As %List = "", blackMask As %List = "") As %List
 {
 	set whiteList = $lfs(whiteMask)
 	set blackList = $lfs(blackMask)
