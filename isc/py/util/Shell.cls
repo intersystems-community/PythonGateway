@@ -8,26 +8,42 @@ Class isc.py.util.Shell
 ClassMethod Shell()
 {
 	try {
+		#dim multi As %Boolean = $$$NO
 		for {
-			write "PY>"
+			write $case(multi, $$$YES:"...", :"PY>")
 			read command, !
-			quit:(command="quit()")||(command="")
-			kill result
-			if (command [ "=") {
-				set sc = ##class(isc.py.Main).SimpleString(command) //, $p(command, "="), , .result)
+			
+			if multi = $$$NO {
+				// enter multi mode if line ends on :
+				set multi = ($e($zstrip(command,">W"),*)=":")
+			} elseif command = "" {
+				// leave multi mode
+				set multi = $$$NO
+				set command = $g(multiCommand) _ $c(10) _ command
+				kill multiCommand
+			}
+			
+			if multi {
+				set multiCommand = $g(multiCommand) _ $c(10) _ command
 			} else {
-				if ($zcvt(command, "l")["import") {
-					set sc = ##class(isc.py.Main).SimpleString(command)
+				quit:(command="quit()")||(command="")
+				kill result
+				if ((command [ "=") || (command [ $c(10))) {
+					set sc = ##class(isc.py.Main).SimpleString(command) //, $p(command, "="), , .result)
 				} else {
-					set sc = ##class(isc.py.Main).SimpleString("zzzresult=" _ command,"zzzresult", , .result)
+					if ($zcvt(command, "l")["import") {
+						set sc = ##class(isc.py.Main).SimpleString(command)
+					} else {
+						set sc = ##class(isc.py.Main).SimpleString("zzzresult=" _ command,"zzzresult", , .result)
+					}
 				}
+				if sc {
+					write $replace($g(result), $c(10), $$$NL)
+				} else {
+					write $System.Status.GetErrorText(sc)
+				}
+				write !
 			}
-			if sc {
-				write $replace($g(result), $c(10), $$$NL)
-			} else {
-				write $System.Status.GetErrorText(sc)
-			}
-			write !
 		}
 	} catch ex {
 		#dim ex As %Exception.General
