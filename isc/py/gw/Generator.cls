@@ -585,7 +585,7 @@ ClassMethod GenereateMethodSignature(funcArgObj As %DynamicArray, Output formalS
 	set iterator = kwonlyargs.%GetIterator()
 	while iterator.%GetNext(.key, .value) {			
 		set formalSpec = formalSpec _ $case(firstArg, $$$YES:"", :", ") _ ..VarNameToIRIS(value)		
-		set callArgs = callArgs _ $case(firstArg, $$$YES:"", :"_"",""_") _ """" _ value _ "=""_..%EscapeArg(." _ ..VarNameToIRIS(value) _ ")"
+		set callArgs = callArgs _ $case(firstArg, $$$YES:"", :"_"",""_") _ "..%EscapeKWArg(""" _ value _ """, ." _ ..VarNameToIRIS(value) _ ")"
 		set firstArg = $$$NO
 
 		//set default = $case($isObject($g(kwonlydefaults)), $$$YES:kwonlydefaults.%Get(key), :"")

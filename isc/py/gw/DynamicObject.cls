@@ -278,6 +278,15 @@ ClassMethod %EscapeArg(arg, escapeString As %Boolean = {..#EscapeOnCall}) As %St
 	quit value
 }
 
+/// Escape one keyword argumet if needed
+/// w ##class(isc.py.gw.DynamicObject).%EscapeArg()
+ClassMethod %EscapeKWArg(key As %String, arg, escapeString As %Boolean = {..#EscapeOnCall}) As %String
+{
+	quit:'$d(arg) ""
+	set value = ..%EscapeArg(arg, escapeString)
+	quit key _ "=" _  value
+}
+
 /// Get unused Python variable
 /// w ##class(isc.py.gw.DynamicObject).%GetNewVar()
 ClassMethod %GetNewVar() [ CodeMode = expression ]
