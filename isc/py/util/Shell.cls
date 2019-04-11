@@ -8,6 +8,7 @@ Class isc.py.util.Shell
 ClassMethod Shell()
 {
 	try {
+		// Multiline mode
 		#dim multi As %Boolean = $$$NO
 		for {
 			write $case(multi, $$$YES:"...", :"PY>")
@@ -28,16 +29,12 @@ ClassMethod Shell()
 			} else {
 				quit:(command="quit()")||(command="")
 				kill result
-				if ((command [ "=") || (command [ $c(10))) {
-					set sc = ##class(isc.py.Main).SimpleString(command) //, $p(command, "="), , .result)
+				if ((command [ "=") || (command [ $c(10)) || ($zcvt(command, "l")["import")) {
+					set sc = ##class(isc.py.Main).SimpleString(command)
 				} else {
-					if ($zcvt(command, "l")["import") {
-						set sc = ##class(isc.py.Main).SimpleString(command)
-					} else {
-						set sc = ##class(isc.py.Main).SimpleString("zzzresult=" _ command,"zzzresult", , .result)
-					}
+					set sc = ##class(isc.py.Main).SimpleString("zzzresult=" _ command,"zzzresult", , .result)
 				}
-				if sc {
+				if $$$ISOK(sc) {
 					write $replace($g(result), $c(10), $$$NL)
 				} else {
 					write $System.Status.GetErrorText(sc)
