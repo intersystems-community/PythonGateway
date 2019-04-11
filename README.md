@@ -1,3 +1,12 @@
+# Webinar: PythonGateway - part of InterSystems ML Toolkit
+
+Do you want to reap the benefits of the advances in the fields of artificial intelligence and machine learning? With InterSystems IRIS and the Machine Learning (ML) Toolkit, it’s easier than ever. Join my colleague Sergey Lukyanchikov and me on Tuesday, April 23rd at 11am EDT for the Machine Learning Toolkit for InterSystems IRIS webinar to find out how InterSystems IRIS can be used as both a standalone development platform and an orchestration platform for AI/ML models that brings together InterSystems IRIS, Python and other external tools.
+
+Date: **Tuesday, April 23rd at 11am EDT**
+
+[**REGISTER**](https://attendee.gotowebinar.com/register/2487801585929959180)! 
+
+
 # PythonGateway
 Python Gateway for InterSystems Data Platforms. Execute Python code and more from InterSystems IRIS.
 This projects brings you the power of Python right into your InterSystems IRIS environment:
