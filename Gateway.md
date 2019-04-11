@@ -246,12 +246,12 @@ It generates classes with all defaults. If you want more control you can instant
 1. Let's generate `random` module: 
 ```
 set module = "random"
-set sc = ##class(isc.py.gw.Generator).Generate(module))
+set sc = ##class(isc.py.gw.Generator).Generate(module)
 ```
 2. Now let's import the module: `set sc = ##class(isc.py.Main).ImportModule(module)`
 3. We immediately can call functions of `random` module: `write ##class(py.random).randint(1,100)`
 4. Let's init a `random.Random` object: `set rr = ##class(py.random.Random).%New()`
-5. And call instance method: `write rr.betavariate(1,3)`
+5. And call instance method: `write rr.betavariate(1, 3)`
 
 ## Calling conventions
 
@@ -262,7 +262,7 @@ set sc = ##class(isc.py.gw.Generator).Generate(module))
 - To pass *args pass either %List or Dynamic Array.
 - To pass **kwargs pass either: %List of %List(key, value) or Flat dynamic object.
 
-### Calling example
+## Calling examples
 
 Consider this function:
 
@@ -290,17 +290,17 @@ do redirect.Enable(1)
 5. Here are different ways of calling `ed.allargs` function:
 ```
 set parg = 1
-set parg = ##class(isc.py.gw.DynamicObject).%New("int",,1)
+set parg = ##class(isc.py.gw.DynamicObject).%New("int",, 1)
 
 set args = 3
-set args = $lb(2,3)
+set args = $lb(2, 3)
 set args = [2, 3]
 
 set kwarg = 4
-set kwarg = ##class(isc.py.gw.DynamicObject).%New("int",,4)
+set kwarg = ##class(isc.py.gw.DynamicObject).%New("int",, 4)
 
-set kwargs = { "a":5, "b":6}
-set kwargs = $lb($lb("a", 5), $lb("b",6))
+set kwargs = { "a":5, "b":6 }
+set kwargs = $lb($lb("a", 5), $lb("b", 6))
 
 set sc = ##class(py.ed).allargs(parg, args, kwarg, kwargs)
 
