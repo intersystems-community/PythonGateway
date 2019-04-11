@@ -24,7 +24,7 @@ Property TypeList As %List;
 /// Created IRIS classes
 Property ClassList As %List;
 
-/// Base pachage for generated classes
+/// Base package for generated classes
 Property Package As %String [ InitialExpression = "py" ];
 
 /// Inspect alias
@@ -34,7 +34,10 @@ Property Inspect As %String [ InitialExpression = "inspect" ];
 Property Module As %String;
 
 /// Base class for all python classes
-Property BaseClass As %String [ InitialExpression = "isc.py.gw.DynamicObject" ];
+Property BaseClass As %Dictionary.CacheClassname [ InitialExpression = "isc.py.gw.DynamicObject" ];
+
+/// Class that fixes Method/Classmethod and Signatures
+Property FixClass As %Dictionary.CacheClassname [ InitialExpression = "isc.py.util.Generator" ];
 
 /// List of modules loaded in memory
 Property ImportedModulesList As %List;
@@ -66,22 +69,24 @@ Property PropertiesWhiteMask As %String [ InitialExpression = "*" ];
 /// Properties satisfying this mask would not be imported
 Property PropertiesBlackMask As %String [ InitialExpression = "_*,*_" ];
 
-/// do ##class(isc.py.gw.Generator).Test()
-ClassMethod Test(modules As %List = {$lb("builtins","random")})
+/// Generate a  list of python modules
+/// set sc = ##class(isc.py.gw.Generator).Import()
+ClassMethod Import(modules As %List = {$lb("builtins", "random")}) As %Status
 {
-	quit:modules=""
+	quit:modules="" $$$ERROR($$$GeneralError, "Provide a list of modules")
 	set:'$listvalid(modules) modules = $lb(modules)
 	
 	set obj = ..%New()
-	do $system.OBJ.DeletePackage(obj.Package)
+	set sc = $system.OBJ.DeletePackage(obj.Package)
+	quit:$$$ISERR(sc) sc
 	
 	for i=1:1:$ll(modules) {
 		set sc = obj.GenerateModule($lg(modules, i))
-		w $System.Status.GetErrorText(sc)
-		break:$$$ISERR(sc)
+		write $System.Status.GetErrorText(sc)
+		quit:$$$ISERR(sc)
 	}
-	set sc = obj.Compile()
-	w $System.Status.GetErrorText(sc)
+	set:$$$ISOK(sc) sc = obj.Compile()
+	quit sc
 }
 
 /// Compile all generated classes
@@ -98,24 +103,7 @@ Method Compile()
 	}
 	
 	set sc = $system.OBJ.Compile($lts(..ClassList), "cuks /checkuptodate=expandedonly " _ displayFlags, .errors)
-	
-	/*
-	errors(4)="ERROR #5477: Keyword signature error in py.matplotlib.text.Text:Method:draw, keyword 'ClassMethod' must be '0'"_$c(13,10)_"  > ERROR #5030: An error occurred while compiling class 'py.matplotlib.text.Text'"
-	errors(4,"caller")="ConstructCompileTree+736^%occInherit"
-	errors(4,"code")=5477
-	errors(4,"dcode")=5477
-	errors(4,"domain")="%ObjectErrors"
-	errors(4,"embeddederror")=1
-	errors(4,"embeddederror",1)="0 "_$lb($lb(5030,"py.matplotlib.text.Text",,,,,,,,$lb(,"PYTHON",$lb("e^compile+43^%occClass^1"))))
-	errors(4,"embeddedstatus")="0 "_$lb($lb(5030,"py.matplotlib.text.Text",,,,,,,,$lb(,"PYTHON",$lb("e^compile+43^%occClass^1"))))
-	errors(4,"namespace")="PYTHON"
-	errors(4,"param")=3
-	errors(4,"param",1)="py.matplotlib.text.Text:Method:draw"
-	errors(4,"param",2)="ClassMethod"
-	errors(4,"param",3)=0
-	errors(4,"stack")=$lb("e^ConstructCompileTree+736^%occInherit^2","e^memberSuper+333^%occInherit^1","e^memberSuper+206^%occInherit^1","e^ConstructCompileTree+20^%occInherit^1","e^compile+12^%occClass^2","e^startWork+218^%SYS.WorkQueueMgr^1","x^startWork+218^%SYS.WorkQueueMgr^1","d^startWork+215^%SYS.WorkQueueMgr^1","d^startWork+87^%SYS.WorkQueueMgr^1","d^^^0")
-	*/
-	
+		
 	write "Compile error fixes: ",!
 	for i=1:1:errors {
 		set errorCode = errors(i, "code")
@@ -127,7 +115,6 @@ Method Compile()
 			set isClassMethod = errors(i,"param", 3)
 			
 			set methods(type, isClassMethod) = $g(methods(type, isClassMethod)) _ $lb(method)
-			//write "quit:((type=""" _ type _ """) && (method="""_method_""")) " _ $case(isClassMethod, $$$YES:"$$$YES", :"$$$NO"),!
 		}
 	}
 	
@@ -185,7 +172,6 @@ Method GenerateModule(module) As %Status
 	do ..Log(0, "Generating module: %1 alias %2 into package: %3", module, alias, ..Package)
 	
 	set sc = ..GetModuleTypes(alias, .classes)
-	set classes = ##class(isc.py.util.Matcher).FilterList(classes, ..ClassesWhiteMask, ..ClassesBlackMask)	
 	do ..AppendToTypeList(classes)
 
 	while $ll(..TypeList)>0 {
@@ -279,21 +265,23 @@ Method GenerateClass(type As %String) As %Status
 /// Generate empty class so compilation succeeds.
 Method GenerateMissingClass(type As %String) As %Status
 {
+	#dim sc As %Status = $$$OK
 	set class = ..TypeToClass(type)
 	if ##class(%Dictionary.ClassDefinition).%ExistsId(class) {
-		set classObj = ##class(%Dictionary.ClassDefinition).%OpenId(class)
+		set warning = $$$FormatText("Duplicate generation hit on missing type %1, class %2,", type, class)
+		do ..Warnings.Insert(warning)
+		do ..Log(3, warning)
 	} else {
-		set classObj = ##class(%Dictionary.ClassDefinition).%New(class)
-	}
-	
-	do classObj.ProcedureBlockReset()
-	set classObj.Abstract = $$$YES
+		set classObj = ##class(%Dictionary.ClassDefinition).%New(class)	
+		do classObj.ProcedureBlockReset()
+		set classObj.Abstract = $$$YES
+			
+		set classObj.Description = "Pyhton type: " _ type _ $$$NL _ "This type can't be found by name."
+		set classObj.Super = ..BaseClass
 		
-	set classObj.Description = "Pyhton type: " _ type _ $$$NL _ "This type can't be found by name."
-	set classObj.Super = ..BaseClass
-	
-	do ..GenerateTypeParameter(type, classObj)
-	set sc = classObj.%Save()
+		do ..GenerateTypeParameter(type, classObj)
+		set sc = classObj.%Save()
+	}
 	
 	quit sc
 }
@@ -304,54 +292,53 @@ Method GetInitialClass(type As %String, Output classObj As %Dictionary.ClassDefi
 	#dim sc As %Status = $$$OK
 	set class = ..TypeToClass(type)
 	if ##class(%Dictionary.ClassDefinition).%ExistsId(class) {
-		set classObj = ##class(%Dictionary.ClassDefinition).%OpenId(class)
+		set warning = $$$FormatText("Duplicate generation hit on type %1, class %2,", type, class)
+		do ..Warnings.Insert(warning)
+		do ..Log(3, warning)
 	} else {
-		set classObj = ##class(%Dictionary.ClassDefinition).%New(class)
-	}
-	
-	do classObj.ProcedureBlockReset()
-	
-	set sc = ..IsAbstract(type, .isAbstract)
-	quit:$$$ISERR(sc) sc
-	set:isAbstract classObj.Abstract = isAbstract
-	
-	set sc = ##class(isc.py.Main).SimpleString("zzzdocs=" _ ..Inspect _ ".getdoc(" _ type _ ")", "zzzdocs", , .docs)
-	quit:$$$ISERR(sc) sc
-	set sc = ##class(isc.py.Main).SimpleString("del zzzdocs")
-	set:docs="None" docs = ""
-	
-	set classObj.Description = "Pyhton type: " _ type _ $$$NL _ $replace(docs, $c(10), $$$NL) _ $$$NL _ ..GenerateCall(classObj.Name, "%OnNew", $$$NO) 
-	
-	set sc = ##class(isc.py.Main).SimpleString("zzzextends=json.dumps([item.__module__ + '.' + item.__name__ for item in " _ ..Inspect _ ".getmro(" _ type _ ")])", "zzzextends", , .zzzextends)
-	// TODO - modules
-	if $$$ISERR(sc) {
-		set sc = $$$OK
-		set classObj.Super = ..BaseClass
-	} else {
-		set obj = [].%FromJSON(zzzextends)
+		set classObj = ##class(%Dictionary.ClassDefinition).%New(class)	
+		do classObj.ProcedureBlockReset()
 		
-		set extends = ""
-		set irisExtends = ""
-		set iterator = obj.%GetIterator()
-		while iterator.%GetNext(.key, .value) {	
-			// todo classes with underscores, i.e. random._Random and random.Random 
-			continue:$e(value)="_"
+		set sc = ..IsAbstract(type, .isAbstract)
+		quit:$$$ISERR(sc) sc
+		set:isAbstract classObj.Abstract = isAbstract
+		
+		set sc = ##class(isc.py.Main).SimpleString("zzzdocs=" _ ..Inspect _ ".getdoc(" _ type _ ")", "zzzdocs", , .docs)
+		quit:$$$ISERR(sc) sc
+		set sc = ##class(isc.py.Main).SimpleString("del zzzdocs")
+		set:docs="None" docs = ""
+		
+		set classObj.Description = "Pyhton type: " _ type _ $$$NL _ $replace(docs, $c(10), $$$NL) _ $$$NL _ ..GenerateCall(classObj.Name, "%OnNew", $$$NO) 
+		
+		set sc = ##class(isc.py.Main).SimpleString("zzzextends=json.dumps([item.__module__ + '.' + item.__name__ for item in " _ ..Inspect _ ".getmro(" _ type _ ")])", "zzzextends", , .zzzextends)
+		// TODO - modules
+		if $$$ISERR(sc) {
+			set sc = $$$OK
+			set classObj.Super = ..BaseClass
+		} else {
+			set obj = [].%FromJSON(zzzextends)
 			
-			set value = $replace(value, "<unknown>", ..Module)
-			continue:value=type
-			set extends = extends _ $lb(value)
-			set irisExtends = irisExtends _ $lb(..TypeToClass(value))
-		}
-		
-		for i=1:1:$ll(irisExtends) {
-			set irisExtendsClass = $lg(irisExtends, i)
-			if classObj.Name'=irisExtendsClass {
-				set classObj.Super = irisExtendsClass
-				quit
+			set extends = ""
+			set irisExtends = ""
+			set iterator = obj.%GetIterator()
+			while iterator.%GetNext(.key, .value) {			
+				set value = $replace(value, "<unknown>", ..Module)
+				continue:value=type
+				continue:##class(isc.py.util.Matcher).FilterList($lb(value), ..ClassesWhiteMask, ..ClassesBlackMask)=""
+				set extends = extends _ $lb(value)
+				set irisExtends = irisExtends _ $lb(..TypeToClass(value))
 			}
+			
+			for i=1:1:$ll(irisExtends) {
+				set irisExtendsClass = $lg(irisExtends, i)
+				if classObj.Name'=irisExtendsClass {
+					set classObj.Super = irisExtendsClass
+					quit
+				}
+			}
+			set:classObj.Super="" classObj.Super = ..BaseClass
+			do ..AppendToTypeList(extends)
 		}
-		set:classObj.Super="" classObj.Super = ..BaseClass
-		do ..AppendToTypeList(extends)
 	}
 		
 	quit sc
@@ -431,7 +418,7 @@ Method GenerateMethod(type As %String, classObj As %Dictionary.ClassDefinition, 
 	set sc = ##class(isc.py.Main).GetFunctionInfo(type _ "." _ method, .defined, .methodType, .docs, .signature, .arguments)
 	quit:$$$ISERR(sc) sc
 	
-	do ##class(isc.py.util.Generator).GetArguments(type, method, .arguments)
+	do $classmethod(..FixClass, "GetArguments", type, method, .arguments)
 	
 	set irisMethod = $case(method, "__init__":"%OnNew", : ..FixMethodName(method))
 	
@@ -453,6 +440,9 @@ Method GenerateMethod(type As %String, classObj As %Dictionary.ClassDefinition, 
 		set:methodType="method_descriptor" methodObj.ClassMethod = $$$NO
 		// Module methods can always be called
 		set:type=..Module methodObj.ClassMethod = $$$YES
+		
+		set isClassMethod = $classmethod(..FixClass, "IsClassMethod", type, method)
+		set:isClassMethod'="" methodObj.ClassMethod = isClassMethod
 		// Is it class or object method? - End
 		// Not really the end
 		
@@ -474,15 +464,11 @@ Method GenerateMethod(type As %String, classObj As %Dictionary.ClassDefinition, 
 			} else {
 				set methodObj.ClassMethod = $$$YES
 			}
+			set:isClassMethod'="" methodObj.ClassMethod = isClassMethod
 
 			do ..GenereateMethodSignature(funcArgObj, .formalSpec, .callArgs)
 		}	
 		// end - calculating signatures
-		
-
-		
-		set isClassMethod = ##class(isc.py.util.Generator).IsClassMethod(type, method)
-		set:isClassMethod'="" methodObj.ClassMethod = isClassMethod  ///$case(isClassMethod, $$$YES:$$$YES, $$$NO:"")
 		
 		do ..GenerateMethodBody(methodObj, type, method, formalSpec, callArgs)
 		set methodObj.Description = methodObj.Description _  ..GenerateCall(classObj.Name, irisMethod, methodObj.ClassMethod) 
@@ -698,8 +684,13 @@ Method AppendImportedModule(module As %String)
 /// If GeneratedTypeList or TypeList alredy clontain python type it would be skipped.
 Method AppendToTypeList(types As %List)
 {
+	set types = ##class(isc.py.util.Matcher).FilterList(types, ..ClassesWhiteMask, ..ClassesBlackMask)
 	set ptr=0
 	while $listnext(types, ptr, type) {
+		if ((type'=..Module) && ($l(type,".")=1)) {
+			set type = "builtins." _ type	
+		}
+		
 		if (($lf(..GeneratedTypeList, type)=0) && ($lf(..TypeList, type)=0)) {
 			set ..TypeList = ..TypeList _ $lb(type)
 		}
