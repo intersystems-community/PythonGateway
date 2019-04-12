@@ -98,7 +98,7 @@ ClassMethod Generate(modules As %List = {$lb("builtins", "random")}, delete As %
 		set sc = generator.GenerateModule(module)
 		quit:$$$ISERR(sc)
 	}
-	write $System.Status.GetErrorText(sc)
+
 	set:$$$ISOK(sc) sc = generator.Compile()
 	quit sc
 }
