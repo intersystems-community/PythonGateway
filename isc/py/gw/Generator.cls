@@ -71,25 +71,35 @@ Property PropertiesBlackMask As %String [ InitialExpression = "_*,*_" ];
 
 /// Generate a  list of python modules using default parameters.
 /// modules can be either a %List if modules or one module string.
+/// delete - delete existing classes. none - delete nothing, all - delete Pachage, module - delete only modules from modules list
 /// set sc = ##class(isc.py.gw.Generator).Generate()
-ClassMethod Generate(modules As %List = {$lb("builtins", "random")}) As %Status
+ClassMethod Generate(modules As %List = {$lb("builtins", "random")}, delete As %String(VALUELIST=",none,all,module") = "all") As %Status
 {
+	#dim sc As %Status = $$$OK
 	quit:modules="" $$$ERROR($$$GeneralError, "Provide a list of modules")
 	set:'$listvalid(modules) modules = $lb(modules)
 	
-	set obj = ..%New()
+	set generator = ..%New()
+	
+	if delete = "all" {
+		set sc = $system.OBJ.DeletePackage(generator.Package)
+	} elseif delete="module" {
+		for i=1:1:$ll(modules) {
+			set module = $lg(modules, i)
+			set sc = generator.DeleteModule(module)
+			quit:$$$ISERR(sc)
+		}
+	}
+	quit:$$$ISERR(sc) sc
 	
 	for i=1:1:$ll(modules) {
 		set module = $lg(modules, i)
-		
-		set sc = $system.OBJ.DeletePackage(obj.Package _ "." _ module)
-		quit:$$$ISERR(sc)
-		
-		set sc = obj.GenerateModule(module)
+
+		set sc = generator.GenerateModule(module)
 		quit:$$$ISERR(sc)
 	}
 	write $System.Status.GetErrorText(sc)
-	set:$$$ISOK(sc) sc = obj.Compile()
+	set:$$$ISOK(sc) sc = generator.Compile()
 	quit sc
 }
 
@@ -796,6 +806,23 @@ Method LogStatus(level As %Integer, msg As %String, sc As %Status)
 Method Log(level As %Integer, msg As %String, args...)
 {
 	Write:level<=..LogLevel $ZDATETIME($ZTIMESTAMP, 3, 1) _ " " _ $$$FormatText(msg, args...),!
+}
+
+/// Delete generated module classes.
+Method DeleteModule(module As %String) As %Status
+{
+	if ..LogLevel>0 {
+		set displayFlags = "/display=all"
+	} else {
+		set displayFlags = "/displaylog=0 /displayerror=0"
+	}
+	
+	set sc = $system.OBJ.DeletePackage(..Package _ "." _ module, displayFlags)
+	quit:$$$ISERR(sc) sc
+
+	set sc = $$Delete^%apiOBJ(..Package _ "." _ module, displayFlags,,$$$YES)
+	
+	quit sc
 }
 
 }
