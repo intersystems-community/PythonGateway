@@ -29,7 +29,7 @@ ML Toolkit user group is a private GitHub repository set up as part of InterSyst
 
 1. [Install Python 3.6.7 64 bit](https://www.python.org/downloads/release/python-367/).
 2. Install `dill` module: `pip install dill` (required for context harvesting)
-3. Load ObjectScript code (i.e. `do $system.OBJ.ImportDir("C:\InterSystems\Repos\Python\isc\py\","*.cls","c",,1)`).
+3. Load ObjectScript code (i.e. `do $system.OBJ.ImportDir("C:\InterSystems\Repos\Python\isc\py\","*.cls","c",,1)`) into Production (Ensemble-enabled) namespace. In case you want to Production-enable namespace call: `write ##class(%EnsembleMgr).EnableNamespace($Namespace, 1)`.
 4. Place [callout DLL/SO/DYLIB](https://github.com/intersystems-community/PythonGateway/releases) in the `bin` folder of your InterSystems IRIS installation. Library file should be placed into a path returned by `write ##class(isc.py.Callout).GetLib()`. 
 
 ## Windows 
