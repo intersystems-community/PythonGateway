@@ -29,6 +29,8 @@ Parameter StreamExecute As Integer = 6;
 
 Parameter EscapeString As Integer = 7;
 
+Parameter GetGlobalOrder As Integer = 8;
+
 /// Get path to the shared library file. 
 /// Library file is assumed to be in a bin folder, unless specified otherwise in ^isc.py.Callout global.
 /// write ##class(isc.py.Callout).GetLib()
@@ -183,6 +185,38 @@ ClassMethod Finalize() As %Status
 		#dim ex As %Exception.General
 		set sc = ex.AsStatus()
 	}
+	quit sc
+}
+
+/// + as is
+/// - skip
+/// b - boolean
+/// d - date
+/// t - time
+/// planned?
+/// s - timestamp
+/// i - integer
+/// d - decimal
+/// Get global as string
+/// s ^BDZ4.DfXU.1(2)=$lb(1,64756,"4post21","@elina_4post как говорят обещаного три года ждут...((",2.1,-2.1,-4096,-65536,718,49,249,0)
+/// s ^BDZ4.DfXU.1(1)=$lb(0,48000,"nugemycejela","Коллеги сидят рубятся в Urban terror, а я из-за долбанной винды не могу :(",-1,-256,256.2,0,26,42,39,0)
+/// write ##class(isc.py.Callout).GetGlobalOrder("a",1,2,"+")
+/// write ##class(isc.py.Callout).GetGlobalOrder("BDZ4.DfXU.1",1,2,      "bd++++++++++")
+/// write ##class(isc.py.Callout).GetGlobalOrder("BDZ4.DfXU.1",1,111922, "++++++++++++")
+ClassMethod GetGlobalOrder(global, start As %Integer, end As %Integer, mask As %String, name As %String = "l", unload As %Boolean = 0) As %Status
+{
+	#dim sc As %Status = $$$OK
+	try {
+		set t1 = $zh
+		do $ZF(-6, ..#PyLibId, ..#GetGlobalOrder, global, start, end, mask, name)
+		set t2 = $zh
+		//zw result
+		w !,"time: ", t2-t1,!
+	} catch ex {
+		#dim ex As %Exception.General
+		set sc = ex.AsStatus()
+	}
+	do:unload ..Unload()
 	quit sc
 }
 

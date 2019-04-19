@@ -94,7 +94,7 @@ Generally the main interface to Python is `isc.py.Main`. It offers these methods
 - `GetStatus()` - returns last occurred exception in Python and clears it.
 - `GetVariableJson(variable, .stream, useString)` - get JSON serialization of variable.
 - `GetVariablePickle(variable, .stream, useString, useDill)` - get Pickle (or Dill) serialization of variable.
-- `ExecuteQuery(query, variable, type)` - create resultset (pandas `dataframe` or `list`) from sql query and set it into `variable`.
+- `ExecuteQuery(query, variable, type, namespace)` - create resultset (pandas `dataframe` or `list`) from sql query and set it into `variable`. `isc.py` package must be available in `namespace`.
 - `ImportModule(module, .imported, .alias)` -  import module with alias.
 - `GetModuleInfo(module, .imported, .alias)` - get module alias and is it currently imported.
 - `GetFunctionInfo(function, .defined, .type, .docs, .signature, .arguments)` - get function information.

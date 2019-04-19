@@ -17,10 +17,9 @@ int StreamInit(int length)
 int StreamWrite(CACHE_EXSTRP command);
 int StreamExecute();
 
-// Test methods
-int GetRandom(double* random);
-int GetRandomSimple(double* random);
-int SimpleStringFull(char *command, double* result);
+int EscapeString(CACHE_EXSTRP string,  CACHE_EXSTRP result)
+PyTupleObject* ListToTuple(CACHE_EXSTRP result,  char* mask, int maskLength, int maskSymbolLength, int key)
+int GetGlobalOrder(const char *global, int start, int end, const char* mask, const char* name, CACHE_EXSTRP value)
 
 // Console test method
 int main(int argc, char **argv);
