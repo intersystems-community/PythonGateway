@@ -12,7 +12,8 @@ Property Variable As %String;
 /// Pandas automatically imported if required.
 Property Type As %String(VALUELIST = ",dataframe,list") [ InitialExpression = "list" ];
 
-/// Namespace in which to execute the query
+/// Namespace in which to execute the query.
+/// 'isc.py' package must be available in this namespace
 Property Namespace As %String [ InitialExpression = {$namespace} ];
 
 Storage Default

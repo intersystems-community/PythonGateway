@@ -29,7 +29,7 @@ ClassMethod Shell()
 			} else {
 				quit:(command="quit()")||(command="")
 				kill result
-				if ((command [ "=") || (command [ $c(10)) || ($zcvt(command, "l")["import")) {
+				if ((command [ "=") || (command [ $c(10)) || ($zcvt(command, "l")["import") || (command [ " ")) {
 					set sc = ##class(isc.py.Main).SimpleString(command)
 				} else {
 					set sc = ##class(isc.py.Main).SimpleString("zzzresult=" _ command,"zzzresult", , .result)
