@@ -57,7 +57,7 @@ ClassMethod ExecuteCode(code As %Stream.Object, variable As %String = "") As %St
 	set length = codeLength + $select(hasVar :$l(variable) + 1, 1:0)
 
 	
-	if length>$$$MaxStringLength {
+	if length>($$$MaxStringLength \ 2) {
 		set sc = ##class(isc.py.Callout).StreamInit(length)
 		quit:$$$ISERR(sc) sc
 		set:hasVar sc = ##class(isc.py.Callout).StreamWrite(variable _ "=")
@@ -105,7 +105,8 @@ ClassMethod ExecuteCode(code As %Stream.Object, variable As %String = "") As %St
 /// variable - python variable to set
 /// type - variable type (Currently supported: dataframe (pandas dataframe) and list.
 /// query - text of the SQL query
-/// Pandas automatically imported if required.
+/// namespace - namespace to execute query in. 'isc.py' package must be available in this namespace.
+/// Pandas is imported automatically if required.
 /// set sc = ##class(isc.py.Main).ExecuteQuery("SELECT * FROM isc_py_test.CannibalizationData", "df")
 ClassMethod ExecuteQuery(query As %String, variable As %String, type As %String(VALUELIST=",dataframe,list") = "list", namespace As %String = {$namespace}) As %Status
 {
@@ -123,7 +124,7 @@ ClassMethod ExecuteQuery(query As %String, variable As %String, type As %String(
 	new $namespace
 	set oldNamespace = $namespace
 	set $namespace = namespace
-		
+	
 	set st =  ##class(%SQL.Statement).%New()
 	set st.%SelectMode = 1 // ODBC
 	set sc = st.%Prepare(query)
@@ -144,64 +145,72 @@ ClassMethod ExecuteQuery(query As %String, variable As %String, type As %String(
 		set column = metadata.columns.GetAt(i)
 		
 		if (column.IsNumeric() || (column.ODBCType = $$$ODBCTYPEnumeric)) {
-			set typeList = typeList _ $lb("numeric")
+			set typeList = typeList _ $lb($$$ODBCTYPEnumeric)
 		} elseif (column.ODBCType=$$$ODBCTYPEtimestamp) {
-			set typeList = typeList _ $lb("timestamp")
+			set typeList = typeList _ $lb($$$ODBCTYPEtimestamp)
 		} elseif (column.ODBCType=$$$ODBCTYPEdate) {
-			set typeList = typeList _ $lb("date")
+			set typeList = typeList _ $lb($$$ODBCTYPEdate)
 		} elseif column.ODBCType = $$$ODBCTYPEtime  {
-			set typeList = typeList _ $lb("time")
+			set typeList = typeList _ $lb($$$ODBCTYPEtime)
 		} elseif column.clientType = 16 {
-			set typeList = typeList _ $lb("bool")
+			// boolean
+			set typeList = typeList _ $lb($$$ODBCTYPEbit)
 		} else {
-			set typeList = typeList _ $lb("string")
+			set typeList = typeList _ $lb($$$ODBCTYPEvarchar)
 		}
 		
 		set columnList = columnList _ $lb("'" _ column.colName _ "'")
 	}
 	
-	set data = ##class(%Stream.GlobalCharacter).%New()
+	set dataStr = ""
+	set data = ##class(%Stream.TmpCharacter).%New()
 	do data.Write("[")
 	
 	set first = $$$YES
 	while result.%Next() {		
-		// TODO get isLastRow in a sane way
-		if first {
-			set first = $$$NO
-		} else {
-			do data.Write(",")
-		}
 		set rowList = ""
 		for i=1:1:columnCount {
 			set value = result.%GetData(i)
 			set:$lv(value) value = $lts(value)
 			
 			set colType = $lg(typeList, i)
-			if colType = "bool" {
+			if colType = $$$ODBCTYPEbit {
 				set rowList = rowList _ $lb(##class(isc.py.util.Converter).BooleanToPython(value))
-			} elseif colType = "numeric" {
+			} elseif colType = $$$ODBCTYPEnumeric {
 				set:value="" value = "None"
 				set rowList = rowList _ $lb(value)
-			} elseif colType = "timestamp" {
+			} elseif colType = $$$ODBCTYPEtimestamp {
 				set rowList = rowList _ $lb(##class(isc.py.util.Converter).ODBCTimeStampToPython(datetime, value))
-			} elseif colType = "date" {
+			} elseif colType = $$$ODBCTYPEdate {
 				set rowList = rowList _ $lb(##class(isc.py.util.Converter).ODBCDateToPython(datetime, value))
 				// TODO Python 3.7 added date.fromisoformat("YYYY-MM-DD")
-			} elseif colType = "time" {
+			} elseif colType = $$$ODBCTYPEtime {
 				set rowList = rowList _ $lb(##class(isc.py.util.Converter).ODBCTimeToPython(datetime, value))
 			} else {
-				// TODO Python String escaper		
 				set rowList = rowList _ $lb(##class(isc.py.util.Converter).EscapeString(value))
 			}
 		}
-		do data.Write("(" _	$lts(rowList, ",") _ ")")
 		
+		// TODO get isLastRow in a sane way
+		if first {
+			set first = $$$NO
+			set dataStr = dataStr _ "(" _	$lts(rowList, ",") _ ")"
+		} else {
+			set dataStr = dataStr _ ",(" _	$lts(rowList, ",") _ ")"
+		}
+		
+		if $l(dataStr)>3000000 {
+			do data.Write(dataStr)
+			set dataStr=""
+		}
+			
 	}
+	do data.Write(dataStr)
 	do data.Write("]")
-	
+
 	set $namespace = oldNamespace
-	
-	set sc = ..ExecuteCode(data, "zzzdata")
+
+	set sc = ..ExecuteCode(data, variable)
 	quit:$$$ISERR(sc) sc
 
 	// zzzcolumns = ['col1', 'col2', 'col3']
@@ -215,12 +224,13 @@ ClassMethod ExecuteQuery(query As %String, variable As %String, type As %String(
 	quit:$$$ISERR(sc) sc
 	
 	if type="dataframe" {
-		set sc = ..SimpleString(variable _ "=" _ pandas _ ".DataFrame(zzzdata, columns=zzzcolumns)")
+		set sc = ..SimpleString(variable _ "=" _ pandas _ ".DataFrame(" _ variable _ ", columns=zzzcolumns)")
 	} elseif type="list" {
-		set sc = ..SimpleString(variable _ "= zzzcolumns + zzzdata")
+		set sc = ..SimpleString(variable _ "= zzzcolumns + " _ variable)
 	}
-	
-	do ..SimpleString("del zzzdata, zzzcolumns")	
+	quit:$$$ISERR(sc) sc
+
+	set sc = ..SimpleString("del zzzcolumns")	
 	
 	quit sc
 }
