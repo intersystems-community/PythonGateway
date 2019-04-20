@@ -235,6 +235,155 @@ ClassMethod ExecuteQuery(query As %String, variable As %String, type As %String(
 	quit sc
 }
 
+/// Transfer global to Python list of tuples or pandas dataframe
+/// global - name of global
+/// variable - list/dataframe name
+/// type - list or dataframe
+/// start - starting global key
+/// end - final global key
+/// mask - mask for $lb fields
+/// labels - %List of column names, first element is key column name.
+/// How to format mask:
+/// + as is
+/// - skip
+/// b - boolean
+/// d - date
+/// t - time
+/// set sc = ##class(isc.py.Main).ExecuteGlobal("BDZ4.DfXU.1", "df")
+ClassMethod ExecuteGlobal(global As %String, variable As %String, type As %String(VALUELIST=",dataframe,list") = "list", start As %Integer = 1, end As %Integer = "", mask As %String, labels As %List = "", namespace As %String = {$namespace}) As %Status
+{
+	#dim sc As %Status = $$$OK
+	quit:",dataframe,list"'[type $$$ERROR($$$GeneralError, "Invalid type: " _ $g(type) _ ". Expected types: dataframe or list")
+
+	if type="dataframe" {
+		set sc = ..ImportModule("pandas", , .pandas)
+		quit:$$$ISERR(sc) sc
+	}
+	
+	// remove ^ if any
+	set:$e(global)="^" global = $e(global, 2, *)
+	
+	new $namespace
+	set oldNamespace = $namespace
+	set $namespace = namespace
+	
+	// set last global key as iteration end
+	if end="" {
+		set glcn = "^" _ global
+		set end = $o(@glvn@(""),-1)
+	}
+		
+	set sc = ##class(isc.py.Callout).GetGlobalOrder(global, start, end, mask, variable)
+	quit:$$$ISERR(sc) sc
+	set $namespace = oldNamespace
+	
+	if labels = "" {
+		for i=1:1:$l(mask) {
+			set labels = $lb(i) 
+		}
+	}
+		
+	set sc = ##class(isc.py.Main).SimpleString("zzzcolumns=[" _ $lts(##class(isc.py.util.Converter).EscapeStringList(labels))_ "]")
+	quit:$$$ISERR(sc) sc
+	
+	if type="dataframe" {
+		set sc = ..SimpleString(variable _ "=" _ pandas _ ".DataFrame(" _variable _ ", columns=zzzcolumns)")
+	} elseif type="list" {
+		set sc = ..SimpleString(variable _ "= zzzcolumns + " _ variable)
+	}
+	quit:$$$ISERR(sc) sc
+	
+	set sc = ..SimpleString("del zzzcolumns")	
+	
+	quit sc
+}
+
+/// Transfer class data to Python list of tuples or pandas dataframe
+/// class - name of class
+/// variable - list/dataframe name
+/// type - list or dataframe
+/// start - starting object id, defaults to 1.
+/// end - final object id, defaults to last object id available.
+/// properties - comma-separated list of properties to form dataframe from. * and ? wildcards are supported. 
+/// 			 Defaults to * (all properties). %%CLASSNAME property is ignored. Only stored properties are used.
+/// namespace - class namespace
+/// 
+/// set sc = ##class(isc.py.Main).ExecuteClass("User.WEB.SENTIMENTNEG", "df", "dataframe")
+/// set sc = ##class(isc.py.Main).ExecuteClass("isc.py.test.CannibalizationData", "df1", "dataframe")
+ClassMethod ExecuteClass(class As %String, variable As %String, type As %String(VALUELIST=",dataframe,list") = "list", start As %Integer = 1, end As %Integer = "", properties As %String = "*", namespace As %String = {$namespace}) As %Status
+{
+	#dim sc As %Status = $$$OK
+	quit:",dataframe,list"'[type $$$ERROR($$$GeneralError, "Invalid type: " _ $g(type) _ ". Expected types: dataframe or list")
+	quit:'##class(%Dictionary.CompiledClass).%ExistsId(class) $$$ERROR($$$GeneralError, "Class does not exist: " _ $g(class))
+	quit:'$$$classIsPersistent(class) $$$ERROR($$$GeneralError, "Class is not persistent: " _ $g(class))
+	
+	if type="dataframe" {
+		set sc = ..ImportModule("pandas", , .pandas)
+		quit:$$$ISERR(sc) sc
+	}
+	
+	new $namespace
+	set oldNamespace = $namespace
+	set $namespace = namespace
+	
+	set mask = ""
+	set labels = ""
+	set storageName = $$$comClassKeyGet(class,$$$cCLASSstoragestrategy)
+	set defaultData = $$$comStorageSubMemberNext(class,$$$cCLASSstorage,storageName,$$$cSDEFdata,"")
+
+	set dataValue = $$$comStorageSubSubMemberNext(class,$$$cCLASSstorage,storageName,$$$cSDEFdata,defaultData,$$$cSDEFDATAvalue,"")
+	while dataValue'="" {
+		set property = $$$comStorageSubSubMemberKeyGet(class,$$$cCLASSstorage,storageName,$$$cSDEFdata,defaultData,$$$cSDEFDATAvalue,dataValue,$$$cSDEFDATAVALvalue)
+		set isCollection = ($$$comMemberKeyGet(class,$$$cCLASSproperty,property,$$$cPROPcollection)'="")
+		set propertyType = $$$comMemberKeyGet(class,$$$cCLASSproperty,property,$$$cPROPtype)
+		if ((##class(isc.py.util.Matcher).MatchOr(property, properties)) && (property'="%%CLASSNAME") && ('isCollection) && (propertyType'="%Library.List") && (propertyType'="%Library.Binary")) {			
+			if propertyType = "%Library.Date" {
+				set $e(mask, dataValue) = "d"
+			} elseif propertyType = "%Library.Time" {
+				set $e(mask, dataValue) = "t"
+			} elseif propertyType = "%Library.Boolean" {
+				set $e(mask, dataValue) = "b"
+			} else {
+				set $e(mask, dataValue) = "+"
+			}
+			set $list(labels, dataValue) = property
+		} else {
+			set $e(mask, dataValue) = "-"
+		}		
+		set dataValue = $$$comStorageSubSubMemberNext(class,$$$cCLASSstorage,storageName,$$$cSDEFdata,defaultData,$$$cSDEFDATAvalue,dataValue)	
+	}
+	
+	set fixedLabels = $lb("globalKey")
+	set ptr=0
+	while $listnext(labels, ptr, value) {
+		set:$g(value)'="" fixedLabels = fixedLabels _ $lb(value)
+	}
+	
+	
+	set global = $$$comMemberKeyGet(class,$$$cCLASSstorage,storageName,$$$cSDEFdatalocation)
+	quit:$d(@global)<10 $$$ERROR($$$GeneralError, "Data global is empty")
+
+	set sc = ..ExecuteGlobal($e(global,2,*), variable, type, start, end, mask, fixedLabels, namespace)
+	
+	quit sc
+}
+
+/// Transfer table data to Python list of tuples or pandas dataframe
+/// table - name of table
+/// variable - list/dataframe name
+/// type - list or dataframe
+/// start - starting row id, defaults to 1.
+/// end - final global key, defaults to last row id available.
+/// properties - comma-separated list of CLASS properties to form dataframe from. * and ? wildcards are supported. 
+/// 			 Defaults to * (all properties). %%CLASSNAME property is ignored. Only stored properties are used.
+/// namespace - class namespace
+/// 
+/// set sc = ##class(isc.py.Main).ExecuteTable("User_WEB.SENTIMENT_NEG", "df2", "dataframe")
+ClassMethod ExecuteTable(table As %String, variable As %String, type As %String(VALUELIST=",dataframe,list") = "list", start As %Integer = 1, end As %Integer = "", properties As %String = "*", namespace As %String = {$namespace}) As %Status [ CodeMode = expression ]
+{
+..ExecuteClass($$$GetClassNameFromIQN(table), variable, type, start, end, properties, namespace)
+}
+
 /// variable - variable name
 /// useString - if variable length is less than $$$MaxStringLength, return string instead of stream. Ignored if variable length is more than $$$MaxStringLength
 /// set sc = ##class(isc.py.Main).GetVariable()
