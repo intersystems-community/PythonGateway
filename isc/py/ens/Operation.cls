@@ -78,6 +78,7 @@ Method Execute(request As isc.py.msg.ExecutionRequest, Output response As isc.py
 	
 	for i=1:1:$ll(codeList) {
 		set line = $lg(codeList, i)
+		continue:line=""
 		$$$TRACE(line)	
 		set sc = ##class(isc.py.Main).SimpleString(line)
 		quit:$$$ISERR(sc)
