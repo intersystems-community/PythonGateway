@@ -235,20 +235,23 @@ ClassMethod ExecuteQuery(query As %String, variable As %String, type As %String(
 	quit sc
 }
 
-/// Transfer global to Python list of tuples or pandas dataframe
+/// Transfer global to Python list of tuples or pandas dataframe.
+/// Global must be in this format: ^global(key) = $lb(field1, ... ,fieldN)
 /// global - name of global
 /// variable - list/dataframe name
-/// type - list or dataframe
-/// start - starting global key
-/// end - final global key
-/// mask - mask for $lb fields
-/// labels - %List of column names, first element is key column name.
+/// type - create list or dataframe
+/// start - starting global key. Must be integer.
+/// end - final global key. Must be integer.
+/// mask - string, mask for global values. Must be less or equal in length to the number of global value fields.
+/// labels - %List of column names, first element is key column name. Therefore: List length is mask symbol length + 1.
 /// How to format mask:
-/// + as is
-/// - skip
-/// b - boolean
-/// d - date
-/// t - time
+///   + use field as is
+///   - skip field
+///   b - boolean (0 - False, everything else - True)
+///   d - date (from $horolog, on Windows only from 1970, on Linux from 1900)
+///   t - time ($horolog, seconds since midnight) 
+///   m - (moment) timestamp string in YEAR-MONTH-DAY HOUR:MINUTE:SECOND format.
+/// 
 /// set sc = ##class(isc.py.Main).ExecuteGlobal("BDZ4.DfXU.1", "df")
 ClassMethod ExecuteGlobal(global As %String, variable As %String, type As %String(VALUELIST=",dataframe,list") = "list", start As %Integer = 1, end As %Integer = "", mask As %String, labels As %List = "", namespace As %String = {$namespace}) As %Status
 {
