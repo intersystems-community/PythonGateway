@@ -83,23 +83,53 @@ set sc = ##class(isc.py.Callout).Finalize()
 set sc = ##class(isc.py.Callout).Unload()
 ```
 
-Generally the main interface to Python is `isc.py.Main`. It offers these methods (all return `%Status`):
+# Terminal API
 
+Generally the main interface to Python is `isc.py.Main`. It offers these methods (all return `%Status`), which can be separated into three categories:
+- Code execution
+- Data transfer
+- Auxiliary
+
+## Code execution
+
+These methods allow execution of arbitrary Python code:
+
+- `ImportModule(module, .imported, .alias)` -  import module with alias.
 - `SimpleString(code, returnVariable, serialization, .result)` - for cases where both code and variable are strings.
 - `ExecuteCode(code, variable)` - execute `code` (it may be a stream or string), optionally set result into `variable`.
+- `ExecuteFunction(function, positionalArguments, keywordArguments, variable, serialization, .result)` - execute Python function or method, write result into Pyhton `variable`, return chosen serialization in `result`.
+- `ExecuteFunctionArgs(function, variable, serialization, .result, args...)` - execute Python function or method, write result into Pyhton `variable`, return chosen serialization in `result`. Builds `positionalArguments` and `keywordArguments` and passes them to `ExecuteFunction`. It's recommended to use `ExecuteFunction`. More information in [Gateway docs](Gateway.md).
+
+## Data Transfer
+
+Transfer data into and from Python.
+
+### Python -> InterSystems IRIS
+
 - `GetVariable(variable, serialization, .stream, useString)` - get `serialization` of `variable` in `stream`. If `useString` is 1 and variable serialization can fit into string then string is returned instead of the stream.
+- `GetVariableJson(variable, .stream, useString)` - get JSON serialization of variable.
+- `GetVariablePickle(variable, .stream, useString, useDill)` - get Pickle (or Dill) serialization of variable.
+
+### InterSystems IRIS -> Python
+
+- `ExecuteQuery(query, variable, type, namespace)` - create resultset (pandas `dataframe` or `list`) from sql query and set it into `variable`. `isc.py` package must be available in `namespace`.
+- `ExecuteGlobal(global, variable, type, start, end, mask, labels, namespace)` - transfer `global` data (from `start` to `end`) to Python variable of `type`: `list` of tuples or pandas `dataframe`. For `mask` and `labels` arguments specification check class docs and [Data Transfer docs](DataTransfer.md).
+- `ExecuteClass(class, variable, type, start, end, properties, namespace)` - transfer class data to Python list of tuples or pandas dataframe. `properties` - comma-separated list of properties to form dataframe from. * and ? wildcards are supported. Defaults to * (all properties). %%CLASSNAME property is ignored. Only stored properties can be used.
+- `ExecuteTable(table, variable, type, start, end, properties, namespace)` - transfer table data to Python list of tuples or pandas dataframe.
+
+`ExecuteQuery` is universal (any valid SQL query would be transfered into Python). `ExecuteGlobal` and its wrappers `ExecuteClass` and `ExecuteTable`, however, operate with a number of limitations. But they are much faster (3-5 times faster than ODBC driver and 20 times faster than `ExecuteQuery`). More information in [Data Transfer docs](DataTransfer.md).
+
+## Auxiliary
+
+Support methods.
+
 - `GetVariableInfo(variable, serialization, .defined, .type, .length)` - get info about variable: is it defined, type and serialized length.
 - `GetVariableDefined(variable, .defined)` - is variable defined.
 - `GetVariableType(variable, .type)` - get variable FQCN.
 - `GetStatus()` - returns last occurred exception in Python and clears it.
-- `GetVariableJson(variable, .stream, useString)` - get JSON serialization of variable.
-- `GetVariablePickle(variable, .stream, useString, useDill)` - get Pickle (or Dill) serialization of variable.
-- `ExecuteQuery(query, variable, type, namespace)` - create resultset (pandas `dataframe` or `list`) from sql query and set it into `variable`. `isc.py` package must be available in `namespace`.
-- `ImportModule(module, .imported, .alias)` -  import module with alias.
 - `GetModuleInfo(module, .imported, .alias)` - get module alias and is it currently imported.
 - `GetFunctionInfo(function, .defined, .type, .docs, .signature, .arguments)` - get function information.
-- `ExecuteFunction(function, positionalArguments, keywordArguments, variable, serialization, .result)` - execute Python function or method, write result into Pyhton `variable`, return chosen serialization in `result`.
-- `ExecuteFunctionArgs(function, variable, serialization, .result, args...)` - execute Python function or method, write result into Pyhton `variable`, return chosen serialization in `result`. Builds `positionalArguments` and `keywordArguments` and passes them to `ExecuteFunction`. It's recommended to use `ExecuteFunction`. More information in [Gateway docs](Gateway.md).
+
 
 Possible Serializations:
 - `##class(isc.py.Callout).SerializationStr` - Serialization by str() function
