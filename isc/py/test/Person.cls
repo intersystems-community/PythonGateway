@@ -17,8 +17,9 @@ Property AgeDouble As %Double(SCALE = 4);
 
 Property Bool As %Boolean;
 
+/// Test data transfer methods
 /// do ##class(isc.py.test.Person).Test()
-ClassMethod Test(count As %Integer = 0)
+ClassMethod Test(count As %Integer = 100)
 {
 	if count {
 		do ..%KillExtent()
