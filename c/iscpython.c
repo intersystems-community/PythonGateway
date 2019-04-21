@@ -361,11 +361,24 @@ PyTupleObject* ListToTuple(CACHE_EXSTRP result,  char* mask, int maskLength, int
 		// Parse element data - START
 
 		// List element, whatever type it is
-		PyObject* item;
+		PyObject* item = Py_None;
 		if (l==1) {
 			item = Py_None;
 		} else if (type==STRING) {
-			item =  PyUnicode_FromStringAndSize(list+dataStart, dataLength);
+			if (mask[maskPosition]=='m') {
+				int year = 0;
+				int month = 1;
+				int day = 1;
+				int hour = 0;
+				int minute = 0;
+				int second = 0;
+				int result = sscanf(list+dataStart, "%d-%d-%d %d:%d:%d", &year, &month, &day, &hour, &minute, &second);
+				if (result>0) {
+					item = PyDateTime_FromDateAndTime(year, month, day, hour, minute, second, 0);
+				}
+			} else {
+				item =  PyUnicode_FromStringAndSize(list+dataStart, dataLength);
+			}
 		} else if (type==USTRING) {
 			item = PyUnicode_FromUnicode(list+dataStart, dataLength / 2);
 		} else if (type == INTP) {
@@ -394,8 +407,10 @@ PyTupleObject* ListToTuple(CACHE_EXSTRP result,  char* mask, int maskLength, int
 				date.tm_year = 70;
 				date.tm_mday = 1;
 				date.tm_mday += temp - 47117; // 47117 is horolog for Jan 1 1970
-				mktime(&date);
-				item = PyDate_FromDate(date.tm_year + 1900, date.tm_mon + 1, date.tm_mday); //date.tm_mday);
+				time_t result = mktime(&date);
+				if (result!=-1) {
+					item = PyDate_FromDate(date.tm_year + 1900, date.tm_mon + 1, date.tm_mday); //date.tm_mday);
+				}
 			} else {
 				item = PyLong_FromLongLong(temp);
 			}

@@ -269,7 +269,7 @@ ClassMethod ExecuteGlobal(global As %String, variable As %String, type As %Strin
 	
 	// set last global key as iteration end
 	if end="" {
-		set glcn = "^" _ global
+		set glvn = "^" _ global
 		set end = $o(@glvn@(""),-1)
 	}
 		
@@ -310,6 +310,7 @@ ClassMethod ExecuteGlobal(global As %String, variable As %String, type As %Strin
 /// 
 /// set sc = ##class(isc.py.Main).ExecuteClass("User.WEB.SENTIMENTNEG", "df", "dataframe")
 /// set sc = ##class(isc.py.Main).ExecuteClass("isc.py.test.CannibalizationData", "df1", "dataframe")
+/// set sc = ##class(isc.py.Main).ExecuteClass("isc.py.test.Person", "dfp", "dataframe")
 ClassMethod ExecuteClass(class As %String, variable As %String, type As %String(VALUELIST=",dataframe,list") = "list", start As %Integer = 1, end As %Integer = "", properties As %String = "*", namespace As %String = {$namespace}) As %Status
 {
 	#dim sc As %Status = $$$OK
@@ -343,6 +344,8 @@ ClassMethod ExecuteClass(class As %String, variable As %String, type As %String(
 				set $e(mask, dataValue) = "t"
 			} elseif propertyType = "%Library.Boolean" {
 				set $e(mask, dataValue) = "b"
+			} elseif propertyType = "%Library.TimeStamp" {
+				set $e(mask, dataValue) = "m"
 			} else {
 				set $e(mask, dataValue) = "+"
 			}
