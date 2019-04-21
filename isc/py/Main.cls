@@ -252,8 +252,8 @@ ClassMethod ExecuteQuery(query As %String, variable As %String, type As %String(
 ///   t - time ($horolog, seconds since midnight) 
 ///   m - (moment) timestamp string in YEAR-MONTH-DAY HOUR:MINUTE:SECOND format.
 /// 
-/// set sc = ##class(isc.py.Main).ExecuteGlobal("BDZ4.DfXU.1", "df")
-ClassMethod ExecuteGlobal(global As %String, variable As %String, type As %String(VALUELIST=",dataframe,list") = "list", start As %Integer = 1, end As %Integer = "", mask As %String, labels As %List = "", namespace As %String = {$namespace}) As %Status
+/// set sc = ##class(isc.py.Main).ExecuteGlobal("BDZ4.DfXU.1", "df", "dataframe")
+ClassMethod ExecuteGlobal(global As %String, variable As %String, type As %String(VALUELIST=",dataframe,list") = "list", start As %Integer = 1, end As %Integer = "", mask As %String = "", labels As %List = "", namespace As %String = {$namespace}) As %Status
 {
 	#dim sc As %Status = $$$OK
 	quit:",dataframe,list"'[type $$$ERROR($$$GeneralError, "Invalid type: " _ $g(type) _ ". Expected types: dataframe or list")
@@ -271,21 +271,35 @@ ClassMethod ExecuteGlobal(global As %String, variable As %String, type As %Strin
 	set $namespace = namespace
 	
 	// set last global key as iteration end
-	if end="" {
+	if end = "" {
 		set glvn = "^" _ global
 		set end = $o(@glvn@(""),-1)
 	}
-		
+	
+	// Set mask to $listlength of the first global value
+	if mask = "" {
+		set glvn = "^" _ global
+		if $data(@glvn@(start))=1 {
+			set data = @glvn@(start)
+		} else {
+			set temp = $o(@glvn@(start),1,data)
+			kill temp
+		}
+		set mask = $tr($j("", $ll(data)), " ", "+")
+		kill data
+	}
+	
 	set sc = ##class(isc.py.Callout).GetGlobalOrder(global, start, end, mask, variable)
 	quit:$$$ISERR(sc) sc
 	set $namespace = oldNamespace
 	
 	if labels = "" {
+		set labels = $lb("globalKey")
 		for i=1:1:$l(mask) {
-			set labels = $lb(i) 
+			set labels = labels _ $lb(i) 
 		}
 	}
-		
+	
 	set sc = ##class(isc.py.Main).SimpleString("zzzcolumns=[" _ $lts(##class(isc.py.util.Converter).EscapeStringList(labels))_ "]")
 	quit:$$$ISERR(sc) sc
 	

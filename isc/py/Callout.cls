@@ -210,11 +210,7 @@ ClassMethod GetGlobalOrder(global, start As %Integer, end As %Integer, mask As %
 {
 	#dim sc As %Status = $$$OK
 	try {
-		set t1 = $zh
 		do $ZF(-6, ..#PyLibId, ..#GetGlobalOrder, global, start, end, mask, name)
-		set t2 = $zh
-		//zw result
-		w !,"time: ", t2-t1,!
 	} catch ex {
 		#dim ex As %Exception.General
 		set sc = ex.AsStatus()
