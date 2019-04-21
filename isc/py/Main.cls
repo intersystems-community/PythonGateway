@@ -242,7 +242,7 @@ ClassMethod ExecuteQuery(query As %String, variable As %String, type As %String(
 /// type - create list or dataframe
 /// start - starting global key. Must be integer.
 /// end - final global key. Must be integer.
-/// mask - string, mask for global values. Must be less or equal in length to the number of global value fields.
+/// mask - string, mask for global values. Must be equal in length to the greatest number of global value fields.
 /// labels - %List of column names, first element is key column name. Therefore: List length is mask symbol length + 1.
 /// How to format mask:
 ///   + use field as is
@@ -279,16 +279,14 @@ ClassMethod ExecuteGlobal(global As %String, variable As %String, type As %Strin
 	// Set mask to $listlength of the first global value
 	if mask = "" {
 		set glvn = "^" _ global
-		if $data(@glvn@(start))=1 {
-			set data = @glvn@(start)
-		} else {
+		if '$data(@glvn@(start),data) {
 			set temp = $o(@glvn@(start),1,data)
 			kill temp
 		}
-		set mask = $tr($j("", $ll(data)), " ", "+")
+		set mask = $tr($j("", $ll($g(data))), " ", "+")
 		kill data
 	}
-	
+
 	set sc = ##class(isc.py.Callout).GetGlobalOrder(global, start, end, mask, variable)
 	quit:$$$ISERR(sc) sc
 	set $namespace = oldNamespace
@@ -378,7 +376,6 @@ ClassMethod ExecuteClass(class As %String, variable As %String, type As %String(
 	while $listnext(labels, ptr, value) {
 		set:$g(value)'="" fixedLabels = fixedLabels _ $lb(value)
 	}
-	
 	
 	set global = $$$comMemberKeyGet(class,$$$cCLASSstorage,storageName,$$$cSDEFdatalocation)
 	quit:$d(@global)<10 $$$ERROR($$$GeneralError, "Data global is empty")
