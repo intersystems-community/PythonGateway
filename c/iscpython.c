@@ -313,7 +313,7 @@ PyTupleObject* ListToTuple(CACHE_EXSTRP result,  char* mask, int maskLength, int
 	int maskPosition = -1;
 
 	while (i<listLength) {
-		if (maskPosition>maskSymbolLength) {
+		if ((maskPosition+1)>=maskSymbolLength) {
 			break;
 		} else {
 			maskPosition++;
@@ -340,21 +340,23 @@ PyTupleObject* ListToTuple(CACHE_EXSTRP result,  char* mask, int maskLength, int
 		}
 
 		// Calculate length and offset of current data - START
-		int dataStart = 0;
-		int dataLength = 0;
+		int dataStart = i;
+		int dataLength = l;
 
-		if (l < 255) {
+		if (l==1) {
+			// do nothing
+		} else if (l < 255) {
 			type = list[i+1];
-			dataStart = i + 2;
-			dataLength = l - 2;
+			dataStart += 2;
+			dataLength -= 2;
 		} else if (l < 65536) {
 			type = list[i+3];
-			dataStart = i + 4;
-			dataLength = l - 4;
+			dataStart += 4;
+			dataLength -= 4;
 		} else {
 			type = list[i+7];
-			dataStart = i + 8;
-			dataLength = l - 8;
+			dataStart += 8;
+			dataLength -= 8;
 		}
 		// Calculate length and offset of current data - END
 
@@ -544,7 +546,7 @@ int GetGlobalOrder(const char *global, int start, int end, const char* mask, con
 	}
 	CACHEEXSTRKILL(value);
 
-	PyObject_SetAttrString(mainModule, name, PyList_GetSlice(list, 0, row));
+	PyObject_SetAttrString(mainModule, name, PyList_GetSlice(list, 0, row-1));
 	//Py_DECREF(list);
 
 	return ZF_SUCCESS;

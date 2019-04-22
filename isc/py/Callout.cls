@@ -204,6 +204,7 @@ ClassMethod Finalize() As %Status
 /// s ^BDZ4.DfXU.1(2)=$lb(1,64756,"4post21","@elina_4post как говорят обещаного три года ждут...((",2.1,-2.1,-4096,-65536,718,49,249,0)
 /// s ^BDZ4.DfXU.1(1)=$lb(0,48000,"nugemycejela","Коллеги сидят рубятся в Urban terror, а я из-за долбанной винды не могу :(",-1,-256,256.2,0,26,42,39,0)
 /// write ##class(isc.py.Callout).GetGlobalOrder("a",1,2,"+",,1)
+/// write ##class(isc.py.Callout).GetGlobalOrder("isc.py.test.PersonD",1,5,"++++++++")
 /// write ##class(isc.py.Callout).GetGlobalOrder("BDZ4.DfXU.1",1,2,      "bd++++++++++")
 /// write ##class(isc.py.Callout).GetGlobalOrder("BDZ4.DfXU.1",1,111922, "++++++++++++")
 ClassMethod GetGlobalOrder(global, start As %Integer, end As %Integer, mask As %String, name As %String = "l", unload As %Boolean = 0) As %Status
