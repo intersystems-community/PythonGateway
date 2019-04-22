@@ -522,7 +522,7 @@ int GetGlobalOrder(const char *global, int start, int end, const char* mask, con
 	// Global value
 	// CACHE_EXSTRP value = calloc(1, sizeof value);
 
-	while (key<end) {
+	while (key<=end) {
 		CACHEPUSHGLOBAL(strlen(global), global);
 		CACHEPUSHINT(key);
 		CACHEGLOBALORDER(narg,  dir, valueflag);
@@ -538,11 +538,11 @@ int GetGlobalOrder(const char *global, int start, int end, const char* mask, con
 		  CACHEPOPINT(&key);
 		}
 
+		row++;
+
 		if (key==NULL) {
 			break;
 		}
-
-		row++;
 	}
 	CACHEEXSTRKILL(value);
 
