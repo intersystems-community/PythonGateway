@@ -58,9 +58,7 @@ ClassMethod Test(count As %Integer = 100)
 	// for global transfer labels are not calculated automatically
 	set labels = $lb("globalKey", "Name", "DOB", "TS", "RandomTime", "AgeYears", "AgeDecimal", "AgeDouble", "Bool")
 
-	// mask is 1 element shorter because "globalKey" is global subscript label
-	// Note: mask MUST be the same length or greater than longest $lb value. 
-	// If you want to skip elements at the end just fill mask with "-"
+	// mask is 1 element shorter than labels because "globalKey" is global subscript label
 	// Here we want to skip %%CLASSNAME field
 	set mask = "-+dmt+++b"
 	
