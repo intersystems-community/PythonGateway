@@ -33,7 +33,7 @@ Arguments:
 - `type` - `list` or Pandas `dataframe`
 - `start` - initial global key. Must be integer.
 - `end` - final global key. Must be integer.
-- `mask` - string, mask for global values. Must equal in length to the greatest number of global value fields. If you want to skip elements at the end (anywhere, really) just fill mask with `-`. How to format mask:
+- `mask` - string, mask for global values. Mask may be shorter than the number of global value fields (in this case fields at the end would be skipped). How to format mask:
   -   `+` use field as is
   -   `-` skip field
   -   `b` - boolean (0 - False, anything else - True)
@@ -46,7 +46,7 @@ Arguments:
 
 Wrapper for `ExecuteGlobal`. Effectively it parses compiled class definition, constructs `ExecuteGlobal` arguments and calls it. 
 
-`ExecuteClass(class, variable, type, start, end, properties, namespace)` - transfer class data to Python list of tuples or pandas dataframe. `properties` - comma-separated list of properties to form dataframe from. * and ? wildcards are supported. Defaults to * (all properties). %%CLASSNAME property is ignored. Only stored properties can be used.
+`ExecuteClass(class, variable, type, start, end, properties, namespace)` - transfer class data to Python list of tuples or pandas dataframe. `properties` - comma-separated list of properties to form dataframe from. `*` and `?` wildcards are supported. Defaults to * (all properties). %%CLASSNAME property is ignored. Only stored properties can be used.
 
 Arguments:
 - `class` - class name
@@ -102,9 +102,7 @@ set sc = ##class(isc.py.Main).ExecuteGlobal(global, variable _ 0, type)
 // globalKey - is global subscript
 set labels = $lb("globalKey", "Name", "DOB", "TS", "RandomTime", "AgeYears", "AgeDecimal", "AgeDouble", "Bool")
 
-// mask is 1 element shorter because "globalKey" is global subscript label
-// Note: mask MUST be the same length or greater than longest $lb value. 
-// If you want to skip elements at the end just fill mask with "-"
+// mask is 1 element shorter than labels because "globalKey" is global subscript label
 // Here we want to skip %%CLASSNAME field
 set mask = "-+dmt+++b"
 
