@@ -156,6 +156,7 @@ Interoperability adapter `isc.py.ens.Operation` offers ability to interact with 
 - Execute Python code via `isc.py.msg.ExecutionRequest`. Returns `isc.py.msg.ExecutionResponse` with requested variable values
 - Execute Python code via `isc.py.msg.StreamExecutionRequest`. Returns `isc.py.msg.StreamExecutionResponse` with requested variable values. Same as above, but accepts and returns streams instead of strings.
 - Set dataset from SQL Query with `isc.py.msg.QueryRequest`. Returns `Ens.Response`.
+- Set dataset faster from Global/Class/Table with `isc.py.msg.GlobalRequest`/`isc.py.msg.ClassRequest`/`isc.py.msg.TableRequest`. Returns `Ens.Response`.
 - Save Python context via `isc.py.msg.SaveRequest`. Returns `Ens.StringResponse` with context id.
 - Restore Python context via `isc.py.msg.RestoreRequest`.
 
