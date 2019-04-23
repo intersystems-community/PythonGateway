@@ -61,6 +61,15 @@ XData MessageMap
   <MapItem MessageType="isc.py.msg.QueryRequest">
     <Method>ExecuteQuery</Method>
   </MapItem>
+    <MapItem MessageType="isc.py.msg.GlobalRequest">
+    <Method>ExecuteGlobal</Method>
+  </MapItem>
+    <MapItem MessageType="isc.py.msg.ClassRequest">
+    <Method>ExecuteClass</Method>
+  </MapItem>
+  <MapItem MessageType="isc.py.msg.TableRequest">
+    <Method>ExecuteTable</Method>
+  </MapItem>
 </MapItems>
 }
 
@@ -161,6 +170,33 @@ Method ExecuteQuery(request As isc.py.msg.QueryRequest, Output response As Ens.R
 	#dim sc As %Status = $$$OK
 	set response = ##class(Ens.Response).%New()	
 	set sc = ##class(isc.py.Main).ExecuteQuery(request.Query, request.Variable, request.Type, request.Namespace)
+	quit sc
+}
+
+/// Create pandas dataframe or list form global.
+Method ExecuteGlobal(request As isc.py.msg.GlobalRequest, Output response As Ens.Response) As %Status
+{
+	#dim sc As %Status = $$$OK
+	set response = ##class(Ens.Response).%New()
+	set sc = ##class(isc.py.Main).ExecuteGlobal(request.Global, request.Variable, request.Type, request.Start, request.End, request.Mask, request.Labels, request.Namespace)
+	quit sc
+}
+
+/// Create pandas dataframe or list form class.
+Method ExecuteClass(request As isc.py.msg.ClassRequest, Output response As Ens.Response) As %Status
+{
+	#dim sc As %Status = $$$OK
+	set response = ##class(Ens.Response).%New()
+	set sc = ##class(isc.py.Main).ExecuteClass(request.Class, request.Variable, request.Type, request.Start, request.End, request.Properties, request.Namespace)
+	quit sc
+}
+
+/// Create pandas dataframe or list form table.
+Method ExecuteTable(request As isc.py.msg.TableRequest, Output response As Ens.Response) As %Status
+{
+	#dim sc As %Status = $$$OK
+	set response = ##class(Ens.Response).%New()
+	set sc = ##class(isc.py.Main).ExecuteTable(request.Table, request.Variable, request.Type, request.Start, request.End, request.Properties, request.Namespace)
 	quit sc
 }
 

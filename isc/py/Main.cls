@@ -258,6 +258,8 @@ ClassMethod ExecuteGlobal(global As %String, variable As %String, type As %Strin
 	#dim sc As %Status = $$$OK
 	quit:",dataframe,list"'[type $$$ERROR($$$GeneralError, "Invalid type: " _ $g(type) _ ". Expected types: dataframe or list")
 
+	set:start="" start=1
+	
 	if type="dataframe" {
 		set sc = ..ImportModule("pandas", , .pandas)
 		quit:$$$ISERR(sc) sc
@@ -304,7 +306,7 @@ ClassMethod ExecuteGlobal(global As %String, variable As %String, type As %Strin
 	if type="dataframe" {
 		set sc = ..SimpleString(variable _ "=" _ pandas _ ".DataFrame(" _variable _ ", columns=zzzcolumns)")
 	} elseif type="list" {
-		set sc = ..SimpleString(variable _ "= zzzcolumns + " _ variable)
+		set sc = ..SimpleString(variable _ "= [tuple(zzzcolumns)] + " _ variable)
 	}
 	quit:$$$ISERR(sc) sc
 	

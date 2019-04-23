@@ -1,20 +1,9 @@
 /// Create pandas dataframe or list form sql.
-Class isc.py.msg.QueryRequest Extends Ens.Request
+Class isc.py.msg.QueryRequest Extends (Ens.Request, isc.py.msg.DataRequest)
 {
 
 /// Text of the SQL query
 Property Query As %VarString;
-
-/// Python variable to set
-Property Variable As %String;
-
-/// Variable type (Currently supported: dataframe (pandas dataframe) and list.
-/// Pandas automatically imported if required.
-Property Type As %String(VALUELIST = ",dataframe,list") [ InitialExpression = "list" ];
-
-/// Namespace in which to execute the query.
-/// 'isc.py' package must be available in this namespace
-Property Namespace As %String [ InitialExpression = {$namespace} ];
 
 Storage Default
 {
