@@ -1,12 +1,3 @@
-# Webinar: PythonGateway - part of InterSystems ML Toolkit
-
-Do you want to reap the benefits of the advances in the fields of artificial intelligence and machine learning? With InterSystems IRIS and the Machine Learning (ML) Toolkit, it’s easier than ever. Join my colleague Sergey Lukyanchikov and me on Tuesday, April 23rd at 11am EDT for the Machine Learning Toolkit for InterSystems IRIS webinar to find out how InterSystems IRIS can be used as both a standalone development platform and an orchestration platform for AI/ML models that brings together InterSystems IRIS, Python and other external tools.
-
-Date: **Tuesday, April 23rd at 11am EDT**
-
-[**REGISTER**](https://attendee.gotowebinar.com/register/2487801585929959180)! 
-
-
 # PythonGateway
 Python Gateway for InterSystems Data Platforms. Execute Python code and more from InterSystems IRIS.
 This projects brings you the power of Python right into your InterSystems IRIS environment:
@@ -178,7 +169,7 @@ All business processes inheriting from `isc.py.ens.ProcessUtils` can use `GetAnn
 Check test `isc.py.test.Process` business process for example in `Correlation Matrix: Graph` activity: `f.savefig(r'#{process.WorkDirectory}SHOWCASE${%PopulateUtils:Integer:1:100}.png')`
 
 In this example:
-- `#{process.WorkDirectory}` returns WorkDirectory property of `process` object which is an instance of `isc.py.test.Process` class and current businedd process.
+- `#{process.WorkDirectory}` returns WorkDirectory property of `process` object which is an instance of `isc.py.test.Process` class and current business process.
 - `${%PopulateUtils:Integer:1:100}` calls `Integer` method of `%PopulateUtils` class passing arguments `1` and `100`, returning random integer in range `1...100`.
 
 # Test Business Process
@@ -200,7 +191,7 @@ Note: instead of step 3 run: `set sc = ##class(isc.py.util.Installer).ConfigureT
 - If you want to use `JDBC` connection, install JayDeBeApi: `pip install JayDeBeApi`. On Linux you might need to install: `apt-get install python-apt` beforehand. 
 - If you get errors similar to `undefined symbol: _Py_TrueStruct` in `isc.py.ens.Operation`operation set setting `PythonLib` to `libpython3.6m.so` or even to a full path of the shared library.
 - In test Business Process `isc.py.test.Process` edit annotation for `ODBC` or `JDBC` calls, specifying correct connection string.
-- In production, `isc.py.test.Process` host set `ConnectionType` setting to a preferred connection type (defaults to `RAW`, change only if you need to test xDBC connectivity).
+- In production, for the sample business process `isc.py.test.Process` set `ConnectionType` setting to a preferred connection type (defaults to RAW, change only if you need to test xDBC connectivity).
 
 # Unit tests
 
