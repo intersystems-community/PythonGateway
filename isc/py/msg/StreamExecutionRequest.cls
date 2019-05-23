@@ -6,7 +6,7 @@ Class isc.py.msg.StreamExecutionRequest Extends Ens.Request
 Property Code As %Stream.GlobalCharacter;
 
 /// Comma-separated list of variables to get in response message
-Property Variables As %String;
+Property Variables As %VarString;
 
 /// Separate incoming message into lines for execution.
 /// $c(10) is used for line separation

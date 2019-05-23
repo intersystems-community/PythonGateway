@@ -199,6 +199,7 @@ Method Restore(verbose As %Boolean = {$$$NO}, clear As %Boolean = {$$$NO}) As %S
 /// Calculate Pickle alias and import pickle if required
 Method InitPickle()
 {
+	#dim sc As %Status = $$$OK
 	#dim importedPickle As %Boolean = $$$NO
 	#dim importedDill As %Boolean = $$$NO
 	
