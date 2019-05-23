@@ -1,5 +1,7 @@
 /// Test data
-Class isc.py.test.CannibalizationData Extends (%Persistent, %XML.Adaptor)
+/// do ##class(isc.py.test.CannibalizationData).Import()
+/// zw ##class(isc.py.test.CannibalizationData).Export()
+Class isc.py.test.CannibalizationData Extends (%Persistent, isc.py.util.Storage)
 {
 
 /// Name of XData block that stores our data for population 
@@ -50,65 +52,6 @@ Property SCHWEIN As %Integer;
 Property UEBRIGEBRUEHWURSTSTUECK As %Integer [ SqlFieldName = UEBRIGE_BRUEHWURST_STUECK ];
 
 Property WIENERLIKNACKERLIFRANKFURTERLI As %Integer [ SqlFieldName = WIENERLI_KNACKERLI_FRANKFURTERLI ];
-
-/// zw ##class(isc.py.test.CannibalizationData).Export()
-ClassMethod Export() As %Status
-{
-    quit:$classmethod($classname(), "%Extends", "%XML.Adaptor")=$$$NO $$$ERROR($$$GeneralError, "Class " _ $classname() _ " should extend %XML.Adaptor")
-    
-    if ##class(%Dictionary.XDataDefinition).IDKEYExists($classname(), ..#XDATA) {
-        set xdata = ##class(%Dictionary.XDataDefinition).IDKEYOpen($classname(), ..#XDATA)
-    } else {
-        set xdata = ##class(%Dictionary.XDataDefinition).%New($classname() _  ":" _ ..#XDATA)
-    }
-    
-    #dim stream As %Stream.TmpCharacter
-    set stream = xdata.Data
-    
-    do stream.Clear()
-    do stream.WriteLine("<xml>")
-    
-    set rs = ..ExtentFunc()
-    while rs.%Next() {
-        set obj = ..%OpenId(rs.ID)
-        do obj.XMLExportToStream(.stream)
-        do stream.WriteLine()
-    }
-    do stream.WriteLine("</xml>")
-    quit xdata.%Save()
-}
-
-/// do ##class(isc.py.test.CannibalizationData).Import()
-ClassMethod Import() As %Status
-{
-	#dim sc As %Status = $$$OK
-	set xdata = ##class(%Dictionary.XDataDefinition).IDKEYOpen($classname(), "Data")
-	
-	#dim stream As %Stream.TmpCharacter 
-	set stream = xdata.Data
-	
-	set reader = ##class(%XML.Reader).%New()
-	set sc=reader.OpenStream(stream)
-	quit:$$$ISERR(sc) sc
-	do reader.Correlate(..GetXMLName(), $classname())
-	
-	do ..%KillExtent()
-	while reader.Next(.obj, .sc) {
-		set sc = obj.%Save()
-		quit:$$$ISERR(sc)
-	}
-	
-	quit sc
-}
-
-/// Get class XMLName
-/// w ##class(isc.py.test.CannibalizationData).GetXMLName()
-ClassMethod GetXMLName(class As %Dictionary.CacheClassname = {$classname()}) As %String
-{
-    set xmlname = ..#XMLNAME
-    set:xmlname="" xmlname = $$$ClassShortName(class)
-    quit xmlname
-}
 
 XData Data
 {
