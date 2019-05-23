@@ -203,8 +203,9 @@ ClassMethod ExecuteQuery(query As %String, variable As %String, type As %String(
 			do data.Write(dataStr)
 			set dataStr=""
 		}
-			
+		
 	}
+	
 	do data.Write(dataStr)
 	do data.Write("]")
 
@@ -829,15 +830,17 @@ ClassMethod GetVariableJson(variable As %String, ByRef stream As %Stream.Object,
 	set sc = ..SimpleString("def zzztoserializable(val):" _ $c(10) _ 
 							"    if hasattr(val, 'to_json'):" _ $c(10) _ 
 							"        return json.loads(val.to_json())" _ $c(10) _ 
-							"    elif hasattr(val, '__dict__'):" _ $c(10) _ 
-							"        return val.__dict__" _ $c(10) _ 
 							"    elif hasattr(val, 'for_json'):" _ $c(10) _ 
 							"        return json.loads(val.for_json()) " _ $c(10) _ 
+							"    elif hasattr(val, '__dict__'):" _ $c(10) _ 
+							"        return val.__dict__" _ $c(10) _ 
+							"    elif hasattr(val, '__iter__'):" _ $c(10) _ //  isinstance(val, collections.Set)
+                            "        return list(val)" _ $c(10) _
 							"    elif isinstance(val, Exception):" _ $c(10) _ 
 							"        return {" _ $c(10) _ 
 							"            'error': val.__class__.__name__," _ $c(10) _ 
 							"            'args': val.args," _ $c(10) _ 
-							"        }" _ $c(10) _ 
+							"        }" _ $c(10) _  
 							"    return str(val)")
 
 	quit:$$$ISERR(sc) sc
