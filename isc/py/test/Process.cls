@@ -85,7 +85,7 @@ corrmat.columns.name='CATEGORY']]></annotation>
 <request type='isc.py.msg.ExecutionRequest' >
 <assign property="callrequest.Variables" value="&quot;corrmat&quot;" action="set" />
 <assign property="callrequest.Code" value="process.GetAnnotation(&quot;Correlation Matrix: Tabular&quot;)" action="set" />
-<assign property="callrequest.Serialization" value="&quot;JSON&quot;" action="set" />
+<assign property="callrequest.Serialization" value='"JSON"' action="set" />
 </request>
 <response type='isc.py.msg.ExecutionResponse' />
 </call>

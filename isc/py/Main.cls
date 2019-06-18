@@ -155,6 +155,8 @@ ClassMethod ExecuteQuery(query As %String, variable As %String, type As %String(
 		} elseif column.clientType = 16 {
 			// boolean
 			set typeList = typeList _ $lb($$$ODBCTYPEbit)
+		} elseif column.ODBCType = $$$ODBCTYPElongvarchar {
+			set typeList = typeList _ $lb($$$ODBCTYPElongvarchar)
 		} else {
 			set typeList = typeList _ $lb($$$ODBCTYPEvarchar)
 		}
@@ -186,6 +188,10 @@ ClassMethod ExecuteQuery(query As %String, variable As %String, type As %String(
 				// TODO Python 3.7 added date.fromisoformat("YYYY-MM-DD")
 			} elseif colType = $$$ODBCTYPEtime {
 				set rowList = rowList _ $lb(##class(isc.py.util.Converter).ODBCTimeToPython(datetime, value))
+			} elseif colType = $$$ODBCTYPElongvarchar {
+				set stream = ##class(%Stream.Object).%Open($lfs(value))
+				set rowList = rowList _ $lb(##class(isc.py.util.Converter).EscapeString(stream.Read(1000000)))
+				kill stream
 			} else {
 				set rowList = rowList _ $lb(##class(isc.py.util.Converter).EscapeString(value))
 			}
