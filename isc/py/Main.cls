@@ -407,7 +407,7 @@ ClassMethod ExecuteClass(class As %String, variable As %String, type As %String(
 /// set sc = ##class(isc.py.Main).ExecuteTable("User_WEB.SENTIMENT_NEG", "df2", "dataframe")
 ClassMethod ExecuteTable(table As %String, variable As %String, type As %String(VALUELIST=",dataframe,list") = "list", start As %Integer = 1, end As %Integer = "", properties As %String = "*", namespace As %String = {$namespace}) As %Status [ CodeMode = expression ]
 {
-..ExecuteClass($$$GetClassNameFromIQN(table), variable, type, start, end, properties, namespace)
+..ExecuteClass($$$GetClassNameFromIQN($select(table[".": table, 1: $$$DefaultSchema _ "." _ table)), variable, type, start, end, properties, namespace)
 }
 
 /// variable - variable name
