@@ -13,5 +13,16 @@ SYSTEM
 		do ex.Log()
 	}
 	quit 1
+	
+LOGIN  
+	try {
+		new $namespace 
+		set $namespace = "PYTHON"
+		do ##class(isc.py.Callout).Initialize("libpython3.6m.so")
+	} catch ex {
+		zn "%SYS"
+		do ex.Log()
+	}
+	quit 1
 ]]></Routine>
 </Export>
