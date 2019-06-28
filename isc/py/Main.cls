@@ -117,6 +117,9 @@ ClassMethod ExecuteQuery(query As %String, variable As %String, type As %String(
 	if type="dataframe" {
 		set sc = ..ImportModule("pandas", , .pandas)
 		quit:$$$ISERR(sc) sc
+		
+		set sc = ..ImportModule("numpy", , .numpy)
+		quit:$$$ISERR(sc) sc
 	}
 	set sc = ..ImportModule("datetime", , .datetime)
 	quit:$$$ISERR(sc) sc
@@ -182,10 +185,19 @@ ClassMethod ExecuteQuery(query As %String, variable As %String, type As %String(
 				set:value="" value = "None"
 				set rowList = rowList _ $lb(value)
 			} elseif colType = $$$ODBCTYPEtimestamp {
-				set rowList = rowList _ $lb(##class(isc.py.util.Converter).ODBCTimeStampToPython(datetime, value))
+				if type = "dataframe" {
+					set value = ##class(isc.py.util.Converter).ODBCDateToNumpy(numpy, value)
+				} else {
+					set value = ##class(isc.py.util.Converter).ODBCTimeStampToPython(datetime, value)
+				}
+				set rowList = rowList _ $lb(value)
 			} elseif colType = $$$ODBCTYPEdate {
-				set rowList = rowList _ $lb(##class(isc.py.util.Converter).ODBCDateToPython(datetime, value))
-				// TODO Python 3.7 added date.fromisoformat("YYYY-MM-DD")
+				if type = "dataframe" {
+					set value = ##class(isc.py.util.Converter).ODBCDateToNumpy(numpy, value)
+				} else {
+					set value = ##class(isc.py.util.Converter).ODBCDateToPython(datetime, value)
+				}
+				set rowList = rowList _ $lb(value)
 			} elseif colType = $$$ODBCTYPEtime {
 				set rowList = rowList _ $lb(##class(isc.py.util.Converter).ODBCTimeToPython(datetime, value))
 			} elseif colType = $$$ODBCTYPElongvarchar {

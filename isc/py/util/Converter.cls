@@ -52,6 +52,14 @@ ClassMethod ODBCDateToPython(datetime As %String = "datetime", date As %String) 
 datetime _ ".date(" _ $e(date, 1, 4) _ "," _ +$e(date, 6, 7) _ "," _ + $e(date, 9, 10) _ ")"
 }
 
+/// numpy - alias of numpy module
+/// date in all formats supported by numpy, i.e. ODBC format: YYYY-MM-DD
+/// w ##class(isc.py.util.Converter).ODBCDateToNumpy(,"2019-01-01")
+ClassMethod ODBCDateToNumpy(numpy As %String = "numpy", date As %String) As %String [ CodeMode = expression ]
+{
+numpy _ ".datetime64('" _ date _  "')"
+}
+
 /// datetime - alias of datetime module
 /// time in $horolog format
 /// w ##class(isc.py.util.Converter).HorologTimeToPython(,$p($h,",",*))
