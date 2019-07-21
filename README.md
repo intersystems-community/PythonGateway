@@ -50,7 +50,7 @@ If you modified environment variables restart your InterSystems product.
 
 1. To build docker image:
   - Copy `iscpython.so` into repository root (if it's not there already)
-  - Execute in the repository root `docker build --force-rm --tag intersystemscommunity/irispy:latest .` By default the image is built upon `intersystems/iris:2019.1.0.510.0-1` image, however you can change that by providing `IMAGE` variable. To build from InterSystems IRIS Community Edition execute: `docker build  --build-arg IMAGE=store/intersystems/iris:2019.1.0.510.0-community --force-rm --tag intersystemscommunity/irispy-community:latest .`
+  - Execute in the repository root `docker build --force-rm --tag intersystemscommunity/irispy:latest .` By default the image is built upon `intersystems/iris:2019.1.0.510.0-1` image, however you can change that by providing `IMAGE` variable. To build from InterSystems IRIS Community Edition execute: `docker build  --build-arg IMAGE=store/intersystems/iris:2019.1.0.510.0-community --force-rm --tag intersystemscommunity/irispy:latest .`
 2. To run docker image execute: 
 
 ```
