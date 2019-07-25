@@ -24,6 +24,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		openssl \
 		libssl1.1 \
 		libssl-dev \
+		libbz2-dev \
+		liblzma-dev \
 	&& rm -rf /var/lib/apt/lists/*
 
 ENV PYTHON_VERSION 3.6.7
