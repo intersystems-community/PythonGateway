@@ -539,6 +539,7 @@ ClassMethod GetVariableDefined(variable As %String = "", Output defined As %Bool
 /// Get variable type
 /// variable - variable name
 /// type - variable FQCN
+/// set sc = ##class(isc.py.Main).GetVariableType("", .type)
 ClassMethod GetVariableType(variable As %String = "", Output type As %String) As %Status
 {
 	#dim sc As %Status = $$$OK
@@ -856,6 +857,8 @@ ClassMethod GetVariableJson(variable As %String, ByRef stream As %Stream.Object,
 							"        return val.__dict__" _ $c(10) _ 
 							"    elif isinstance(val, collections.Set):" _ $c(10) _
                             "        return list(val)" _ $c(10) _
+							"    elif hasattr(val, 'tolist'):" _ $c(10) _ 
+							"        return val.tolist()" _ $c(10) _ 
 							"    elif isinstance(val, Exception):" _ $c(10) _ 
 							"        return {" _ $c(10) _ 
 							"            'error': val.__class__.__name__," _ $c(10) _ 
