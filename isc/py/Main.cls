@@ -843,6 +843,8 @@ ClassMethod GetVariableJson(variable As %String, ByRef stream As %Stream.Object,
 	
 	set sc = ..SimpleString("import json")
 	quit:$$$ISERR(sc) sc
+	set sc = ..SimpleString("import collections")
+	quit:$$$ISERR(sc) sc
 
 	// More info https://hynek.me/articles/serialization/
 	set sc = ..SimpleString("def zzztoserializable(val):" _ $c(10) _ 
@@ -852,7 +854,7 @@ ClassMethod GetVariableJson(variable As %String, ByRef stream As %Stream.Object,
 							"        return json.loads(val.for_json()) " _ $c(10) _ 
 							"    elif hasattr(val, '__dict__'):" _ $c(10) _ 
 							"        return val.__dict__" _ $c(10) _ 
-							"    elif hasattr(val, '__iter__'):" _ $c(10) _ //  isinstance(val, collections.Set)
+							"    elif isinstance(val, collections.Set):" _ $c(10) _
                             "        return list(val)" _ $c(10) _
 							"    elif isinstance(val, Exception):" _ $c(10) _ 
 							"        return {" _ $c(10) _ 
