@@ -9,9 +9,11 @@ This projects brings you the power of Python right into your InterSystems IRIS e
 
 # ML Toolkit Webinar in German
 
-Machine Learning ist gegenwärtig einer der wichtigsten Trends in der Anwendungsentwicklung. In unserer dreiteiligen Webinar-Serie „Machine Learning Toolkit für InterSystems IRIS“ erläutern unsere Experten Aleksandar Kovacevic und Thomas Nitzsche, wie sich Machine Learning Ansätze einfach und effizient mit InterSystems IRIS umsetzen lassen. Zum Auftakt der Webinar-Reihe widmen wir uns der Frage, was passiert, wenn InterSystems IRIS im Rahmen eines Machine Learning Projekts auf Python trifft. Neben den technischen Aspekten – dem „wie“ – stellen wir Ihnen auch einige relevante Praxisbeispiele vor, um die Frage nach dem „warum Machine Learning“ zu beantworten.
-FREITAG, 26 JULI 2019 von 10:30 Uhr bis 11:00 Uhr.
-[JETZT REGISTRIEREN](https://dach.intersystems.de/webinar2).
+Machine Learning ist gegenwärtig einer der wichtigsten Trends in der Anwendungsentwicklung. In unserer dreiteiligen Webinar-Serie „Machine Learning Toolkit für InterSystems IRIS“ erläutern unsere Experten Aleksandar Kovacevic und Thomas Nitzsche, wie sich Machine Learning Ansätze einfach und effizient mit InterSystems IRIS umsetzen lassen.
+
+Melden Sie sich am besten direkt an und erfahren Sie, wie InterSystems IRIS sowohl als eigenständige Entwicklungsplattform wie auch als Orchestrierungswerkzeug für Predictive Modeling eingesetzt werden kann und wie externe Tools in den Entwicklungsprozess eingebunden werden.
+FREITAG, 02. AUGUST 2019 von 10:30 Uhr bis 11:00 Uhr
+[JETZT REGISTRIEREN](https://dach.intersystems.de/webinar3).
  
 # ML Toolkit user group
 
@@ -25,24 +27,30 @@ ML Toolkit user group is a private GitHub repository set up as part of InterSyst
 
 # Installation
 
-1. [Install Python 3.6.7 64 bit](https://www.python.org/downloads/release/python-367/).
+1. [Install Python 3.6.7 64 bit](https://www.python.org/downloads/release/python-367/) (other Python versions will not work due to ABI incompatibility). 
 2. Install `dill` module: `pip install dill` (required for context harvesting)
-3. Load ObjectScript code (i.e. `do $system.OBJ.ImportDir("C:\InterSystems\Repos\Python\isc\py\","*.cls","c",,1)`) into Production (Ensemble-enabled) namespace. In case you want to Production-enable namespace call: `write ##class(%EnsembleMgr).EnableNamespace($Namespace, 1)`.
-4. Place [callout DLL/SO/DYLIB](https://github.com/intersystems-community/PythonGateway/releases) in the `bin` folder of your InterSystems IRIS installation. Library file should be placed into a path returned by `write ##class(isc.py.Callout).GetLib()`. 
+3. Download latest PythonGateway [release](https://github.com/intersystems-community/PythonGateway/releases) and unpack it.
+4. From the InterSystems IRIS terminal, load ObjectScript code. To do that execute: `do $system.OBJ.ImportDir("/path/to/unpacked/pythongateway","*.cls","c",,1)`) in Production (Ensemble-enabled) namespace. In case you want to Production-enable namespace call: `write ##class(%EnsembleMgr).EnableNamespace($Namespace, 1)`.
+5. Place [callout DLL/SO/DYLIB](https://github.com/intersystems-community/PythonGateway/releases) in the `bin` folder of your InterSystems IRIS installation. Library file should be placed into a path returned by `write ##class(isc.py.Callout).GetLib()`. 
 
 ## Windows 
 
-5. Check that your `PYTHONHOME` environment variable points to Python 3.6.7.
-6. Check that your SYSTEM `PATH` environment variable has `PYTHONHOME` variable (or directory it points to).
-
+6. Check that your `PYTHONHOME` environment variable points to Python 3.6.7.
+7. Check that your SYSTEM `PATH` environment variable has:
+  - `%PYTHONHOME%` variable (or directory it points to) 
+  - `%PYTHONHOME%\Scripts` directory
+8. In the InterSystems IRIS Terminal, run:
+  - `write $SYSTEM.Util.GetEnviron("PYTHONHOME")` and verify it prints out the directory of Python installation
+  - `write $SYSTEM.Util.GetEnviron("PATH")` and verify it prints out the directory of Python installation and `Scripts` folder inside Python installation.
+  
 ## Linux 
 
-5. Check that your SYSTEM `PATH` environment variable has `/usr/lib` and `/usr/lib/x86_64-linux-gnu`, preferably at the beginning. Use `/etc/environment` file to set environment variables.
-6. In cause of errors check Troubleshooting section `undefined symbol: _Py_TrueStruct` and specify PythonLib property.
+6. Check that your SYSTEM `PATH` environment variable has `/usr/lib` and `/usr/lib/x86_64-linux-gnu`, preferably at the beginning. Use `/etc/environment` file to set environment variables.
+7. In cause of errors check Troubleshooting section `undefined symbol: _Py_TrueStruct` and specify PythonLib property.
 
 ## Mac
 
-5. Only python 3.6.7 from [Python.org](https://www.python.org/downloads/release/python-367/). is currently supported. Check `PATH` variable.
+6. Only python 3.6.7 from [Python.org](https://www.python.org/downloads/release/python-367/). is currently supported. Check `PATH` variable.
 
 If you modified environment variables restart your InterSystems product.
 
