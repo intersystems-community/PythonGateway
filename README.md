@@ -6,16 +6,6 @@ This projects brings you the power of Python right into your InterSystems IRIS e
 - Seamlessly transfer data from InterSystems IRIS into Python
 - Build intelligent Interoperability business processes with Python Interoperability Adapter
 - Save, examine, modify and restore Python context from InterSystems IRIS
-
-# ML Toolkit Webinar in German
-
-Machine Learning ist gegenwärtig einer der wichtigsten Trends in der Anwendungsentwicklung. In unserer dreiteiligen Webinar-Serie „Machine Learning Toolkit für InterSystems IRIS“ erläutern unsere Experten Aleksandar Kovacevic und Thomas Nitzsche, wie sich Machine Learning Ansätze einfach und effizient mit InterSystems IRIS umsetzen lassen.
-
-Melden Sie sich am besten direkt an und erfahren Sie, wie InterSystems IRIS sowohl als eigenständige Entwicklungsplattform wie auch als Orchestrierungswerkzeug für Predictive Modeling eingesetzt werden kann und wie externe Tools in den Entwicklungsprozess eingebunden werden.
-
-Wir freuen uns auf Ihre Teilnahme!
-FREITAG, 09. AUGUST 2019 von 10:30 Uhr bis 11:00 Uhr
-[JETZT REGISTRIEREN](https://dach.intersystems.de/webinar4).
  
 # ML Toolkit user group
 
