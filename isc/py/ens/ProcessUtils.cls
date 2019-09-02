@@ -10,7 +10,7 @@ Class isc.py.ens.ProcessUtils
 Parameter ActivityNodes = {$lb("Ens.BPL.Case", "Ens.BPL.CaseNode", "Ens.BPL.Catch", "Ens.BPL.CatchAll", "Ens.BPL.CompensationHandler", "Ens.BPL.Default", "Ens.BPL.Flow", "Ens.BPL.ForEach", "Ens.BPL.Message", "Ens.BPL.Request", "Ens.BPL.Response", "Ens.BPL.Scope", "Ens.BPL.Sequence", "Ens.BPL.Until", "Ens.BPL.While")};
 
 /// Get value of activity annatation by name
-ClassMethod GetAnnotation(name) As %String [ CodeMode = objectgenerator ]
+ClassMethod GetAnnotation(name As %String) As %String [ CodeMode = objectgenerator ]
 {
     set sc = $$$OK
     try {
@@ -44,6 +44,14 @@ ClassMethod GetAnnotation(name) As %String [ CodeMode = objectgenerator ]
 	    set sc = ex.AsStatus()
     }
     quit sc
+}
+
+/// Get value of activity annatation by name as stream
+ClassMethod GetAnnotationStream(name As %String) As %Stream.GlobalCharacter
+{
+	set stream = ##class(%Stream.GlobalCharacter).%New()
+	do stream.Write(..GetAnnotation(name))
+	quit stream
 }
 
 ClassMethod ParseActivities(activities As Ens.BPL.ActivityList)
