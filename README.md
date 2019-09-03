@@ -6,6 +6,21 @@ This projects brings you the power of Python right into your InterSystems IRIS e
 - Seamlessly transfer data from InterSystems IRIS into Python
 - Build intelligent Interoperability business processes with Python Interoperability Adapter
 - Save, examine, modify and restore Python context from InterSystems IRIS
+
+# Webinar - AI Robotization
+
+Machine Learning (ML) Toolkit - a set of extensions to implement machine learning and artificial intelligence on the InterSystems IRIS Data Platform. As part of our webinar, we plan to present an approach to the robotization of these tasks, i.e. to ensure their autonomous adaptive execution proceeds within the parameters and rules you specify. Self-learning neural networks, self-monitoring analytical processes, agency of analytical processes are the main subjects of this webinar.
+
+Webinar is aimed at both experts in Data Science, Data Engineering, Robotic Process Automation - and those who just discover the world of artificial intelligence and machine learning.
+
+We are waiting for you at our event!
+
+The language of the webinar is Russian. 
+
+Date: 18 September, 10:00 – 11:00 (GMT+3).
+
+[Register](https://www.intersystems.com/ru/news-events/events/intersystems-ml-toolkit-webinar/).
+
  
 # ML Toolkit user group
 
