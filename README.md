@@ -273,7 +273,7 @@ Commits should follow the pattern: `moule: description issue`. List of modules:
 2. Rename `mingw32-make.exe` to `make.exe` in `mingw64\bin` directory.
 3. Set `GLOBALS_HOME` environment variable to the root of Caché or Ensemble installation.
 4. Set `PYTHONHOME` environment variable to the root of Python3 installation. Usually `C:\Users\<User>\AppData\Local\Programs\Python\Python3<X>`
-5. Open MinGW bash (`mingw64env.cmd`).
+5. Open MinGW bash (`mingw64env.cmd` or `mingw-w64.bat`).
 6. In `<Repository>\c\` execute `make`.
 
 ## Linux
