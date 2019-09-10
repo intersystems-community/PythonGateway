@@ -4,7 +4,7 @@ CD := cd
 MAKE := make
 LDFLAGS := -shared
 
-CFLAGS += -Wall -Wextra -fpic -O3 -fno-strict-aliasing -Wno-unused-parameter
+CFLAGS += -Wall -Wextra -fpic -O3 -fno-strict-aliasing -Wno-incompatible-pointer-types
 
 SYS := $(shell gcc -dumpmachine)
 
