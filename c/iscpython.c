@@ -283,7 +283,7 @@ int64_t Next2(int64_t v)
 /// maskLength - Number of significant characters in mask
 /// maskSymbolLength - Number of total characters in mask
 /// key - key value for $lb (would be first element in tuple)
-PyTupleObject* ListToTuple(CACHE_EXSTRP result,  char* mask, int maskLength, int maskSymbolLength, int key)
+PyTupleObject* ListToTuple(CACHE_EXSTRP result, const char* mask, int maskLength, int maskSymbolLength, int key)
 {
 	// $lb structure
 	char* list = result->str.ch;
@@ -464,10 +464,11 @@ PyTupleObject* ListToTuple(CACHE_EXSTRP result,  char* mask, int maskLength, int
 }
 
 /// Given mask calculate number of non '-' characters
-int CalculateMaskLength(char *mask)
+int CalculateMaskLength(const char *mask)
 {
 	int length = 0;
-	for (int i=0; i<strlen(mask);i++) {
+	int maxLength = (int)strlen(mask);
+	for (int i=0; i<maxLength;i++) {
 		if (mask[i]!='-') {
 			length++;
 		}
@@ -546,25 +547,6 @@ int GetGlobalOrder(const char *global, int start, int end, const char* mask, con
 	//Py_DECREF(list);
 
 	return ZF_SUCCESS;
-}
-
-// Code for testing and debugging as an executable
-int main(int argc, char **argv) {
-	printf("X: ");
-
-	//double random = 0;
-	//GetRandom(&random);
-	//GetRandomSimple(&random);
-	//printf("%lf", random);
-
-	char* result = malloc(sizeof(char) * 1024);
-
-	Initialize(NULL);
-	//SimpleString("x=2", "x", result);
-	Finalize();
-
-	printf("%s", result);
-	return EXIT_SUCCESS;
 }
 
 ZFBEGIN
