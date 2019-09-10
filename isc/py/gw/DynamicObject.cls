@@ -136,11 +136,6 @@ Method %ToStream(ByRef stream As %Stream.Object, useString As %Boolean = {$$$NO}
 ##class(isc.py.Main).GetVariable(..%Variable, ..%Serialization, .stream, useString)
 }
 
-Method %Destroy() [ CodeMode = expression ]
-{
-##class(isc.py.Main).SimpleString("del " _ ..%Variable)
-}
-
 /// Get object as serialized string
 Method %GetString() As %String
 {

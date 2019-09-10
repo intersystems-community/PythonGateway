@@ -9,7 +9,6 @@ Method OnBeforeAllTests() As %Status
 
 Method TestSimpleString()
 {
-	do ##class(isc.py.Callout).Finalize()
 	set random = ##class(isc.py.Callout).SimpleString()
 	do $$$AssertTrue(random<1, "SimpleString works")
 
@@ -471,6 +470,8 @@ Method TestProxyObject()
 	set plusReturned = obj.getAgePlus(plus)
 	do $$$AssertEquals(age + plus, plusReturned)
 	
+	set obj.%DeleteOnClose = $$$NO
+	
 	kill obj, nameReturned
 	
 	set obj = ##class(isc.py.gw.DynamicObject).%New(, variable)
@@ -482,8 +483,9 @@ Method TestProxyObject()
 	
 	do $$$AssertEquals(obj.city, dynObj.city)
 	
-	set sc = obj.%Destroy()
-	do $$$AssertStatusOK(sc, "Destroyed person object")
+	set obj.%DeleteOnClose = $$$YES
+	
+	kill obj
 	
 	set sc = ##class(isc.py.Main).GetVariableInfo(variable,,.defined)
 	do $$$AssertNotTrue(defined, "Person object is undefined")
