@@ -292,9 +292,6 @@ PyTupleObject* ListToTuple(CACHE_EXSTRP result,  char* mask, int maskLength, int
 
 	PyTuple_SET_ITEM(tuple, 0, PyLong_FromLong(key));
 
-	// current element
-	int num = 0;
-
 	// current byte position
 	int i=0;
 
@@ -303,7 +300,6 @@ PyTupleObject* ListToTuple(CACHE_EXSTRP result,  char* mask, int maskLength, int
 
 	// datatype
 	int type = 0;
-
 
 	// current tuple position
 	// 0 is id
