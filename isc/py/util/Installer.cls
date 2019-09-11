@@ -22,6 +22,9 @@ XData Install [ XMLNamespace = INSTALLER ]
  
     <Log Level="1" Text="Configuring Test Process"/>
     <Invoke Class="isc.py.util.Installer" Method="ConfigureTestProcess" CheckStatus="true"/>
+	
+    <Log Level="1" Text="Configuring BPL Editor"/>
+    <Invoke Class="isc.py.util.Installer" Method="PatchBP" CheckStatus="true"/>
         
     <Log Level="1" Text="Enabling OS level Authentication"/>
     <Invoke Class="isc.py.util.Installer" Method="OSAuth" CheckStatus="true"/>
@@ -126,6 +129,41 @@ ClassMethod LoadZRoutines(dir As %String) As %Status
 	set sc = $system.OBJ.ImportDir(dir, "*.xml", "c")
 	quit sc
 }
+
+/// Add magnifying glass to Annotation
+/// zw ##class(isc.py.util.Installer).PatchBP()
+ClassMethod PatchBP()
+{
+	set class = "EnsPortal.BPLEditor"
+	set patch = "<!-- PATCH -->"
+	$$$QuitOnError(##class(%Compiler.UDL.TextServices).GetTextAsString(, class, .code))
+	quit:$find(code, patch) $$$OK 
+		
+	set oldNS = $namespace
+	new $namespace
+	set $namespace = "%SYS"
+	
+	set db = ##class(SYS.Database).%OpenId($system.Util.ManagerDirectory() _ "enslib")
+	set bk = db.ReadOnly
+	set db.ReadOnly = 0 
+	
+	$$$QuitOnError(db.%Save())
+	
+	set $namespace = oldNS
+	set line = "<textarea id=""aAnnotation"" label=""Annotation"" rows=""3"" cols=""35"" onchange=""zenPage.activityChange(1);"" onkeyup=""zenPage.textControlKeyUp(zenEvent,zenThis);"" onkeydown=""zenPage.textControlKeyDown(zenThis);""/>"
+	set button = "<image src=""deepsee/zoom_16.png"" onclick=""zenPage.editPropertyValue('aAnnotation','code');"" title=""Edit value""/>"
+	
+	set code = $replace(code, line, line _ $$$NL _ patch _ button)
+	
+	$$$QuitOnError(##class(%Compiler.UDL.TextServices).SetTextFromString(, class, code))
+	$$$QuitOnError($system.OBJ.Compile(class))
+	
+	set $namespace = "%SYS"
+	
+	set db.ReadOnly = bk 
+	quit db.%Save()
+}
+
 
 }
 
