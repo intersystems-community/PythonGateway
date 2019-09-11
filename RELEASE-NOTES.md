@@ -1,6 +1,6 @@
 # Release notes
 
-See [chagelog](CHANGELOG.md) for a full list of changes. This dociment marks the most important changes and offers somecommentary.
+See [chagelog](CHANGELOG.md) for a full list of changes. This document marks the most important changes and offers some commentary.
 
 ## [0.8] - 2019-09-12
 
@@ -8,7 +8,7 @@ Download new release [from GitHub](https://github.com/intersystems-community/Pyt
 
 Now for the new features.
 
-First of all - **fast transfer**. Pass globals, classes and tables from InterSystems IRIS to Python with ease and speed (3x faster than ODBC/JDBC driver and 10x faster than old `QueryExecute`).
+**Fast transfer**. Pass globals, classes and tables from InterSystems IRIS to Python with ease and speed (3x faster than ODBC/JDBC driver and 10x faster than old `QueryExecute`). [Documentation](https://github.com/intersystems-community/PythonGateway/blob/master/DataTransfer.md).
 
 **Proxy Gateway** allows generation of ObjectScript classes for Python classes. Instantinate objects, call object and class methods using familiar ObjectScript code ([docs](https://github.com/intersystems-community/PythonGateway/blob/master/Gateway.md)).
 ```
@@ -20,8 +20,15 @@ write ##class(py.random).randint(1,100)
 
 **Annotation evaluation** - business processes inheriting from `isc.py.ens.ProcessUtils` now can use activity annotations with variables which would be calculated on ObjectScript side before being passed to Python. 
 
+**Jupyter support** - Jupyter can now be used to browse and edit Interoperability processes. [Documentation](https://github.com/intersystems-community/PythonGateway/tree/master/jupyter).
 
+Last but not least and thanks to Benjamin De Boe we added **PMML support** via `isc.py.util.PMML` allowing imports of predictive models from Python into InterSystems IRIS via PMML.
 
+**Installation instructions** are available in [Readme](https://github.com/intersystems-community/PythonGateway).
+
+**Update instructions** (from v0.7):
+
+1. Load new code and library [from GitHub](https://github.com/intersystems-community/PythonGateway/releases).
 
 ## [0.7] - 2019-03-22
 
@@ -85,4 +92,6 @@ And many other bug fixes and improvements, check full changelog available [here]
 4. It is now a requirement to install dill module: `pip install dill`.
 5. Reload test data: `do ##class(isc.py.test.CannibalizationData).Import()`
 
+[0.8]: https://github.com/intersystems-community/PythonGateway/compare/v0.7...v0.8
+[0.7]: https://github.com/intersystems-community/PythonGateway/compare/v0.6...v0.7
 [0.7]: https://github.com/intersystems-community/PythonGateway/compare/v0.6...v0.7
