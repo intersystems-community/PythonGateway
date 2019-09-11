@@ -2,6 +2,26 @@
 
 See [chagelog](CHANGELOG.md) for a full list of changes. This dociment marks the most important changes and offers somecommentary.
 
+## [0.8] - 2019-09-12
+
+Download new release [from GitHub](https://github.com/intersystems-community/PythonGateway/releases).
+
+Now for the new features.
+
+First of all - **fast transfer**. Pass globals, classes and tables from InterSystems IRIS to Python with ease and speed (3x faster than ODBC/JDBC driver and 10x faster than old `QueryExecute`).
+
+**Proxy Gateway** allows generation of ObjectScript classes for Python classes. Instantinate objects, call object and class methods using familiar ObjectScript code ([docs](https://github.com/intersystems-community/PythonGateway/blob/master/Gateway.md)).
+```
+set module = "random"
+set sc = ##class(isc.py.gw.Generator).Generate(module)
+set sc = ##class(isc.py.Main).ImportModule(module)
+write ##class(py.random).randint(1,100)
+```
+
+**Annotation evaluation** - business processes inheriting from `isc.py.ens.ProcessUtils` now can use activity annotations with variables which would be calculated on ObjectScript side before being passed to Python. 
+
+
+
 
 ## [0.7] - 2019-03-22
 
