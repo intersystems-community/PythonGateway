@@ -1,8 +1,5 @@
-ARG IMAGE=store/intersystems/iris:2019.3.0.302.0-community
+ARG IMAGE=intersystems/iris:2019.1.0.510.0-1
 FROM ${IMAGE}
-
-
-USER root
 
 # ensure local python is preferred over distribution python
 ENV PATH /usr/local/bin:$PATH
@@ -95,35 +92,33 @@ RUN pip install pandas matplotlib seaborn numpy dill
 
 # now for InterSystems IRIS
 
-USER irisowner
+ENV SRC_DIR=/tmp/src
 
-ENV SRC_DIR=/home/irisowner
+COPY ./isc/ $SRC_DIR/isc
+COPY ./rtn/ $SRC_DIR/rtn
+COPY iscpython.so $ISC_PACKAGE_INSTALLDIR/bin/
 
-COPY --chown=irisowner ./isc/ $SRC_DIR/isc
-COPY --chown=irisowner ./rtn/ $SRC_DIR/rtn
-COPY --chown=irisowner iscpython.so $ISC_PACKAGE_INSTALLDIR/bin/
-
-
-RUN iris start $ISC_PACKAGE_INSTANCENAME && \
-    /bin/echo -e " do \$system.OBJ.Load(\$system.Util.GetEnviron(\"SRC_DIR\") _ \"/isc/py/util/Installer.cls\",\"ck\")\n" \
+RUN iris start $ISC_PACKAGE_INSTANCENAME EmergencyId=sys,sys && \
+    /bin/echo -e "sys\nsys\n" \
+            " do ##class(Security.Users).UnExpireUserPasswords(\"*\")\n" \
+            " do ##class(Security.Users).AddRoles(\"Admin\", \"%ALL\")\n" \
+            " do \$system.OBJ.Load(\$system.Util.GetEnviron(\"SRC_DIR\") _ \"/isc/py/util/Installer.cls\",\"ck\")\n" \
             " set sc = ##class(isc.py.util.Installer).Setup(, 3)\n" \
             " if 'sc  write !,\$System.Status.GetErrorText(sc),!  do \$system.Process.Terminate(, 1)\n" \
             " zn \"%SYS\"" \
-			" set sc = ##class(Security.Users).UnExpireUserPasswords(\"*\")\n" \
-			" if 'sc  write !,\$System.Status.GetErrorText(sc),!  do \$system.Process.Terminate(, 1)\n" \
-            " do ##class(Security.Users).AddRoles(\"Admin\", \"%ALL\")\n" \
             " do INT^JRNSTOP" \
             " kill ^%SYS(\"JOURNAL\")" \
             " kill ^SYS(\"NODE\")" \
             " halt" \
     | iris session $ISC_PACKAGE_INSTANCENAME && \
- iris stop $ISC_PACKAGE_INSTANCENAME quietly \
+    /bin/echo -e "sys\nsys\n" \
+| iris stop $ISC_PACKAGE_INSTANCENAME quietly \
   && rm -f $ISC_PACKAGE_INSTALLDIR/mgr/journal.log \
   && rm -f $ISC_PACKAGE_INSTALLDIR/mgr/IRIS.WIJ \
   && rm -f $ISC_PACKAGE_INSTALLDIR/mgr/iris.ids \
   && rm -f $ISC_PACKAGE_INSTALLDIR/mgr/alerts.log \
   && rm -f $ISC_PACKAGE_INSTALLDIR/mgr/journal/* \
   && rm -f $ISC_PACKAGE_INSTALLDIR/mgr/messages.log \
-  && rm -rf $SRC_DIR/isc $SRC_DIR/rtn
+  && rm -rf $SRC_DIR
 
 HEALTHCHECK --interval=5s CMD /irisHealth.sh || exit 1
