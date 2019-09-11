@@ -6,6 +6,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8] - 2019-09-12
+
+### Added
+- Direct global transfer for fast global, class, table transfer.
+- Jupyter support.
+- Annotation evaluation.
+- (Experimental) Proxy Gateway support. 
+- PMML integration.
+- IO redirection utils.
+
+### Changed
+- Docker now can build from arbitrary image.
+- Docker now supports 2019.3+ base images. 
+- Multiline mode for shell. 
+- JSON harvesting improvements.
+- BPEmulator supports `process` and `context` objects.
+
 ## [0.7] - 2019-03-21
 ### Added
 - Docker support.
@@ -83,6 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial version.
 
 [Unreleased]: https://github.com/intersystems-community/PythonGateway/compare/v0.7...HEAD
+[0.8]: https://github.com/intersystems-community/PythonGateway/compare/v0.7...v0.8
 [0.7]: https://github.com/intersystems-community/PythonGateway/compare/v0.6...v0.7
 [0.6]: https://github.com/intersystems-community/PythonGateway/compare/v0.5...v0.6
 [0.5]: https://github.com/intersystems-community/PythonGateway/compare/v0.4.2...v0.5
