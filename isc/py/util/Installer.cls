@@ -132,7 +132,7 @@ ClassMethod LoadZRoutines(dir As %String) As %Status
 
 /// Add magnifying glass to Annotation
 /// zw ##class(isc.py.util.Installer).PatchBP()
-ClassMethod PatchBP()
+ClassMethod PatchBP() As %Status
 {
 	set class = "EnsPortal.BPLEditor"
 	set patch = "<!-- PATCH -->"
@@ -163,7 +163,6 @@ ClassMethod PatchBP()
 	set db.ReadOnly = bk 
 	quit db.%Save()
 }
-
 
 }
 
