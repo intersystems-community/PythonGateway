@@ -9,18 +9,21 @@ This projects brings you the power of Python right into your InterSystems IRIS e
 
 # Webinar - AI Robotization
 
-Machine Learning (ML) Toolkit - a set of extensions to implement machine learning and artificial intelligence on the InterSystems IRIS Data Platform. As part of our webinar, we plan to present an approach to the robotization of these tasks, i.e. to ensure their autonomous adaptive execution proceeds within the parameters and rules you specify. Self-learning neural networks, self-monitoring analytical processes, agency of analytical processes are the main subjects of this webinar.
+[![Foo](https://community.intersystems.com/sites/default/files/inline/images/landing_image.png)](https://zoom.us/meeting/register/42c43ac83dcf9a1834538d7d4481ef37)
 
-Webinar is aimed at both experts in Data Science, Data Engineering, Robotic Process Automation - and those who just discover the world of artificial intelligence and machine learning.
+Machine Learning (ML) Toolkit is a suite of extensions for Machine Learning and Artificial Intelligence in-platform with InterSystems IRIS. During this webinar we will present an approach to robotizing AI/ML, i.e. making it run autonomously and adaptively within constraints and rules that you define. Self-learning neural nets, self-monitored analytical processes, agent-based systems of analytical processes and distributed AI/ML computations – are all the topics to expect in our webinar.
 
-We are waiting for you at our event!
+Three demos are on the agenda:
 
-The language of the webinar is Russian. 
+- Realtime predictive maintenance
+- Self-monitored sentiment analysis
+- Distributed AI/ML computations involving cloud services
 
-Date: 18 September, 10:00 – 11:00 (GMT+3).
+The webinar is for expert audience (Data Science, Data Engineering, Robotic Process Automation) as well as for those that discover the world of data science. As a preparation, we would recommend revisiting our [previous webinar’s recording](https://youtu.be/z9O0F1ovBUY).
 
-[Register](https://www.intersystems.com/ru/news-events/events/intersystems-ml-toolkit-webinar/).
+Time: Nov 7, 2019 11:00 AM in Eastern Time (US and Canada)
 
+[![Foo](https://community.intersystems.com/sites/default/files/inline/images/clipboard01.png)](https://zoom.us/meeting/register/42c43ac83dcf9a1834538d7d4481ef37)
  
 # ML Toolkit user group
 
