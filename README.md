@@ -6,24 +6,6 @@ This projects brings you the power of Python right into your InterSystems IRIS e
 - Seamlessly transfer data from InterSystems IRIS into Python
 - Build intelligent Interoperability business processes with Python Interoperability Adapter
 - Save, examine, modify and restore Python context from InterSystems IRIS
-
-# Webinar - AI Robotization
-
-[![Foo](https://community.intersystems.com/sites/default/files/inline/images/landing_image.png)](https://zoom.us/meeting/register/42c43ac83dcf9a1834538d7d4481ef37)
-
-Machine Learning (ML) Toolkit is a suite of extensions for Machine Learning and Artificial Intelligence in-platform with InterSystems IRIS. During this webinar we will present an approach to robotizing AI/ML, i.e. making it run autonomously and adaptively within constraints and rules that you define. Self-learning neural nets, self-monitored analytical processes, agent-based systems of analytical processes and distributed AI/ML computations – are all the topics to expect in our webinar.
-
-Three demos are on the agenda:
-
-- Realtime predictive maintenance
-- Self-monitored sentiment analysis
-- Distributed AI/ML computations involving cloud services
-
-The webinar is for expert audience (Data Science, Data Engineering, Robotic Process Automation) as well as for those that discover the world of data science. As a preparation, we would recommend revisiting our [previous webinar’s recording](https://youtu.be/z9O0F1ovBUY).
-
-Time: Nov 7, 2019 11:00 AM in Eastern Time (US and Canada)
-
-[![Foo](https://community.intersystems.com/sites/default/files/inline/images/clipboard01.png)](https://zoom.us/meeting/register/42c43ac83dcf9a1834538d7d4481ef37)
  
 # ML Toolkit user group
 
