@@ -185,12 +185,8 @@ Along with callout code and Interoperability adapter there's also a test Interop
 
 1. In OS bash execute `pip install pandas matplotlib seaborn`. 
 2. Execute: `do ##class(isc.py.test.CannibalizationData).Import()` to populate test data.
-3. In test Business Process `isc.py.test.Process` edit annotation for `Correlation Matrix: Graph` call, specifying valid filepath for `f.savefig` function.
-4. Save and compile business process.
-5. Start `isc.py.test.Production` production.
-6. Send empty `Ens.Request` message to the `isc.py.test.Process`.
-
-Note: instead of step 3 run: `set sc = ##class(isc.py.util.Installer).ConfigureTestProcess(user, password, host, port, namespace)` to try adjust process automatically. 
+3. Start `isc.py.test.Production` production.
+4. Send empty `Ens.Request` message to the `isc.py.test.Process`.
 
 ### Notes
 
