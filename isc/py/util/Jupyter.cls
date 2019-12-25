@@ -292,5 +292,55 @@ ClassMethod GetLastModified(path As %String)
 	quit $tr($zdt(time, 3, 1, 3), " ", "T")
 }
 
+/// Simple BPL Definition
+XData BPL [ XMLNamespace = "http://www.intersystems.com/bpl" ]
+{
+<process language='objectscript' request='Ens.Request' response='Ens.Response'>
+<sequence >
+</sequence>
+</process>
+}
+
+/// w $System.Status.GetErrorText(##class(isc.py.util.Jupyter).InitProcess("Test.MyBP"))
+ClassMethod InitProcess(class) As %Status
+{
+	#dim sc As %Status = $$$OK
+	quit:##class(%Dictionary.ClassDefinition).%ExistsId(class) $$$ERROR($$$GeneralError, $$$FormatText("Class %1 already exists", class))
+	set sc = ##class(%Dictionary.CacheClassname).IsValid(class) 
+	quit:$$$ISERR(sc) $$$ADDSC($$$ERROR($$$GeneralError, $$$FormatText("Class name %1 is invalid", class)), sc)
+	
+	set bp = ##class(%Dictionary.ClassDefinition).%New(class)
+	
+	set utils = "isc.py.ens.ProcessUtils"
+	
+	set bp.Super = "Ens.BusinessProcessBPL, " _ utils
+	set bp.DependsOn = utils
+	// Why is it right by default?
+	set bp.Inheritance = "left"
+	
+	set pythonOp = ##class(%Dictionary.PropertyDefinition).%New()
+	set pythonOp.parent = bp
+	set pythonOp.Name = "PythonOperation"
+	set pythonOp.InitialExpression = """isc.py.ens.Operation"""
+	do pythonOp.Parameters.SetAt(128, "MAXLEN")
+
+	set settingsParam = ##class(%Dictionary.ParameterDefinition).%New()
+	set settingsParam.parent = bp
+	set settingsParam.Name = "SETTINGS"
+	set settingsParam.Default = "PythonOperation:Basic:selector?context={Ens.ContextSearch/ProductionItems?targets=1&productionName=@productionId}"
+	
+	set bplDataTemplate = ##class(%Dictionary.XDataDefinition).IDKEYOpen($classname(), "BPL")
+	#dim bplData As %Dictionary.XDataDefinition
+	set bplData = bplDataTemplate.%ConstructClone()
+	set bplData.parent = bp
+
+	set sc = bp.%Save()
+	quit:$$$ISERR(sc) sc
+	
+	set sc = $system.OBJ.Compile(class, "/displaylog=0 /displayerror=0")
+	
+	quit sc
+}
+
 }
 
