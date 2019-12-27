@@ -309,14 +309,11 @@ ClassMethod InitProcess(class) As %Status
 	set sc = ##class(%Dictionary.CacheClassname).IsValid(class) 
 	quit:$$$ISERR(sc) $$$ADDSC($$$ERROR($$$GeneralError, $$$FormatText("Class name %1 is invalid", class)), sc)
 	
-	set bp = ##class(%Dictionary.ClassDefinition).%New(class)
+	set bp = ##class(%Dictionary.ClassDefinition).%New(class, 25)
 	
-	set utils = "isc.py.ens.ProcessUtils"
-	
+	set utils = "isc.py.ens.ProcessUtils"	
 	set bp.Super = "Ens.BusinessProcessBPL, " _ utils
 	set bp.DependsOn = utils
-	// Why is it right by default?
-	set bp.Inheritance = "left"
 	
 	set pythonOp = ##class(%Dictionary.PropertyDefinition).%New()
 	set pythonOp.parent = bp
@@ -340,6 +337,132 @@ ClassMethod InitProcess(class) As %Status
 	set sc = $system.OBJ.Compile(class, "/displaylog=0 /displayerror=0")
 	
 	quit sc
+}
+
+/// w $System.Status.GetErrorText(##class(isc.py.util.Jupyter).Install())
+ClassMethod Install()
+{
+	
+	set version = $system.Version.GetNumber()
+	set minVersion = 2019.3
+	if version<minVersion {
+		write $$$FormatText("Current version %1 is lesser than minimal version %2. Exiting.", version, minVersion)
+		quit
+	}
+
+	set sc = ..ModuleCheck("irisnative", ..GetNativeWheel(), $$$YES)
+	if $$$ISERR(sc) {
+		write $System.Status.GetErrorText(sc)
+		quit
+	}
+	
+	set sc = ..ModuleCheck("jupyter", , $$$YES)
+	if $$$ISERR(sc) {
+		write $System.Status.GetErrorText(sc)
+		quit
+	}
+
+	write "Enter values (press Enter if the default value is OK)"
+
+	set sc = ##class(%RoutineMgr).GetWebServerPort(,.host)
+	set sc = ##class(%Prompt).GetString("Host:", .host)
+
+	set port = $get(^%SYS("SSPort"), 51773)
+	set sc = ##class(%Prompt).GetNumber("Port:", .port)
+
+	set namespace = $namespace
+	set sc = ##class(%Prompt).GetString("Namespace:", .namespace)
+
+	set user = $username
+	set sc = ##class(%Prompt).GetString("User:", .user, 1, 160)
+
+	set sc = ##class(%Prompt).GetString("Password:", .password, 1)
+
+	set dirMsg = "Directory (for config file, it MUST contain MLContentsManager.py and usually is <PythonGateway\Jupyter\>):" 
+	set sc = ##class(%Prompt).GetString(dirMsg, .directory)
+
+	set sc = ..CreateConfig(host, port, namespace, user, password, directory)
+
+	if $$$ISERR(sc) {
+		write "Error creating config: ", $System.Status.GetErrorText(sc)
+		quit
+	}
+
+	write !,!
+	write "Success", !
+	write "Too start open '", directory, "' directory in command line and type:", !
+	write $c(27)_"[1mjupyter notebook"_$c(27)_"[0m", !
+}
+
+/// d ##class(isc.py.util.Jupyter).CreateConfig()
+ClassMethod CreateConfig(host, port = {$get(^%SYS("SSPort"), 51773)}, namespace = {$namespace}, user = {$username}, password, directory) As %Status
+{
+  #dim sc As %Status = $$$OK
+  set:'$d(host) sc = ##class(%RoutineMgr).GetWebServerPort(,.host)
+  quit:$$$ISERR(sc) sc
+  
+  quit:'$d(directory) $$$ERROR($$$GeneralError, "Directory must be set and contain MLContentsManager.py")
+  set directory = ##class(%File).NormalizeDirectory(directory)
+  
+  
+  set file = ##class(%Stream.FileCharacter).%New()
+  do file.LinkToFile(directory _ "jupyter_notebook_config.py")
+  
+  do file.WriteLine("exec(open(""MLContentsManager.py"").read())")
+  do file.WriteLine("c.NotebookApp.contents_manager_class = MLContentsManager")
+  
+  do file.WriteLine("c.MLContentsManager.host = '" _ host _ "'")
+  do file.WriteLine("c.MLContentsManager.port = " _ port)
+  do file.WriteLine("c.MLContentsManager.namespace = '"_ namespace _ "'")
+  do file.WriteLine("c.MLContentsManager.user = '"_ user _ "'")
+  do file.WriteLine("c.MLContentsManager.password = '"_ password _ "'")
+  
+  set sc = file.%Save()
+  quit sc
+}
+
+/// d ##class(isc.py.util.Jupyter).ModuleCheck()
+ClassMethod ModuleCheck(module, source, verbose As %Boolean = {$$$NO}) As %Status
+{
+	#dim sc As %Status = $$$OK
+	write:verbose "Checking ", module,!
+	
+	set cmd = "pip"
+	set timeout = 60
+	
+	set args = 2
+	set args(1) = "show"
+	set args(2) = module
+	set sc = ##class(%Net.Remote.Utility).RunCommandViaZF(cmd, , .out, timeout, $$$YES, .code, .args)
+	
+	quit:$$$ISERR(sc) $$$ADDSC($$$ERROR($$$GeneralError, "Unable to detect ", module, ", aborting"), sc)
+		
+	
+	if out'="" {
+		write:verbose module, " is installed", !
+	} else {
+		write:verbose module, " is NOT found. Attempting install", !
+
+		kill args, out, code
+		set args = 2
+		set args(1) = "install"
+		set args(2) = $case($d(source), $$$YES: source, :module)
+		set sc = ##class(%Net.Remote.Utility).RunCommandViaZF(cmd, , .out, timeout, $$$YES, .code, .args)
+		if $$$ISERR(sc) {
+			write:verbose "Auto install failed, try running: ", cmd, " ", args(1), " ", args(2), !
+			set sc = $$$ADDSC($$$ERROR($$$GeneralError, "Unable to install ", module, ", aborting"), sc)
+		} else {
+			write:verbose "Suceessfully installed ", module
+		}	
+	}
+	quit sc
+}
+
+ClassMethod GetNativeWheel() As %String
+{
+	set dir = ##class(%File).SubDirectoryName(##class(%File).SubDirectoryName($System.Util.InstallDirectory(), "dev"), "python", 1)
+	set file = $zsearch(dir _ "irisnative-*cp36*.whl")
+	quit file
 }
 
 }
