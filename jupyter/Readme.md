@@ -20,25 +20,36 @@ This extension assumes that annotations contain Python code and uses activities 
 
 # Installation
 
+## Prerequisites
+
 1. You'll need [InterSystems IRIS 2019.2+](https://wrc.intersystems.com/wrc/).
 2. Install PythonGateway v0.8+ (only `isc.py.util.Jupyter` and `isc.py.ens.ProcessUtils` are required).
-3. Install IRISNative for Python 3.6.7 (`cp36` should be in a finename, wheel is in `\dev\python\` folder inside InterSystems IRIS installation path):
+
+## Automatic installation
+
+1. Run `do ##class(isc.py.util.Jupyter).Install()` and follow the prompt.
+
+## Manual installation
+
+Manual installation contains all the same steps as automatic installation, but you need to execute them manually.
+
+1. Install IRISNative for Python 3.6.7 (`cp36` should be in a finename, wheel is in `\dev\python\` folder inside InterSystems IRIS installation path):
 ```
 pip install <IRIS>\dev\python\irisnative-*cp36*.whl
 ```
 
-4. Install Jupyter.
+2. Install Jupyter.
 ```
 pip install jupyter
 ```
-5. Check [jupyter_notebook_config.py](jupyter_notebook_config.py). It assumes the following defaults for IRIS connection:
+3. Check [jupyter_notebook_config.py](jupyter_notebook_config.py). It assumes the following defaults for IRIS connection:
 - host: `localhost`
 - port: `51773`
 - namespace: `USER`
 - user: `_SYSTEM`
 - password: `SYS`
 
-6. If you need other connection parameters values, modify `jupyter_notebook_config.py`. 
+4. If you need other connection parameters values, modify `jupyter_notebook_config.py`. 
 For example to connect to InterSystems IRIS instance on port `51776` you'll need to add this line to the bottom of `jupyter_notebook_config.py`:
 ```
 c.MLContentsManager.port = 51776
@@ -46,7 +57,9 @@ c.MLContentsManager.port = 51776
 
 You can configure all settings (host, port, namespace, user, password) this way.
 
-7. Open OS bash in the folder with `jupyter_notebook_config.py` and `MLContentsManager.py` and start jupyter with:
+# Runnning
+
+After completing automatic or manual installation open OS bash in the folder with `jupyter_notebook_config.py` and `MLContentsManager.py` and start jupyter with:
 
 ```
 jupyter notebook
