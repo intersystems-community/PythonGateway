@@ -1,4 +1,4 @@
-ARG IMAGE=store/intersystems/iris:2019.3.0.302.0-community
+ARG IMAGE=store/intersystems/iris-community:2019.4.0.383.0
 FROM ${IMAGE}
 
 
