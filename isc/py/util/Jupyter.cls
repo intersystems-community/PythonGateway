@@ -2,6 +2,13 @@
 Class isc.py.util.Jupyter
 {
 
+Parameter DEBUG = 0;
+
+Parameter INTERACTIVE As COSEXPRESSION = "$io[""|TRM|""";
+
+/// Name of a SYNC activity
+Parameter SYNC = "Wait for ";
+
 /// do ##class(isc.py.util.Jupyter).GetBPLFunc("").%Display()
 Query GetBPL(path) As %SQLQuery
 {
@@ -60,29 +67,46 @@ ClassMethod Get(path As %String, content As %Boolean, type, format) As %String
 /// w ##class(isc.py.util.Jupyter).Save()
 ClassMethod Save(model, path) As %String
 {
-	#dim sc As %Status = $$$OK
-	set path = ..PathToLogical(path)
-	quit:'##class(%Dictionary.ClassDefinition).%ExistsId(path) $$$ERROR($$$GeneralError, $$$FormatText("Class %1 does not exist", path))
-	
-	set model = {}.%FromJSON(model)
+	try {
+		do ..Log(,"Save",path,,,,model)
+		#dim sc As %Status = $$$OK
+		set path = ..PathToLogical(path)
+		set:'##class(%Dictionary.ClassDefinition).%ExistsId(path) sc = $$$ERROR($$$GeneralError, $$$FormatText("Class %1 does not exist", path))
+		quit:$$$ISERR(sc)
+		//set:'##class(%Dictionary.ClassDefinition).%ExistsId(path) sc = ..InitProcess(path)
+		
+		set model = {}.%FromJSON(model)
 
-	set cells = {} // object with { ActivityName1: ActivityAnnotation1, ... } structure 
-	set iterator = model.content.cells.%GetIterator()
-	while iterator.%GetNext(.key, .value) {
-		if value."cell_type" = "markdown" {
-			set name = $e(value.source, 3, *)
-			do iterator.%GetNext(.key, .value)
-			if value."cell_type" = "code" {
-				do cells.%Set(name, $replace(value.source, $c(10), $$$NL))
+		set cells = [] // array with [ { Name: ActivityName1, Annotation: ActivityAnnotation1}, ... ] structure 
+		set names = "" // %List with $lb(ActivityName1, ActivityName2, ..., ActivityNameN) structure
+		set iterator = model.content.cells.%GetIterator()
+		while iterator.%GetNext(.key, .value) {
+			if value."cell_type" = "markdown" {
+				set name = $e(value.source, 3, *)
+				do iterator.%GetNext(.key, .value)
+				if value."cell_type" = "code" {
+					do cells.%Push({"Name":(name), "Annotation":($replace(value.source, $c(10), $$$NL))})
+					set names = names _ $lb(name)
+				}
 			}
 		}
-	}
-	
-	set sc = ..UpdateBPL(path, cells)
-	quit:$$$ISERR(sc) sc
 
-	set sc = $system.OBJ.Compile(path, "/displaylog=0 /displayerror=0")
+		set sc = ..UpdateBPL(path, cells, names)
+		quit:$$$ISERR(sc) //sc
+
+		set sc = $system.OBJ.Compile(path, "/displaylog=0 /displayerror=0")
+	} catch ex {
+		do ex.Log()
+		set sc =ex.AsStatus()
+	}
 	quit sc
+}
+
+/// Does the item exists
+ClassMethod Exists(path) As %Boolean
+{
+	set exists = $$$NO
+	quit exists
 }
 
 /// Translate BPL into JSON
@@ -138,8 +162,7 @@ ClassMethod ParseActivities(activities As Ens.BPL.ActivityList, ByRef cells As %
 			do ..ParseActivities(activity.Cases, cells)
 		} else {
 			set annotationText = activity.Annotation
-			//set annotationText = $$$quote(activity.Annotation)
-			if activity.Annotation'="" {
+			if ..IsJupyterActivity(activity) {
 				do cells.%Push(..GetNameCell(activity.Name))				
 				do cells.%Push(..GetCodeCell(annotationText))
 			}
@@ -150,7 +173,7 @@ ClassMethod ParseActivities(activities As Ens.BPL.ActivityList, ByRef cells As %
 }
 
 /// Update BPL from JSON
-ClassMethod UpdateBPL(class, cells As %DynamicObject) As %Status
+ClassMethod UpdateBPL(class, cells As %DynamicArray, names As %List) As %Status [ PublicList = cells ]
 {
 	set sc = $$$OK
 	try {
@@ -175,7 +198,15 @@ ClassMethod UpdateBPL(class, cells As %DynamicObject) As %Status
 			
 			#dim activities As Ens.BPL.ActivityList
 			set activities = process.Sequence.Activities
-			do ..UpdateActivities(activities, cells)
+			set iterator = cells.%GetIterator()
+			do ..UpdateActivities(activities, iterator, names)
+			
+			// Append end cells if any
+			#dim iterator As %Iterator.Array
+			while iterator.%GetNext(.key,.cell) {
+				do activities.Insert(..GenerateActivity(cell.Name, cell.Annotation))
+				do activities.Insert(..GeterateSync(cell.Name))
+			}
 			
 			do stream.Rewind()
 			set sc = process.GenerateXML(stream)
@@ -184,32 +215,112 @@ ClassMethod UpdateBPL(class, cells As %DynamicObject) As %Status
 			set sc = xData.%Save()
 	    }
 	} catch ex {
+		do ex.Log()
 	    set sc = ex.AsStatus()
 	}
 	quit sc
 }
 
 /// Update individual activities from JSON
-ClassMethod UpdateActivities(activities As Ens.BPL.ActivityList, cells As %DynamicObject)
+ClassMethod UpdateActivities(activities As Ens.BPL.ActivityList, iterator As %Iterator.Array, names As %List)
 {
-	quit:'$isObject($g(cells))
-	for i=1:1:activities.Count() {
-		#dim activity As Ens.BPL.Activity
-		set activity = activities.GetAt(i)
-		set class = activity.%ClassName(1)
-		if $lf(##class(isc.py.ens.ProcessUtils).#ActivityNodes, class) {
-			do ..UpdateActivities(activity.Activities, cells)
-		} elseif (class="Ens.BPL.If") {
-			do ..UpdateActivities(activity.True, cells)
-			do ..UpdateActivities(activity.False, cells)
-		} elseif (class ="Ens.BPL.Switch"){
-			do ..UpdateActivities(activity.Cases, cells)
-		} else {
-			if cells.%IsDefined(activity.Name) {
-				set activity.Annotation = cells.%Get(activity.Name)
+	try {
+		quit:'$isObject($g(iterator))
+		for i=1:1:activities.Count() {
+			#dim activity As Ens.BPL.Activity
+			set activity = activities.GetAt(i)
+			quit:'$isObject(activity)
+			
+			set class = activity.%ClassName(1)
+			if $lf(##class(isc.py.ens.ProcessUtils).#ActivityNodes, class) {
+				do ..UpdateActivities(activity.Activities, iterator, names)
+			} elseif (class="Ens.BPL.If") {
+				do ..UpdateActivities(activity.True, iterator, names)
+				do ..UpdateActivities(activity.False, iterator, names)
+			} elseif (class ="Ens.BPL.Switch"){
+				do ..UpdateActivities(activity.Cases, iterator, names)
+			} else {
+				if ..IsJupyterActivity(activity) {
+					if $lf(names, activity.Name) {
+						// Activity is down the line
+						
+						// cell - object with { Name: ActivityName, Annotation: ActivityAnnotation} structure 
+						do iterator.%GetNext(.key,.cell)
+						
+						// Add cells till we get to our cell
+						while (cell.Name '= activity.Name) {
+							// Add new cells to BP
+
+							do activities.InsertAt(..GeterateSync(cell.Name), i)
+							do activities.InsertAt(..GenerateActivity(cell.Name, cell.Annotation), i)
+							do iterator.%GetNext(.key,.cell)
+						}
+
+						// We iterated to the right activity
+						set activity.Annotation = cell.Annotation
+					} else {
+						// Delete BP activities
+						do activities.RemoveAt(i)
+						do:activities.GetAt(i+1).Name=..#SYNC_activity.Name activities.RemoveAt(i+1)
+					}
+				}
 			}
-		}
+		}	
+	} catch ex {
+		do ex.Log()
+		break:..#INTERACTIVE
+		throw ex
 	}
+}
+
+ClassMethod GenerateActivity(name, code) As Ens.BPL.Call
+{
+	/*
+	<call name='Import pandas' target='@..%Process.PythonOperation' async='1' >
+	<annotation><![CDATA[import pandas as pd
+
+	import sys]]></annotation>
+	<request type='isc.py.msg.ExecutionRequest' >
+	<assign property="callrequest.Code" value="process.GetAnnotation(&quot;Import pandas&quot;)" action="set" />
+	</request>
+	<response type='isc.py.msg.ExecutionResponse' />
+	</call>
+	
+	<sync name='Wait for import' calls='Import pandas' type='all' xpos='200' ypos='350' />
+	*/
+	set activity = ##class(Ens.BPL.Call).%New()
+	set activity.Name = name
+	set activity.Target = "@..%Process.PythonOperation"
+	set activity.Async = $$$YES
+	set activity.Annotation = code
+	
+	set request = ##class(Ens.BPL.Request).%New()
+	set request.Type = "isc.py.msg.ExecutionRequest"
+	set activity.Request = request
+	
+	set assign = ##class(Ens.BPL.Assign).%New()
+	set assign.Property = "callrequest.Code"
+	set assign.Value = "process.GetAnnotation(""" _ name _ """)"
+	do request.Activities.Insert(assign)
+	
+	set response = ##class(Ens.BPL.Response).%New()
+	set response.Type = "isc.py.msg.ExecutionResponse"
+	set activity.Response = response
+	
+	quit activity
+}
+
+ClassMethod GeterateSync(name As %String) As Ens.BPL.Sync
+{
+	set sync = ##class(Ens.BPL.Sync).%New()
+	set sync.Calls = name
+	set sync.Name = ..#SYNC _ name
+	quit sync
+}
+
+ClassMethod IsJupyterActivity(activity As Ens.BPL.Activity) As %Boolean [ CodeMode = expression ]
+{
+activity.Annotation'=""
 }
 
 ClassMethod GetNameCell(name) [ CodeMode = expression ]
@@ -301,6 +412,7 @@ XData BPL [ XMLNamespace = "http://www.intersystems.com/bpl" ]
 </process>
 }
 
+/// Create default Python-enabled business process.
 /// w $System.Status.GetErrorText(##class(isc.py.util.Jupyter).InitProcess("Test.MyBP"))
 ClassMethod InitProcess(class) As %Status
 {
@@ -309,7 +421,7 @@ ClassMethod InitProcess(class) As %Status
 	set sc = ##class(%Dictionary.CacheClassname).IsValid(class) 
 	quit:$$$ISERR(sc) $$$ADDSC($$$ERROR($$$GeneralError, $$$FormatText("Class name %1 is invalid", class)), sc)
 	
-	set bp = ##class(%Dictionary.ClassDefinition).%New(class, 25)
+	set bp = ##class(%Dictionary.ClassDefinition).%New(class, $$$CLASSDEFINITIONVERSION)
 	
 	set utils = "isc.py.ens.ProcessUtils"	
 	set bp.Super = "Ens.BusinessProcessBPL, " _ utils
@@ -339,6 +451,7 @@ ClassMethod InitProcess(class) As %Status
 	quit sc
 }
 
+/// Interactively installs Iris Native API for Python and Jupyter Notebook
 /// w $System.Status.GetErrorText(##class(isc.py.util.Jupyter).Install())
 ClassMethod Install()
 {
@@ -394,6 +507,7 @@ ClassMethod Install()
 	write $c(27)_"[1mjupyter notebook"_$c(27)_"[0m", !
 }
 
+/// Create Jupyter config to use with InterSystems IRIS
 /// d ##class(isc.py.util.Jupyter).CreateConfig()
 ClassMethod CreateConfig(host, port = {$get(^%SYS("SSPort"), 51773)}, namespace = {$namespace}, user = {$username}, password, directory) As %Status
 {
@@ -421,7 +535,11 @@ ClassMethod CreateConfig(host, port = {$get(^%SYS("SSPort"), 51773)}, namespace 
   quit sc
 }
 
-/// d ##class(isc.py.util.Jupyter).ModuleCheck()
+/// Check if module is installed and install it if needed.
+/// module - module name. 
+/// source - if provided (can be a URI or file path) it would be used instead of module name to install the module
+/// verbose - hints in case autoinstallation fails.
+/// do ##class(isc.py.util.Jupyter).ModuleCheck()
 ClassMethod ModuleCheck(module, source, verbose As %Boolean = {$$$NO}) As %Status
 {
 	#dim sc As %Status = $$$OK
@@ -435,7 +553,7 @@ ClassMethod ModuleCheck(module, source, verbose As %Boolean = {$$$NO}) As %Statu
 	set args(2) = module
 	set sc = ##class(%Net.Remote.Utility).RunCommandViaZF(cmd, , .out, timeout, $$$YES, .code, .args)
 	
-	quit:$$$ISERR(sc) $$$ADDSC($$$ERROR($$$GeneralError, "Unable to detect ", module, ", aborting"), sc)
+	quit:$$$ISERR(sc) $$$ADDSC($$$ERROR($$$GeneralError, "Unable to detect ", module), sc)
 		
 	
 	if out'="" {
@@ -450,7 +568,7 @@ ClassMethod ModuleCheck(module, source, verbose As %Boolean = {$$$NO}) As %Statu
 		set sc = ##class(%Net.Remote.Utility).RunCommandViaZF(cmd, , .out, timeout, $$$YES, .code, .args)
 		if $$$ISERR(sc) {
 			write:verbose "Auto install failed, try running: ", cmd, " ", args(1), " ", args(2), !
-			set sc = $$$ADDSC($$$ERROR($$$GeneralError, "Unable to install ", module, ", aborting"), sc)
+			set sc = $$$ADDSC($$$ERROR($$$GeneralError, "Unable to install ", module), sc)
 		} else {
 			write:verbose "Suceessfully installed ", module
 		}	
@@ -463,6 +581,15 @@ ClassMethod GetNativeWheel() As %String
 	set dir = ##class(%File).SubDirectoryName(##class(%File).SubDirectoryName($System.Util.InstallDirectory(), "dev"), "python", 1)
 	set file = $zsearch(dir _ "irisnative-*cp36*.whl")
 	quit file
+}
+
+/// Debug info
+ClassMethod Log(class = {$classname()}, method, path = "", content = "", type = "", format = "", model = "") As %Status
+{
+	quit:'..#DEBUG $$$OK
+	quit:..#INTERACTIVE $$$OK
+	quit $$$OK
+	//quit ##class(User.Logger).Log(class, method, path, content, type, format, model)
 }
 
 }
