@@ -21,9 +21,10 @@ WHERE Name %STARTSWITH :path
 }
 
 /// Translate Jupyter Path into InterSystems IRIS path
-ClassMethod PathToLogical(path As %String) As %String
+/// w ##class(isc.py.util.Jupyter).PathToLogical()
+ClassMethod PathToLogical(path As %String, isFile As %Boolean = {$$$NO}) As %String
 {
-	
+	set:(isFile&&($e(path,*-5,*)=".ipynb")) path = $e(path,1,*-6)
 	set path = $tr(path, "/" _ $c(0), ".")
 	set:$e(path)="." path = $e(path, 2, *)
 	set:$e(path,*,*)="." path = $e(path, 1, *-1)
@@ -38,7 +39,7 @@ ClassMethod PathToLogical(path As %String) As %String
 /// w ##class(isc.py.util.Jupyter).Get()
 ClassMethod Get(path As %String, content As %Boolean, type, format) As %String
 {
-	set path = ..PathToLogical(path)
+	set path = ..PathToLogical(path, $$$YES)
 
 	set obj = ..Node(path)
 	
@@ -70,10 +71,10 @@ ClassMethod Save(model, path) As %String
 	try {
 		do ..Log(,"Save",path,,,,model)
 		#dim sc As %Status = $$$OK
-		set path = ..PathToLogical(path)
-		set:'##class(%Dictionary.ClassDefinition).%ExistsId(path) sc = $$$ERROR($$$GeneralError, $$$FormatText("Class %1 does not exist", path))
+		set path = ..PathToLogical(path, $$$YES)
+		//set:'##class(%Dictionary.ClassDefinition).%ExistsId(path) sc = $$$ERROR($$$GeneralError, $$$FormatText("Class %1 does not exist", path))
+		set:'##class(%Dictionary.ClassDefinition).%ExistsId(path) sc = ..InitProcess(path)
 		quit:$$$ISERR(sc)
-		//set:'##class(%Dictionary.ClassDefinition).%ExistsId(path) sc = ..InitProcess(path)
 		
 		set model = {}.%FromJSON(model)
 
@@ -105,7 +106,74 @@ ClassMethod Save(model, path) As %String
 /// Does the item exists
 ClassMethod Exists(path) As %Boolean
 {
-	set exists = $$$NO
+	set path = ..PathToLogical(path)
+	set exists = ##class(%Dictionary.ClassDefinition).%ExistsId(path)
+	do ..Log(,"Exists",path,exists)
+	quit exists
+}
+
+/// w ##class(isc.py.util.Jupyter).PackageExists("isc")
+ClassMethod PackageExists(package) As %Boolean
+{
+    set prefix = package_"."
+    set firstClass = $o(^oddCOM(prefix))
+    quit prefix = $e(firstClass,1,$l(prefix))
+}
+
+/// w ##class(isc.py.util.Jupyter).Delete()
+ClassMethod Delete(path) As %Boolean
+{
+	#dim sc As %Status = $$$OK
+	set path = ..PathToLogical(path)
+	do ..Log(,"Delete", path)
+	
+	set rs = ##class(isc.py.util.Jupyter).GetBPLFunc(path)
+	
+	while rs.%Next() {
+		set sc1 = ##class(%Dictionary.ClassDefinition).%DeleteId(rs.Name)
+		set sc = $$$ADDSC(sc, sc1)
+	}
+	
+	quit $$$ISOK(sc)
+}
+
+/// w ##class(isc.py.util.Jupyter).Rename("User.A","User.B")
+ClassMethod Rename(oldPath, newPath) As %Boolean
+{
+	#dim sc As %Status = $$$OK
+	set oldPath = ..PathToLogical(oldPath)
+	set newPath = ..PathToLogical(newPath)
+	do ..Log(,"Rename", oldPath, newPath)
+	
+	quit:'##class(%Dictionary.ClassDefinition).%ExistsId(oldPath) $$$NO // Old class does not exist
+	quit:##class(%Dictionary.ClassDefinition).%ExistsId(newPath) $$$YES // New class already exists
+	
+	merge ^oddDEF(newPath) = ^oddDEF(oldPath)
+	$$$defClassKeySet(newPath, $$$cCLASSname, newPath) // Set class name
+	$$$defClassKeyKill(newPath, $$$cCLASSstorage) // Kill old storage
+	
+	Do UpdClsDef^%occLibrary(newPath)
+	
+	set sc = $system.OBJ.Compile(newPath, "/displaylog=0 /displayerror=0")
+	set:$$$ISOK(sc) sc = ##class(%Dictionary.ClassDefinition).%DeleteId(oldPath)
+	
+	quit $$$ISOK(sc)
+}
+
+/// Does the item exists
+/// w ##class(isc.py.util.Jupyter).ExistsDir()
+ClassMethod ExistsDir(path) As %Boolean
+{
+	set path = ..PathToLogical(path)
+
+	#dim exists As %Boolean
+	if path = "" {
+		set exists = $$$YES
+	} else {
+		set exists = ..PackageExists(path)
+	}	
+
+	do ..Log(,"ExistsDir",path,exists)
 	quit exists
 }
 
@@ -327,7 +395,7 @@ ClassMethod GetNameCell(name) [ CodeMode = expression ]
 {
 {
 	"cell_type": "markdown",
-	"metadata": {"editable": false},
+	"metadata": {"editable": true},
 	"source": ("# " _ name)
 }
 }
