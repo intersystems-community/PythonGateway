@@ -329,7 +329,7 @@ ClassMethod UpdateActivities(activities As Ens.BPL.ActivityList, iterator As %It
 					} else {
 						// Delete BP activities
 						do activities.RemoveAt(i)
-						do:activities.GetAt(i+1).Name=..#SYNC_activity.Name activities.RemoveAt(i+1)
+						do:(activities.GetAt(i).Name=(..#SYNC_activity.Name)) activities.RemoveAt(i)
 					}
 				}
 			}
