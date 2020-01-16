@@ -520,7 +520,7 @@ ClassMethod InitProcess(class) As %Status
 }
 
 /// Interactively installs Iris Native API for Python and Jupyter Notebook
-/// w $System.Status.GetErrorText(##class(isc.py.util.Jupyter).Install())
+/// do ##class(isc.py.util.Jupyter).Install()
 ClassMethod Install()
 {
 	
