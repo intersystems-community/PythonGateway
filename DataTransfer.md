@@ -71,11 +71,11 @@ Other arguments are passed as is to `ExecuteClass`.
 
 ## Notes 
 
-- `ExecuteGlobal`, `ExecuteClass` and `ExecuteQuery` generally offer the same speed (as the time to parse class definition is negligible).
+- `ExecuteGlobal`, `ExecuteClass` and `ExecuteTable` generally offer the same speed (as the time to parse class definition is negligible).
 - `ExecuteGlobal` is 3-5 times faster than ODBC driver and up to 20 times faster than `ExecuteQuery` on measurable workloads (>0.01 second).
-- `ExecuteGlobal`, `ExecuteClass` and `ExecuteQuery` only work on the globals with this structure: `^global(key) = $lb(prop1, prop2, ..., propN)` where `key` must be an integer.
-- For `ExecuteGlobal`, `ExecuteClass` and `ExecuteQuery` supported `%Date` range equals `mktime` range ([windows](https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/mktime-mktime32-mktime64?view=vs-2019): 1970-01-01, [linux](https://linux.die.net/man/3/mktime) 1900-01-01, [mac](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/mktime.3.html)). Use `%TimeStamp` to transfer dates outside of this range.
-- For `ExecuteGlobal`, `ExecuteClass` and `ExecuteQuery` all arguments besides source (global, class, table) and variable are optional.
+- `ExecuteGlobal`, `ExecuteClass` and `ExecuteTable` only work on the globals with this structure: `^global(key) = $lb(prop1, prop2, ..., propN)` where `key` must be an integer.
+- For `ExecuteGlobal`, `ExecuteClass` and `ExecuteTable` supported `%Date` range equals `mktime` range ([windows](https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/mktime-mktime32-mktime64?view=vs-2019): 1970-01-01, [linux](https://linux.die.net/man/3/mktime) 1900-01-01, [mac](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/mktime.3.html)). Use `%TimeStamp` to transfer dates outside of this range.
+- For `ExecuteGlobal`, `ExecuteClass` and `ExecuteTable` all arguments besides the source (global, class, table) and variable are optional.
 
 ## Examples
 
