@@ -114,7 +114,7 @@ set sc = ##class(isc.py.Main).ExecuteClass(class, variable _ 2, type, start, end
 // Approach 3: ExecuteTable
 set sc = ##class(isc.py.Main).ExecuteTable(table, variable _ 3, type, start, end)
 
-// Approach 4: ExecuteTable
+// Approach 4: ExecuteQuery
 set sc = ##class(isc.py.Main).ExecuteQuery(query, variable _ 4, type)
 ```
 
