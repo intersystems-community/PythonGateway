@@ -9,6 +9,8 @@ Note that currently default Python 3 executor is used.
 
 This extension assumes that annotations contain Python code and uses activities names as preceding read-only headings.
 
+This is a direct Jupyter<->BPL bridge, at no time file representations of processes or notebooks are created.
+
 # Screenshots
 
 ## Process Explorer 
@@ -24,6 +26,7 @@ This extension assumes that annotations contain Python code and uses activities 
 
 1. You'll need [InterSystems IRIS 2019.2+](https://wrc.intersystems.com/wrc/).
 2. Install PythonGateway v0.8+ (only `isc.py.util.Jupyter` and `isc.py.ens.ProcessUtils` are required).
+3. Update ObjectScript repo from the repo edge.
 
 ## Automatic installation
 
@@ -33,9 +36,9 @@ This extension assumes that annotations contain Python code and uses activities 
 
 Manual installation contains all the same steps as automatic installation, but you need to execute them manually.
 
-1. Install IRISNative for Python 3.6.7 (`cp36` should be in a finename, wheel is in `\dev\python\` folder inside InterSystems IRIS installation path):
+1. Install IRISNative for Python 3.6.7 (`cp3` should be in a finename, wheel is in `\dev\python\` folder inside InterSystems IRIS installation path):
 ```
-pip install <IRIS>\dev\python\irisnative-*cp36*.whl
+pip install <IRIS>\dev\python\irisnative-*cp3*.whl
 ```
 
 2. Install Jupyter.
@@ -55,7 +58,16 @@ For example to connect to InterSystems IRIS instance on port `51776` you'll need
 c.MLContentsManager.port = 51776
 ```
 
-You can configure all settings (host, port, namespace, user, password) this way.
+You can configure all settings (host, port, namespace, user, password) this way. Completely customized config looks like this:
+```
+exec(open("MLContentsManager.py").read())
+c.NotebookApp.contents_manager_class = MLContentsManager
+c.MLContentsManager.host = 'localhost'
+c.MLContentsManager.port = 51773
+c.MLContentsManager.namespace = 'USER'
+c.MLContentsManager.user = '_SYSTEM'
+c.MLContentsManager.password = 'SYS'
+```
 
 # Runnning
 
