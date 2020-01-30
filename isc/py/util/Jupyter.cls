@@ -613,7 +613,7 @@ ClassMethod ModuleCheck(module, source, verbose As %Boolean = {$$$NO}) As %Statu
 	#dim sc As %Status = $$$OK
 	write:verbose "Checking ", module,!
 	
-	set cmd = "pip"
+	set cmd = "pip3"
 	set timeout = 60
 	
 	set args = 2
@@ -647,7 +647,7 @@ ClassMethod ModuleCheck(module, source, verbose As %Boolean = {$$$NO}) As %Statu
 ClassMethod GetNativeWheel() As %String
 {
 	set dir = ##class(%File).SubDirectoryName(##class(%File).SubDirectoryName($System.Util.InstallDirectory(), "dev"), "python", 1)
-	set file = $zsearch(dir _ "irisnative-*cp36*.whl")
+	set file = $zsearch(dir _ "irisnative-*cp3*.whl")
 	quit file
 }
 
