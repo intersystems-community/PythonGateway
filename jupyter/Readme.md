@@ -26,7 +26,7 @@ This is a direct Jupyter<->BPL bridge, at no time file representations of proces
 
 1. You'll need [InterSystems IRIS 2019.2+](https://wrc.intersystems.com/wrc/).
 2. Install PythonGateway v0.8+ (only `isc.py.util.Jupyter` and `isc.py.ens.ProcessUtils` are required).
-3. Update ObjectScript repo from the repo edge.
+3. Update ObjectScript code from the repo edge.
 
 ## Automatic installation
 
