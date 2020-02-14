@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		libssl-dev \
 		libbz2-dev \
 		liblzma-dev \
+		libsqlite3-dev \
 	&& rm -rf /var/lib/apt/lists/*
 
 ENV PYTHON_VERSION 3.6.7
