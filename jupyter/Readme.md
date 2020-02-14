@@ -69,6 +69,24 @@ c.MLContentsManager.user = '_SYSTEM'
 c.MLContentsManager.password = 'SYS'
 ```
 
+# Docker
+
+You can also run PythonGateway Jupyter in Docker. To run the latest image execute:
+```
+docker run -d \
+  -p 14558:52773 \
+  -p 8888:8888 \
+  --name irisj \
+  intersystemscommunity/irispyj:latest \
+  --log $ISC_PACKAGE_INSTALLDIR/mgr/messages.log \
+  --after /start.sh
+```
+
+You might be required to start jupyter manyally, to do that execute: `docker exec -d irisj sh /start.sh`.
+
+To build Docker image execute: `docker build --force-rm --tag intersystemscommunity/irispyj:latest .`
+
+
 # Runnning
 
 After completing automatic or manual installation open OS bash in the folder with `jupyter_notebook_config.py` and `MLContentsManager.py` and start jupyter with:
