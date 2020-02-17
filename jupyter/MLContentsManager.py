@@ -2,6 +2,8 @@ import irisnative
 from notebook.services.contents.manager import ContentsManager
 import json
 from traitlets import Unicode, Integer, HasTraits, default
+from datetime import datetime
+import nbformat
 
 class MLContentsManager(ContentsManager, HasTraits):
 
@@ -54,7 +56,12 @@ class MLContentsManager(ContentsManager, HasTraits):
         Get the file (bpl) or directory (package) at path.
         '''
         model = self.iris.classMethodValue(self.className, 'Get', path, content, type, format)
-        return json.loads(model)
+
+        model = json.loads(model)
+        model['last_modified'] = datetime.strptime(model['last_modified'],"%Y-%m-%dT%H:%M:%S.%f")
+        if model['type'] == 'notebook' and content==True:
+            model['content'] = nbformat.reads(json.dumps(model['content']), 4)
+        return model
 
     def save(self, model, path):
         '''

@@ -406,6 +406,7 @@ ClassMethod GetCodeCell(value) [ CodeMode = expression ]
    "cell_type": "code",
    "metadata": {},
    "outputs": [],
+   "execution_count": 0,
    "source": (value)
  }
 }
