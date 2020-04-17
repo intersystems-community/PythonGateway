@@ -19,7 +19,7 @@ Property End As %Integer;
 ///  `d` - date (from $horolog, on Windows only from 1970, on Linux from 1900 see notes for details)
 ///  `t` - time ($horolog, seconds since midnight) 
 ///  `m` - (moment) timestamp string in YEAR-MONTH-DAY HOUR:MINUTE:SECOND format.
-Property Mask As %String;
+Property Mask As %VarString;
 
 /// - `labels` - %List of column names, first element is key column name. 
 /// Therefore: List length must be mask symbol length + 1.
