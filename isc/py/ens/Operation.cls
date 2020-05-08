@@ -70,6 +70,15 @@ XData MessageMap
   <MapItem MessageType="isc.py.msg.TableRequest">
     <Method>ExecuteTable</Method>
   </MapItem>
+  <MapItem MessageType="isc.py.msg.DebugRequest">
+    <Method>Debug</Method>
+  </MapItem>
+  <MapItem MessageType="isc.py.msg.CreateCQRequest">
+    <Method>CreateCustomQuery</Method>
+  </MapItem>
+    <MapItem MessageType="isc.py.msg.SQLRequest">
+    <Method>SQL</Method>
+  </MapItem>
 </MapItems>
 }
 
@@ -223,6 +232,40 @@ Method RestoreContext(request As isc.py.msg.RestoreRequest, Output response As E
 {
 	#dim sc As %Status = $$$OK
 	set sc = ##class(isc.py.data.Context).RestoreContext(request.ContextId,, request.Clear)
+	set response = ##class(Ens.Response).%New()
+	quit sc
+}
+
+/// Works only in Foreground mode on Windows
+Method Debug(request As isc.py.msg.DebugRequest, Output response As Ens.Response) As %Status
+{
+	#dim sc As %Status = $$$OK
+	set response = ##class(Ens.Response).%New()
+	break
+	quit sc
+}
+
+/// Create Custom Query class from DataFrame
+Method CreateCustomQuery(request As isc.py.msg.CreateCQRequest, Output response As Ens.Response) As %Status
+{
+	#dim sc As %Status = $$$OK
+	set sc = ##class(isc.py.query.Generator).Generate(request.Variable, request.Classname)
+	set response = ##class(Ens.Response).%New()
+	quit sc
+}
+
+/// Create Custom Query class from DataFrame
+Method SQL(request As isc.py.msg.SQLRequest, Output response As Ens.Response) As %Status
+{
+	#dim sc As %Status = $$$OK
+	
+	set args = request.Args.Count()
+	for i=1:1:request.Args.Count() {
+		set args(i) = request.Args.GetAt(i)
+	}
+	
+	set sc = ##class(isc.py.ens.SQL).Execute(request.Query, args...)
+	break
 	set response = ##class(Ens.Response).%New()
 	quit sc
 }
