@@ -265,7 +265,6 @@ Method SQL(request As isc.py.msg.SQLRequest, Output response As Ens.Response) As
 	}
 	
 	set sc = ##class(isc.py.ens.SQL).Execute(request.Query, args...)
-	break
 	set response = ##class(Ens.Response).%New()
 	quit sc
 }
