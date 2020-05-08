@@ -254,7 +254,7 @@ Method CreateCustomQuery(request As isc.py.msg.CreateCQRequest, Output response 
 	quit sc
 }
 
-/// Create Custom Query class from DataFrame
+/// Execute arbitrary query against InterSystems IRIS
 Method SQL(request As isc.py.msg.SQLRequest, Output response As Ens.Response) As %Status
 {
 	#dim sc As %Status = $$$OK

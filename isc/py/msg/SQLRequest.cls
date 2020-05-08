@@ -8,7 +8,23 @@ Class isc.py.msg.SQLRequest Extends Ens.Request
 /// - Class:XData
 Property Query As %VarString;
 
+/// Query arguments, if any
 Property Args As list Of %String;
+
+Storage Default
+{
+<Data name="SQLRequestDefaultData">
+<Subscript>"SQLRequest"</Subscript>
+<Value name="1">
+<Value>Query</Value>
+</Value>
+<Value name="2">
+<Value>Args</Value>
+</Value>
+</Data>
+<DefaultData>SQLRequestDefaultData</DefaultData>
+<Type>%Library.CacheStorage</Type>
+}
 
 }
 
