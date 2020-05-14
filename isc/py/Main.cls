@@ -284,7 +284,7 @@ ClassMethod ExecuteGlobal(global As %String, variable As %String, type As %Strin
 		quit:$$$ISERR(sc) sc
 	}
 	
-	// remove ^ if any
+	// remove '^' if any
 	set:$e(global)="^" global = $e(global, 2, *)
 	
 	new $namespace
