@@ -21,7 +21,7 @@ XData Install [ XMLNamespace = INSTALLER ]
     <Invoke Class="isc.py.util.Installer" Method="ConfigureProduction" CheckStatus="true"/>
  
     <Log Level="1" Text="Configuring Test Process"/>
-    <Invoke Class="isc.py.util.Installer" Method="ConfigureTestProcess" CheckStatus="true"/>
+    <Invoke Class="isc.py.util.Installer" Method="ConfigureTestProcess" CheckStatus="false"/>
 	
     <Log Level="1" Text="Configuring BPL Editor"/>
     <Invoke Class="isc.py.util.Installer" Method="PatchBP" CheckStatus="true"/>
