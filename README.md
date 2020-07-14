@@ -6,19 +6,7 @@ This projects brings you the power of Python right into your InterSystems IRIS e
 - Seamlessly transfer data from InterSystems IRIS into Python
 - Build intelligent Interoperability business processes with Python Interoperability Adapter
 - Save, examine, modify and restore Python context from InterSystems IRIS
- 
-# AI/ML contest
 
-[Develop an AI/ML solution using InterSystems IRIS](https://community.intersystems.com/post/take-part-intersystems-iris-ai-programming-contest) and win prises.
-
-[![announcement_-_4rd_iris-contest-dc-banner](https://community.intersystems.com/sites/default/files/inline/images/announcement_-_4rd_iris-contest-dc-banner.jpg)](https://community.intersystems.com/post/take-part-intersystems-iris-ai-programming-contest)
-
-We will choose the best AI/ML solution built with InterSystems IRIS. Your application could be a library, package, tool, or any AI/ML solution which uses InterSystems IRIS.
-
-The application should work either on IRIS Community Edition or IRIS for Health Community Edition or IRIS Advanced Analytics Community Edition.
-
-The application should be Open Source and published on GitHub.
- 
 # ML Toolkit user group
 
 ML Toolkit user group is a private GitHub repository set up as part of InterSystems corporate GitHub organization. It is addressed to the external users that are installing, learning or are already using ML Toolkit components. To join ML Toolkit user group, please send a short e-mail at the following address: [MLToolkit@intersystems.com](mailto:MLToolkit@intersystems.com?subject=MLToolkit%20user%20group&body=Hello.%0A%0APlease%20add%20me%20to%20ML%20Toolkit%20user%20group%3A%0A%0A-%20GitHub%20username%3A%20%0A%0A-%20Name%3A%20%0A%0A-%20Company%3A%20%0A%0A-%20Position%3A%0A-%20Country%3A%20%0A%0A) and indicate in your e-mail the following details (needed for the group members to get to know and identify you during discussions):
