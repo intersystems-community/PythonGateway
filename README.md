@@ -7,6 +7,10 @@ This projects brings you the power of Python right into your InterSystems IRIS e
 - Build intelligent Interoperability business processes with Python Interoperability Adapter
 - Save, examine, modify and restore Python context from InterSystems IRIS
 
+# Important notice
+
+This project is a community supported bridge between InterSystems IRIS and Python. Starting with 2020.3 InterSystems IRIS provides out-of-the-box Python Gateway implementation, officially supported by InterSystems. Documentation is available [here](https://docs.intersystems.com/irislatest/csp/docbook/Doc.View.cls?KEY=BPYGATE).
+
 # ML Toolkit user group
 
 ML Toolkit user group is a private GitHub repository set up as part of InterSystems corporate GitHub organization. It is addressed to the external users that are installing, learning or are already using ML Toolkit components. To join ML Toolkit user group, please send a short e-mail at the following address: [MLToolkit@intersystems.com](mailto:MLToolkit@intersystems.com?subject=MLToolkit%20user%20group&body=Hello.%0A%0APlease%20add%20me%20to%20ML%20Toolkit%20user%20group%3A%0A%0A-%20GitHub%20username%3A%20%0A%0A-%20Name%3A%20%0A%0A-%20Company%3A%20%0A%0A-%20Position%3A%0A-%20Country%3A%20%0A%0A) and indicate in your e-mail the following details (needed for the group members to get to know and identify you during discussions):
