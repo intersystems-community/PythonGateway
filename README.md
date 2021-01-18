@@ -54,7 +54,7 @@ If you modified environment variables restart your InterSystems product.
 
 1. To build docker image:
   - Copy `iscpython.so` into repository root (if it's not there already)
-  - Execute in the repository root `docker build --force-rm --tag intersystemscommunity/irispy:latest .` By default the image is built upon `store/intersystems/iris-community:2019.4.0.383.0` image, however you can change that by providing `IMAGE` variable. To build from InterSystems IRIS Community Edition execute: `docker build  --build-arg IMAGE=store/intersystems/iris-community:2019.4.0.383.0 --force-rm --tag intersystemscommunity/irispy:latest .`
+  - Execute in the repository root `docker build --force-rm --tag intersystemsdc/irispy:latest .` By default the image is built upon `store/intersystems/iris-community:2019.4.0.383.0` image, however you can change that by providing `IMAGE` variable. To build from InterSystems IRIS Community Edition execute: `docker build  --build-arg IMAGE=store/intersystems/iris-community:2019.4.0.383.0 --force-rm --tag intersystemsdc/irispy:latest .`
 2. To run docker image execute (key is not needed for Community based images): 
 
 ```
@@ -62,7 +62,7 @@ docker run -d \
   -p 52773:52773 \
   -v /<HOST-DIR-WITH-iris.key>/:/mount \
   --name irispy \
-  intersystemscommunity/irispy:latest \
+  intersystemsdc/irispy:latest \
   --key /mount/iris.key \
 ```
 3. Test process `isc.py.test.Process` saves image artifact into temp directory. You might want to change that path to a mounted directory. To do that edit annotation for `Correlation Matrix: Graph` call, specifying valid filepath for `f.savefig` function.
