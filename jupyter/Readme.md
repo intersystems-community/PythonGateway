@@ -77,14 +77,14 @@ docker run -d \
   -p 14558:52773 \
   -p 8888:8888 \
   --name irisj \
-  intersystemscommunity/irispyj:latest \
+  intersystemsdc/irispyj:latest \
   --log $ISC_PACKAGE_INSTALLDIR/mgr/messages.log \
   --after /start.sh
 ```
 
 You might be required to start jupyter manually, to do that execute: `docker exec -d irisj sh /start.sh`.
 
-To build Docker image execute: `docker build --force-rm --tag intersystemscommunity/irispyj:latest .`
+To build Docker image execute: `docker build --force-rm --tag intersystemsdc/irispyj:latest .`
 
 
 # Runnning
