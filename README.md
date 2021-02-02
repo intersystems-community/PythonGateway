@@ -309,6 +309,15 @@ The result should contain: `Python 3.6.7` and `64 bit`. If it's not, [install Py
 
 3. Make sure that InterSystems IRIS can access Python installation. 
 
+4. If you use PyEnv you need to install Python 3.6.7. with shared library support:
+
+```
+env PYTHON_CONFIGURE_OPTS="--enable-shared" pyenv install 3.6.7
+pyenv global 3.6.7
+```
+
+5. To change `LD_LIBRARY_PATH` variable set [LibPath](https://docs.intersystems.com/irislatest/csp/docbook/DocBook.UI.Page.cls?KEY=RACS_LIBPATH) config property and restart InterSystems IRIS. 
+
 ## Module not found error
 
 Sometimes you can get module not found error. Here's how to fix it. Each step constitutes a complete solution so restart IRIS and check that the problem is fixed.
