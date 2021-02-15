@@ -9,7 +9,7 @@
 ZPY(command) Public
 	set:$namespace'="PYTHON" $namespace = "PYTHON" 
 	
-	if '$d(comand) {
+	if '$d(command) {
 		do ##class(isc.py.util.Shell).Shell()
 		quit
 	}
