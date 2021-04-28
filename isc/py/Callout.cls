@@ -7,6 +7,8 @@
 Class isc.py.Callout
 {
 
+Parameter EmbeddedPython As %Boolean = {$$$NO};
+
 /// Serialization by str() function
 Parameter SerializationStr = 0;
 

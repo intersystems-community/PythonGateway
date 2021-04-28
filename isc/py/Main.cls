@@ -1,3 +1,5 @@
+Include EnsUtil
+
 /// Public entry point to call Python.
 /// Also may be refernced as API or Terminal API.
 Class isc.py.Main
@@ -28,7 +30,7 @@ ClassMethod SimpleString(code As %String = "", variable As %String = "", seriali
 	
 	set sc1 = ..GetStatus()
 	
-	set:$$$ISERR(sc1) sc2 = $$$ERROR($$$GeneralError, $$$FormatText("code: %1, variable: %2, serialization: %3, result: %4", $replace(code, $c(10), $$$NL), variable, serialization, $g(result)))
+	set:($$$ISERR(sc1) || $$$ISERR(sc)) sc2 = $$$ERROR($$$GeneralError, $$$FormatText("code: %1, variable: %2, serialization: %3, result: %4", $replace(code, $c(10), $$$NL), variable, serialization, $g(result)))
 	
 	set sc = $$$ADDSC(sc2, $$$ADDSC(sc, sc1))
 	
@@ -401,8 +403,20 @@ ClassMethod ExecuteClass(class As %String, variable As %String, type As %String(
 	set global = $$$comMemberKeyGet(class,$$$cCLASSstorage,storageName,$$$cSDEFdatalocation)
 	quit:$d(@global)<10 $$$ERROR($$$GeneralError, "Data global is empty")
 
-	set sc = ..ExecuteGlobal($e(global,2,*), variable, type, start, end, mask, fixedLabels, namespace)
-	
+	if ##class(isc.py.Callout).#EmbeddedPython {
+		set $list(fixedLabels, 1) = "%ID As globalKey"
+		for i=2:1:$ll(fixedLabels) {
+			set label = $lg(fixedLabels, i)
+			if $SYSTEM.SQL.IsReservedWord(label) {
+				set $list(fixedLabels, i) = """" _ label _ """"
+			}
+		}
+		set table = ##class(%CSP.UI.Portal.SQL.Home).Quoter2($$$ClassSQLTable(class))
+		set query = "SELECT " _ $lts(fixedLabels, ", ") _ " FROM " _ table _ " WHERE %ID BETWEEN " _ start _ " AND " _ end
+		set sc = ..ExecuteQuery(query, variable, type, namespace)
+	} else {
+		set sc = ..ExecuteGlobal($e(global,2,*), variable, type, start, end, mask, fixedLabels, namespace)
+	}
 	quit sc
 }
 
@@ -820,7 +834,7 @@ ClassMethod GetStatus() As %Status
 		do ##class(isc.py.Callout).SimpleString("import sys, traceback")
 		set haxExc = ##class(isc.py.Callout).SimpleString("zzzerr = hasattr(sys, 'last_type')", "zzzerr")
 		do ##class(isc.py.Callout).SimpleString("del zzzerr")
-		quit:haxExc="False"
+		quit:((haxExc="False") || (haxExc = 0))
 		
 		set excText = ##class(isc.py.Callout).SimpleString("zzzerr = traceback.format_exception(sys.last_type, sys.last_value, sys.last_traceback)", "zzzerr")
 		set excText = $replace($zcvt(excText, "I", "JSON"), $c(10), $$$NL)
