@@ -7,7 +7,7 @@
 Class isc.py.Callout
 {
 
-Parameter EmbeddedPython As %Boolean = {$$$NO};
+Parameter EmbeddedPython As %Boolean = {$$$YES};
 
 /// Serialization by str() function
 Parameter SerializationStr = 0;
@@ -46,28 +46,7 @@ $g(^isc.py.Callout, $g(^%SYS("bindir")) _ "iscpython." _ $select($$$isWINDOWS:"d
 /// write ##class(isc.py.Callout).Setup()
 ClassMethod Setup() As %Status
 {
-	#dim sc As %Status = $$$OK
-	set file = ..GetLib()
-	quit:'##class(%File).Exists(file) $$$ERROR($$$GeneralError, "Library file: " _ file _ " does not exist")	
-
-	try {
-		set result = $ZF(-4,6,..#PyLibId)
-		if result'=0 {
-			set sc = $$$ERROR($$$GeneralError, "Failed $ZF(-4, 6,..#PyLibId) call with result: " _ result _ " expected 0")
-			quit
-		}
-		
-		set result =$ZF(-4,5,..#PyLibId, file)
-		if result'=0 {
-			set sc = $$$ERROR($$$GeneralError, "Failed $ZF(-4, 5,..GetLib()) call with result: " _ result _ " expected 0")
-			quit
-		}
-	} catch ex {
-		set sc = ex.AsStatus()
-	}
-	
-	
-    quit sc
+    quit $$$OK
 }
 
 /// Initializes Python environment. Idempotent.
@@ -80,13 +59,9 @@ ClassMethod Setup() As %Status
 /// In cause of problems: do ##class(isc.py.Callout).Initialize("libpython3.6m.so") 
 ClassMethod Initialize(file As %String = "") As %Status
 {
-	#dim sc As %Status = $$$OK
-	try {
-		do $ZF(-6, ..#PyLibId, ..#Initialize, file)
-	} catch ex {
-		set sc = ex.AsStatus()
-	}
-	quit sc
+	set %zzzpythongw("builtins") = ##class(%SYS.Python).Import("builtins")
+	set %zzzpythongw("globals") = %zzzpythongw("builtins").dict()
+    quit $$$OK
 }
 
 /// Eval code vaiable in initialized context and 
@@ -96,11 +71,30 @@ ClassMethod Initialize(file As %String = "") As %Status
 /// write ##class(isc.py.Callout).SimpleString()
 ClassMethod SimpleString(code As %String = "", variable As %String = "", serialization As %Integer = {..#SerializationStr}) As %String
 {
-	set:$ZISWIDE(code) code = $zcvt(code, "O", "UTF8")
-	set result = $ZF(-6, ..#PyLibId, ..#SimpleString, code, variable, serialization)
+	do:'$d(%zzzpythongw) ..Initialize()
+	set result = ""
+
+	try {
+		do %zzzpythongw("builtins").exec(code, %zzzpythongw("globals"))
+	} catch ex {
+		//break
+		#dim ex As %Exception.General
+		throw ex
+		//return result
+	}
 	
-	// Slows getting result by ~50%
-	set result = $zcvt(result, "I", "UTF8")
+	if variable'="" {
+		if serialization = ..#SerializationStr {
+			set eval = "str(" _ variable _ ")"
+		} elseif serialization = ..#SerializationRepr {
+			set eval = "repr(" _ variable _ ")"
+		} else {
+			set result = "isc.py.Callout:SimpleString - unexpected serialization value."
+			return result
+		}
+		set result = %zzzpythongw("builtins").eval(eval, %zzzpythongw("globals"))
+	}
+	
 	quit result
 }
 
@@ -109,17 +103,7 @@ ClassMethod SimpleString(code As %String = "", variable As %String = "", seriali
 ClassMethod StreamInit(length As %Integer) As %Status
 {
 	#dim sc As %Status = $$$OK
-	try {
-		do $ZF(-6, ..#PyLibId, ..#StreamInit, length)
-	} catch ex {
-		#dim ex As %Exception.General
-		if (ex.Name = "<FUNCTION>") {
-			set sc = $$$ERROR($$$GeneralError, "Unable to allocate memory")
-		} else {
-			set sc = ex.AsStatus()
-		}
-	}
-	
+	do ..SimpleString("zzzstream = ''")
 	quit sc
 }
 
@@ -129,18 +113,7 @@ ClassMethod StreamInit(length As %Integer) As %Status
 ClassMethod StreamWrite(code As %String = "") As %Status
 {
 	#dim sc As %Status = $$$OK
-	try {
-		set:$ZISWIDE(code) code = $zcvt(code, "O", "UTF8")
-		do $ZF(-6, ..#PyLibId, ..#StreamWrite, code)
-	} catch ex {
-		#dim ex As %Exception.General
-		if (ex.Name = "<FUNCTION>") {
-			set sc = $$$ERROR($$$GeneralError, "Call StreamInit before calling StreamWrite. Or reallocation failed as initial allocation in StreamInit could not hold all the data.")
-		} else {
-			set sc = ex.AsStatus()
-		}
-	}
-	
+	do ..SimpleString("zzzstream +='" _ code_ "'")
 	quit sc
 }
 
@@ -149,17 +122,7 @@ ClassMethod StreamWrite(code As %String = "") As %Status
 ClassMethod StreamExecute() As %Status
 {
 	#dim sc As %Status = $$$OK
-	try {
-		do $ZF(-6, ..#PyLibId, ..#StreamExecute)
-	} catch ex {
-		#dim ex As %Exception.General
-		if (ex.Name = "<FUNCTION>") {
-			set sc = $$$ERROR($$$GeneralError, "Call StreamInit and StreamWrite before calling StreamExecute")
-		} else {
-			set sc = ex.AsStatus()
-		}
-	}
-	
+	do ..SimpleString("exec(zzzstream)")
 	quit sc
 }
 
@@ -168,12 +131,7 @@ ClassMethod StreamExecute() As %Status
 /// write ##class(isc.py.Callout).EscapeString()
 ClassMethod EscapeString(string As %String = "") As %String
 {
-	set:$ZISWIDE(string) string = $zcvt(string, "O", "UTF8")
-	set result = $ZF(-6, ..#PyLibId, ..#EscapeString, string)
-	
-	// Slows getting result by ~50%
-	set result = $zcvt(result, "I", "UTF8")
-	quit result
+	quit string
 }
 
 /// Finalize Python. Idempotent.
@@ -181,12 +139,7 @@ ClassMethod EscapeString(string As %String = "") As %String
 ClassMethod Finalize() As %Status
 {
 	#dim sc As %Status = $$$OK
-	try {
-		do $ZF(-6, ..#PyLibId, ..#Finalize)
-	} catch ex {
-		#dim ex As %Exception.General
-		set sc = ex.AsStatus()
-	}
+	kill %zzzpythongw
 	quit sc
 }
 
@@ -211,15 +164,7 @@ ClassMethod Finalize() As %Status
 /// write ##class(isc.py.Callout).GetGlobalOrder("BDZ4.DfXU.1",1,111922, "++++++++++++")
 ClassMethod GetGlobalOrder(global, start As %Integer, end As %Integer, mask As %String, name As %String = "l", unload As %Boolean = 0) As %Status
 {
-	#dim sc As %Status = $$$OK
-	try {
-		do $ZF(-6, ..#PyLibId, ..#GetGlobalOrder, global, start, end, mask, name)
-	} catch ex {
-		#dim ex As %Exception.General
-		set sc = ex.AsStatus()
-	}
-	do:unload ..Unload()
-	quit sc
+	quit $$$ERROR($$$GeneralError, "GetGlobalOrder is unimplemented in Embedded Python")
 }
 
 /// Unload library. Idempotent.
@@ -227,14 +172,7 @@ ClassMethod GetGlobalOrder(global, start As %Integer, end As %Integer, mask As %
 ClassMethod Unload() As %Status
 {
 	#dim sc As %Status = $$$OK
-	
-	try {
-		set result = $ZF(-4, 4, ..#PyLibId)
-		set:result'=0 sc = $$$ERROR($$$GeneralError, "Failed $ZF(-4, 4,..#PyLibId) call with result: " _ result _ " expected 0")
-	} catch ex {
-		set sc = ex.AsStatus()
-	}
-
+	kill %zzzpythongw
 	quit sc
 }
 
