@@ -60,6 +60,7 @@ ClassMethod Setup() As %Status
 ClassMethod Initialize(file As %String = "") As %Status
 {
 	set %zzzpythongw("builtins") = ##class(%SYS.Python).Import("builtins")
+	set %zzzpythongw("io") = ##class(%SYS.Python).Import("io")
 	set %zzzpythongw("globals") = %zzzpythongw("builtins").dict()
     quit $$$OK
 }
@@ -102,8 +103,9 @@ ClassMethod SimpleString(code As %String = "", variable As %String = "", seriali
 /// write ##class(isc.py.Callout).StreamInit()
 ClassMethod StreamInit(length As %Integer) As %Status
 {
+	do:'$d(%zzzpythongw) ..Initialize()
 	#dim sc As %Status = $$$OK
-	do ..SimpleString("zzzstream = ''")
+	set %zzzpythongw("stream") = %zzzpythongw("io").StringIO()
 	quit sc
 }
 
@@ -113,7 +115,7 @@ ClassMethod StreamInit(length As %Integer) As %Status
 ClassMethod StreamWrite(code As %String = "") As %Status
 {
 	#dim sc As %Status = $$$OK
-	do ..SimpleString("zzzstream +='" _ code_ "'")
+	do %zzzpythongw("stream").write(code)
 	quit sc
 }
 
@@ -122,7 +124,9 @@ ClassMethod StreamWrite(code As %String = "") As %Status
 ClassMethod StreamExecute() As %Status
 {
 	#dim sc As %Status = $$$OK
-	do ..SimpleString("exec(zzzstream)")
+	set streamId =  %zzzpythongw("builtins").id(%zzzpythongw("stream"))
+	set sc = ..SimpleString("import ctypes" _ $$$NL _ "exec(ctypes.cast(" _ streamId _ ", ctypes.py_object).value.getvalue())")
+	kill:$$$ISOK(sc) %zzzpythongw("stream")
 	quit sc
 }
 
