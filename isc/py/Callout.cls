@@ -123,9 +123,11 @@ ClassMethod StreamWrite(code As %String = "") As %Status
 /// write ##class(isc.py.Callout).StreamExecute()
 ClassMethod StreamExecute() As %Status
 {
+	//write "start execute",!
 	#dim sc As %Status = $$$OK
 	set streamId =  %zzzpythongw("builtins").id(%zzzpythongw("stream"))
-	set sc = ..SimpleString("import ctypes" _ $$$NL _ "exec(ctypes.cast(" _ streamId _ ", ctypes.py_object).value.getvalue())")
+	//set sc = ..SimpleString("import ctypes" _ $$$NL _ "exec(ctypes.cast(" _ streamId _ ", ctypes.py_object).value.getvalue())")
+	do %zzzpythongw("builtins").exec("import ctypes" _ $$$NL _ "exec(ctypes.cast(" _ streamId _ ", ctypes.py_object).value.getvalue())", %zzzpythongw("globals"))
 	kill:$$$ISOK(sc) %zzzpythongw("stream")
 	quit sc
 }
