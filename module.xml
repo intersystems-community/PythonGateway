@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Document name="PythonGateway.ZPM">
+<Module>
+ <Name>PythonGateway</Name>
+  <Version>1.0.0</Version>
+  <Description>This project is a community supported bridge between InterSystems IRIS and Python.</Description>
+  <Keywords>InterSystems IRIS Python</Keywords>
+  <Packaging>module</Packaging>
+   <SourcesRoot>isc</SourcesRoot>
+  <Resource Name="py.PKG" Directory="cls"/>
+    <FileCopy Name="iscpython.dll" Target="${bindir}"/>
+	<FileCopy Name="iscpython.dylib" Target="${bindir}"/>
+    <FileCopy Name="iscpython.so" Target="${bindir}"/>
+</Module>
+</Document>
+</Export>
