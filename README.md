@@ -316,7 +316,7 @@ env PYTHON_CONFIGURE_OPTS="--enable-shared" pyenv install 3.6.7
 pyenv global 3.6.7
 ```
 
-5. To change `LD_LIBRARY_PATH` variable set [LibPath](https://docs.intersystems.com/irislatest/csp/docbook/DocBook.UI.Page.cls?KEY=RACS_LIBPATH) config property and restart InterSystems IRIS. 
+5. To change `LD_LIBRARY_PATH` variable set [LibPath](https://docs.intersystems.com/irislatest/csp/docbook/DocBook.UI.Page.cls?KEY=RACS_LIBPATH) config property and restart InterSystems IRIS. Note that a folder name in the LibPath MUST be without trailing slash, for example: `/usr/local/lib`. Also some notes on [Python compilation](https://stackoverflow.com/a/56088070/2425753). Get `LD_LIBRARY_PATH` value after restart with: `w $system.Util.GetEnviron("LD_LIBRARY_PATH")`.
 
 ## Module not found error
 
@@ -340,6 +340,7 @@ path=sys.path
 path
 ```
 They should be the same. If they are not the same read how `PYTHONPATH` (python) is formed [here](https://stackoverflow.com/questions/897792/where-is-pythons-sys-path-initialized-from) and adjust your OS environment to form pythonpath (python) correctly, i.e. set `PYTHONPATH` (system) env var to `C:\Users\<USER>\AppData\Roaming\Python\Python36\site-packages` or other directories where your modules reside (and other missing directories).
+
 4. Compare python paths again and they are not the same or the problem persists add missing paths explicitly to the `isc.py.ens.Operation` init code (for interoperability) and on process start (for Callout wrapper):
 
 ```
