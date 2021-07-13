@@ -36,9 +36,10 @@ This is a direct Jupyter<->BPL bridge, at no time file representations of proces
 
 Manual installation contains all the same steps as automatic installation, but you need to execute them manually.
 
-1. Install IRISNative for Python 3.6.7 (`cp3` should be in a finename, wheel is in `\dev\python\` folder inside InterSystems IRIS installation path):
+1. Install IRISNative for Python 3.6.7 (`cp3` **OR** `py3` should be in a finename, wheel is in `\dev\python\` folder inside InterSystems IRIS installation path):
 ```
 pip install <IRIS>\dev\python\irisnative-*cp3*.whl
+pip install <IRIS>\dev\python\*py3*.whl
 ```
 
 2. Install Jupyter.
