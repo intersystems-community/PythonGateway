@@ -649,6 +649,7 @@ ClassMethod GetNativeWheel() As %String
 {
 	set dir = ##class(%File).SubDirectoryName(##class(%File).SubDirectoryName($System.Util.InstallDirectory(), "dev"), "python", 1)
 	set file = $zsearch(dir _ "irisnative-*cp3*.whl")
+	set:file="" file = $zsearch(dir _ "*py3*.whl")
 	quit file
 }
 
