@@ -28,7 +28,7 @@ ClassMethod Generate(variable As %String, classname As %Dictionary.CacheClassnam
 	
 	set sequenceNumber = 1
 	while iterator.%GetNext(.colName, .colDesc) {
-		set colNames =  colNames _ $lb(colName)
+		set colNames =  colNames _ $lb($case($zname(colName,6), 1: colName, 0: """" _ colName _ """"))
 		do class.Properties.Insert(..GetColumn(colName, .colDesc, .sequenceNumber))
 	}
 	
