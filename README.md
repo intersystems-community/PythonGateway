@@ -70,6 +70,23 @@ docker run -d \
 5. Access SMP with SuperUser/SYS or Admin/SYS user/password.
 6. To stop container execute: `docker stop irispy && docker rm --force irispy`.
 
+### Docker wIth GPU support
+
+After building a normal docker container, execute: `docker build -t intersystemsdc/irispy:latest-gpu -f Dockerfile-GPU .`
+Run this container with: `--gpus all` flag:
+
+```
+docker run -d \
+  --gpus all \
+  -p 52773:52773 \
+  -v /<HOST-DIR-WITH-iris.key>/:/mount \
+  --name irispy \
+  intersystemsdc/irispy:latest-gpu \
+  --key /mount/iris.key \
+```
+
+Requires installed [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#setting-up-nvidia-container-toolkit) on Docker host.
+
 # Use
 
 1. Call: `set sc = ##class(isc.py.Callout).Setup()` once per systems start (add to ZSTART: [docs](https://docs.intersystems.com/latest/csp/docbook/DocBook.UI.Page.cls?KEY=GSTU_customize#GSTU_customize_startstop), sample routine available in `rtn` folder).
