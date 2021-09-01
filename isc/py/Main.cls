@@ -449,7 +449,7 @@ ClassMethod GetVariable(variable As %String, serialization As %Integer = {##clas
 	if ((length<=$$$MaxStringLength) && useString) {
 		set sc = ..SimpleString("zzzvar = " _ variable, "zzzvar", serialization, .stream)
 	} else {
-		set step = $$$MaxStringLength \ 2
+		set step = $$$MaxStringLength \ 4
 		set:'$isObject($g(stream)) stream = ##class(%Stream.GlobalCharacter).%New()
 		
 		if (length<=step) {
@@ -510,6 +510,8 @@ ClassMethod GetVariableInfo(variable As %String = "", serialization As %Integer 
 			set sc = ..SimpleString("zzzlen=len(str(" _ variable _ "))",  "zzzlen", , .length)
 		}
 		quit:$$$ISERR(sc) sc
+		
+		set length = +length
 		
 		set sc = ..SimpleString("del zzzlen")
 	}
