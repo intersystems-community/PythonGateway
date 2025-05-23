@@ -128,7 +128,7 @@ int SimpleString(CACHE_EXSTRP command, char *resultVar, int serialization, CACHE
 			varStr = PyObject_Repr(var);
 		}
 
-		char* str = PyUnicode_AsUTF8(varStr);
+		char* str = PyUnicode_AsUTF8AndSize(varStr, NULL);
 
 		int len = strlen(str);
 		CACHEEXSTRKILL(result);
@@ -224,7 +224,7 @@ int EscapeString(CACHE_EXSTRP string,  CACHE_EXSTRP result)
 
 	PyObject *var = PyUnicode_FromStringAndSize(string->str.ch, string->len);
 	PyObject *varStr = PyObject_Repr(var);
-	char* str = PyUnicode_AsUTF8(varStr);
+	char* str = PyUnicode_AsUTF8AndSize(varStr, NULL);
 
 	int len = strlen(str);
 	CACHEEXSTRKILL(result);
@@ -378,7 +378,8 @@ PyTupleObject* ListToTuple(CACHE_EXSTRP result, const char* mask, int maskLength
 				item =  PyUnicode_FromStringAndSize(list+dataStart, dataLength);
 			}
 		} else if (type==USTRING) {
-			item = PyUnicode_FromUnicode(list+dataStart, dataLength / 2);
+			//#item = PyUnicode_FromUnicode(list+dataStart, dataLength / 2);
+			item = PyUnicode_DecodeUTF16(list + dataStart, dataLength, NULL, NULL);		
 		} else if (type == INTP) {
 
 			int64_t temp = Makeint(list, dataStart, 0, dataLength);
